@@ -1,0 +1,161 @@
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 10px;
+}
+
+.slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.name {
+  font-family: var(--font-script);
+  font-weight: 700;
+  line-height: 1.05;
+  text-align: center;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.score {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.step {
+  width: 100%;
+  display: grid;
+  place-items: start center;
+  border-radius: 10px 10px 0 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.p1 .step {
+  background: var(--saffron);
+}
+.p2 .step {
+  background: var(--sky);
+}
+.p3 .step {
+  background: var(--tomato);
+  color: #fff;
+}
+
+/* Versión de estantería (historial). */
+.compact .name {
+  font-size: 20px;
+}
+.compact .score {
+  font-size: 22px;
+  margin: 2px 0 6px;
+}
+.compact .step {
+  font-size: 20px;
+  padding-top: 6px;
+}
+.compact .p1 .step {
+  height: 62px;
+}
+.compact .p2 .step {
+  height: 46px;
+}
+.compact .p3 .step {
+  height: 34px;
+}
+
+/* Versión de final de partida. */
+.grand {
+  gap: clamp(10px, 2vw, 28px);
+}
+.grand .name {
+  font-size: clamp(24px, 2.8vw, 42px);
+}
+.grand .p1 .name {
+  font-size: clamp(28px, 3.4vw, 52px);
+}
+.grand .score {
+  font-size: clamp(28px, 3.2vw, 48px);
+  margin: 4px 0 10px;
+}
+.grand .step {
+  font-size: clamp(36px, 5vw, 76px);
+  padding-top: 14px;
+}
+.grand .p1 .step {
+  height: clamp(120px, 22vh, 220px);
+}
+.grand .p2 .step {
+  height: clamp(90px, 16vh, 160px);
+}
+.grand .p3 .step {
+  height: clamp(64px, 11vh, 110px);
+}
+
+.crown {
+  color: var(--tomato-deep);
+  margin-bottom: 4px;
+}
+
+.shell .crown {
+  color: var(--saffron);
+}
+
+.none {
+  font-family: var(--font-script);
+  font-weight: 700;
+  color: var(--card-ink-soft);
+  text-align: center;
+  align-self: center;
+}
+
+.none.compact {
+  font-size: 22px;
+  padding: 20px 0;
+}
+
+.none.grand {
+  font-size: 36px;
+  padding: 40px 0;
+}
+
+.empty {
+  visibility: hidden;
+}
+
+/* En el final los escalones suben uno tras otro: 3º, 2º y por último 1º. */
+.rise .slot {
+  animation: rise 700ms var(--ease-out) both;
+}
+.rise .p1 .step,
+.rise .p2 .step,
+.rise .p3 .step {
+  transform-origin: bottom;
+}
+.rise .p3 {
+  animation-delay: 200ms;
+}
+.rise .p2 {
+  animation-delay: 700ms;
+}
+.rise .p1 {
+  animation-delay: 1300ms;
+}
+
+/* Solo desplazamiento: el podio es visible aunque la animación no llegue a correr. */
+@keyframes rise {
+  from {
+    transform: translateY(24px);
+  }
+  to {
+    transform: none;
+  }
+}

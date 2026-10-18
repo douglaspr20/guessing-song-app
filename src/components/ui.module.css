@@ -1,0 +1,122 @@
+/* Controles compartidos: botones de etiqueta en mayúsculas condensadas y la carátula de papel. */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 12px 22px;
+  border-radius: var(--radius-control);
+  border: var(--stroke) solid currentColor;
+  background: transparent;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  text-decoration: none;
+  transition:
+    background-color 160ms var(--ease-out),
+    color 160ms var(--ease-out),
+    transform 160ms var(--ease-out);
+}
+.btn:active:not(:disabled) {
+  transform: translateY(2px);
+}
+.btn:disabled {
+  opacity: 0.45;
+}
+.btn svg {
+  flex: none;
+}
+
+/* Sobre la carátula de papel: tinta índigo. */
+.onCard {
+  color: var(--ink);
+}
+.onCard:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--card);
+}
+
+/* Sobre la carcasa: texto de papel. */
+.onShell {
+  color: var(--on-shell);
+}
+.onShell:hover:not(:disabled) {
+  background: var(--on-shell);
+  color: var(--ink);
+}
+
+/* La acción principal de cada pantalla: tomate. */
+.primary {
+  background: var(--tomato);
+  border-color: var(--tomato);
+  color: #fff;
+}
+.primary:hover:not(:disabled) {
+  background: var(--tomato-deep);
+  border-color: var(--tomato-deep);
+}
+
+.big {
+  min-height: 72px;
+  font-size: 28px;
+  padding: 16px 32px;
+}
+
+/* Carátula: cartulina con tres rayas arriba. */
+.card {
+  background: var(--card);
+  color: var(--ink);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.cardStripes {
+  height: 36px;
+  background: linear-gradient(
+    to bottom,
+    var(--saffron) 0 33.4%,
+    var(--tomato) 33.4% 66.7%,
+    var(--sky) 66.7% 100%
+  );
+}
+.cardTitle {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--card-ink-soft);
+}
+
+/* Texto de error y avisos. */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: var(--radius-control);
+  border: var(--stroke) solid currentColor;
+  font-weight: 600;
+}
+.notice svg {
+  flex: none;
+  margin-top: 2px;
+}
+.noticeError {
+  color: #ffd6cf;
+  background: #4a1d24;
+}
+.noticeErrorOnCard {
+  color: var(--bad);
+  background: #fbe3df;
+}
+
+/* Sobre la cartulina el azafrán no contrasta: el anillo de foco pasa a tomate oscuro. */
+.card :focus-visible,
+.onCard:focus-visible {
+  outline-color: var(--tomato-deep);
+}

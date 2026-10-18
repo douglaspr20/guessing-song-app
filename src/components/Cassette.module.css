@@ -1,0 +1,229 @@
+.shell {
+  position: relative;
+  background: var(--shell);
+  border-radius: var(--radius-shell);
+  padding: clamp(14px, 1.6vw, 22px) clamp(16px, 2.4vw, 32px);
+  /* Tornillos de la carcasa. */
+  background-image:
+    radial-gradient(circle at 18px 18px, var(--shell-hi) 0 5px, transparent 6px),
+    radial-gradient(circle at calc(100% - 18px) 18px, var(--shell-hi) 0 5px, transparent 6px),
+    radial-gradient(circle at 18px calc(100% - 18px), var(--shell-hi) 0 5px, transparent 6px),
+    radial-gradient(circle at calc(100% - 18px) calc(100% - 18px), var(--shell-hi) 0 5px, transparent 6px);
+}
+
+.label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 12px;
+  padding: 10px 20px;
+}
+
+.labelTitle {
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: clamp(22px, 2.2vw, 32px);
+  line-height: 1.1;
+}
+
+.labelValue {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(16px, 1.5vw, 22px);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.labelValue b {
+  color: var(--tomato-deep);
+}
+
+/*
+ * La ventana se mide a sí misma (container query): bobinas y contador escalan con su ancho,
+ * así el contador nunca invade una bobina, sea cual sea la pantalla.
+ */
+.window {
+  position: relative;
+  container-type: inline-size;
+  margin: clamp(10px, 1.2vw, 16px) auto 0;
+  width: min(100%, 900px);
+  background: var(--window);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.windowInner {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 2cqw;
+  padding: 2.6cqw 4cqw;
+}
+
+.reel {
+  position: relative;
+  width: clamp(48px, 16cqw, 150px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+/* Rollo de cinta: su tamaño depende de cuánta cinta queda en esa bobina. */
+.tape {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--r);
+  height: var(--r);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, #6d4826 0 55%, #5b3a1e 56% 100%);
+  transition:
+    width 1s linear,
+    height 1s linear;
+}
+
+.hub {
+  position: relative;
+  width: 34%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--card);
+  display: grid;
+  place-items: center;
+}
+
+/* Dientes del eje: giran mientras suena. */
+.hub::before {
+  content: "";
+  width: 62%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      var(--window) 0 10%,
+      transparent 10% 33.3%,
+      var(--window) 33.3% 43.3%,
+      transparent 43.3% 66.6%,
+      var(--window) 66.6% 76.6%,
+      transparent 76.6% 100%
+    );
+  animation: spin 1.6s linear infinite;
+  animation-play-state: paused;
+}
+
+.running .hub::before {
+  animation-play-state: running;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.counter {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  min-width: 0;
+}
+
+.digits {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(40px, 15cqw, 150px);
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+  color: var(--saffron);
+  font-variant-numeric: tabular-nums;
+}
+
+.low .digits {
+  color: var(--tomato);
+}
+
+.caption {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(13px, 2.2cqw, 20px);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sky);
+}
+
+.marks {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: clamp(10px, 1.2vw, 16px) 4% 0;
+  list-style: none;
+}
+
+.mark {
+  border-top: 6px solid var(--shell-hi);
+  padding-top: 8px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(15px, 1.5vw, 22px);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--on-shell-soft);
+  transition:
+    border-color 400ms var(--ease-out),
+    color 400ms var(--ease-out);
+}
+
+.mark strong {
+  display: block;
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: clamp(20px, 2.1vw, 30px);
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.15;
+  color: var(--card);
+  overflow-wrap: anywhere;
+}
+
+.markOn {
+  border-color: var(--saffron);
+  color: var(--saffron);
+}
+
+.markOn strong {
+  animation: write 600ms var(--ease-out) both;
+}
+
+/* La pista aparece con un pequeño deslizamiento, como al escribirla. */
+@keyframes write {
+  from {
+    transform: translateX(-10px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .window {
+    border-radius: 28px;
+  }
+  .windowInner {
+    padding: 16px 12px;
+  }
+  .caption {
+    letter-spacing: 0.08em;
+  }
+  .marks {
+    margin: 14px 0 0;
+    gap: 8px;
+  }
+}

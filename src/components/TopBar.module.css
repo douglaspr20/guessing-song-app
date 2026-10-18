@@ -1,0 +1,56 @@
+.bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 92px;
+  padding: 14px var(--gutter);
+  /* Las tres rayas de la cinta, de borde a borde. */
+  background: linear-gradient(
+    to bottom,
+    var(--saffron) 0 33.4%,
+    var(--tomato) 33.4% 66.7%,
+    var(--sky) 66.7% 100%
+  );
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  padding: 10px 16px;
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+.brand {
+  font-size: clamp(20px, 2vw, 30px);
+}
+
+.brand svg {
+  flex: none;
+}
+
+.status {
+  font-size: clamp(16px, 1.6vw, 24px);
+  font-weight: 700;
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .bar {
+    min-height: 72px;
+    flex-wrap: wrap;
+  }
+  .status {
+    font-size: 15px;
+  }
+}

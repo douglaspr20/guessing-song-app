@@ -1,0 +1,85 @@
+.board {
+  display: flex;
+  flex-direction: column;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 18px 24px 6px;
+}
+
+.list {
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 24px;
+  border-bottom: 2px dashed var(--card-rule);
+  transition: transform 500ms var(--ease-out);
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.pos {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 28px;
+  color: var(--tomato-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+.name {
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: clamp(26px, 2.5vw, 36px);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.pts {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(36px, 3.2vw, 46px);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.pts small {
+  font-size: 0.42em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin-left: 4px;
+  color: var(--card-ink-soft);
+}
+
+/* Un jugador acaba de sumar: la fila se marca un momento. */
+.bump {
+  animation: bump 1200ms var(--ease-out);
+}
+
+@keyframes bump {
+  0% {
+    background: color-mix(in srgb, var(--saffron) 70%, transparent);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+.gain {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 22px;
+  color: var(--ok);
+  margin-right: 8px;
+}

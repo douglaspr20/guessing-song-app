@@ -1,0 +1,138 @@
+/*
+ * Mundo "Casete grabado": carcasa índigo, carátula de cartulina y tres rayas de cinta.
+ * Tokens en :root; los componentes los consumen desde sus CSS Modules.
+ */
+:root {
+  /* Carcasa */
+  --ink: #1d2747;
+  --shell: #26335c;
+  --shell-hi: #314172;
+  --window: #0f1630;
+  /* Carátula */
+  --card: #f4eedf;
+  --card-rule: #c9c0aa;
+  --card-ink-soft: #4a5170;
+  /* Rayas de la cinta */
+  --saffron: #f2b632;
+  --tomato: #e5482e;
+  --tomato-deep: #c23a22;
+  --sky: #6fb7e0;
+  /* Estados */
+  --ok: #2f8f5b;
+  --bad: #b3261e;
+  /* Texto sobre carcasa */
+  --on-shell: #f4eedf;
+  --on-shell-soft: #b9c3e3;
+
+  --font-display: var(--font-cond), "Arial Narrow", sans-serif;
+  --font-script: var(--font-hand), cursive;
+  --font-text: var(--font-body), system-ui, sans-serif;
+
+  --radius-shell: 28px;
+  --radius-card: 16px;
+  --radius-control: 12px;
+  --stroke: 3px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --gutter: clamp(16px, 3.4vw, 48px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+  scrollbar-color: var(--shell-hi) var(--ink);
+}
+
+body {
+  min-height: 100%;
+  background: var(--ink);
+  color: var(--on-shell);
+  font-family: var(--font-text);
+  font-size: 18px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--saffron);
+  color: var(--ink);
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track {
+  background: var(--ink);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--shell-hi);
+  border-radius: 999px;
+  border: 3px solid var(--ink);
+}
+
+a {
+  color: inherit;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 2px;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+
+input {
+  caret-color: var(--tomato);
+}
+
+:focus-visible {
+  outline: 3px solid var(--saffron);
+  outline-offset: 3px;
+}
+
+/* Números de marcador y contadores siempre alineados. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,285 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: clamp(24px, 4vw, 56px) var(--gutter) 48px;
+}
+
+/* ---------- Conectar ---------- */
+
+.connect {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: clamp(24px, 4vw, 64px);
+  align-items: center;
+  min-height: calc(100vh - 92px - 104px);
+}
+
+.headline {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(56px, 7.4vw, 104px);
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.headline em {
+  font-style: normal;
+  color: var(--saffron);
+}
+
+.lede {
+  margin-top: 24px;
+  max-width: 34ch;
+  font-size: clamp(20px, 1.7vw, 24px);
+  color: var(--on-shell-soft);
+}
+
+.lede strong {
+  color: var(--on-shell);
+}
+
+.actions {
+  margin-top: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.req {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 17px;
+  color: var(--on-shell-soft);
+}
+
+.req svg {
+  flex: none;
+  color: var(--sky);
+}
+
+.error {
+  margin-top: 24px;
+  max-width: 46ch;
+}
+
+/* ---------- Estantería ---------- */
+
+.shelfHead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: clamp(24px, 3vw, 40px);
+}
+
+.shelfTitle {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(44px, 5vw, 72px);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.shelfSub {
+  margin-top: 8px;
+  font-size: 20px;
+  color: var(--on-shell-soft);
+}
+
+.shelf {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 600px), 1fr));
+  gap: 20px;
+}
+
+/* Cada partida es un casete en la estantería: lomo con rayas arriba y carátula debajo. */
+.spine {
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  color: var(--ink);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.spineBand {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  background: linear-gradient(
+    to bottom,
+    var(--saffron) 0 33.4%,
+    var(--tomato) 33.4% 66.7%,
+    var(--sky) 66.7% 100%
+  );
+}
+
+.spineMeta {
+  background: var(--card);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.spineBody {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 260px);
+  gap: 24px;
+  padding: 0 20px;
+}
+
+.spineInfo {
+  padding: 16px 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.catalog {
+  background: var(--card);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 34px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+
+.meta {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 19px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--card-ink-soft);
+}
+
+.winner {
+  margin-top: auto;
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+.badge {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--ink);
+  color: var(--card);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.resume {
+  margin-top: 8px;
+  align-self: flex-start;
+  min-height: 48px;
+  font-size: 19px;
+}
+
+.spinePodium {
+  padding-top: 16px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.spinePodium > * {
+  width: 100%;
+}
+
+.emptyShelf {
+  border: var(--stroke) dashed var(--shell-hi);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.emptyShelf .spineBand {
+  opacity: 0.5;
+  min-height: 28px;
+}
+
+.emptyText {
+  padding: 28px 24px;
+  font-size: 22px;
+  color: var(--on-shell-soft);
+}
+
+.emptyText strong {
+  display: block;
+  font-family: var(--font-script);
+  font-size: 34px;
+  color: var(--on-shell);
+}
+
+.foot {
+  margin-top: 40px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.linkBtn {
+  background: none;
+  border: 0;
+  color: var(--on-shell-soft);
+  text-decoration: underline;
+  font-size: 17px;
+}
+
+.loading {
+  padding: 80px 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--on-shell-soft);
+}
+
+@media (max-width: 900px) {
+  .connect {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .spineBody {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 0 16px;
+  }
+  .spineInfo {
+    padding-bottom: 0;
+  }
+}

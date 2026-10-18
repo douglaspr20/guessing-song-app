@@ -1,0 +1,315 @@
+---
+name: Adivina la canción
+description: Cada partida es un casete grabado en casa; la cinta es el reloj y la carátula guarda nombres y puntos.
+colors:
+  ink: "#1d2747"
+  shell: "#26335c"
+  shell-hi: "#314172"
+  window: "#0f1630"
+  card: "#f4eedf"
+  card-rule: "#c9c0aa"
+  card-ink-soft: "#4a5170"
+  field: "#fffaf0"
+  saffron: "#f2b632"
+  tomato: "#e5482e"
+  tomato-deep: "#c23a22"
+  on-tomato: "#ffffff"
+  sky: "#6fb7e0"
+  tape-brown: "#5b3a1e"
+  ok: "#2f8f5b"
+  bad: "#b3261e"
+  on-shell: "#f4eedf"
+  on-shell-soft: "#b9c3e3"
+typography:
+  display:
+    fontFamily: "Barlow Condensed, Arial Narrow, sans-serif"
+    fontSize: "clamp(56px, 7.4vw, 104px)"
+    fontWeight: 800
+    lineHeight: 0.92
+    letterSpacing: "-0.01em"
+  counter:
+    fontFamily: "Barlow Condensed, Arial Narrow, sans-serif"
+    fontSize: "clamp(40px, 15cqw, 150px)"
+    fontWeight: 800
+    lineHeight: 0.95
+    letterSpacing: "0.02em"
+    fontFeature: "tnum"
+  headline:
+    fontFamily: "Barlow Condensed, Arial Narrow, sans-serif"
+    fontSize: "clamp(44px, 5vw, 72px)"
+    fontWeight: 800
+    lineHeight: 0.95
+  title:
+    fontFamily: "Barlow Condensed, Arial Narrow, sans-serif"
+    fontSize: "28px"
+    fontWeight: 800
+    letterSpacing: "0.04em"
+  script-name:
+    fontFamily: "Kalam, cursive"
+    fontSize: "clamp(26px, 2.5vw, 36px)"
+    fontWeight: 700
+    lineHeight: 1.1
+  script-title:
+    fontFamily: "Kalam, cursive"
+    fontSize: "clamp(38px, 4.6vw, 64px)"
+    fontWeight: 700
+    lineHeight: 1.02
+  body:
+    fontFamily: "Barlow, system-ui, sans-serif"
+    fontSize: "18px"
+    fontWeight: 400
+    lineHeight: 1.45
+  label:
+    fontFamily: "Barlow Condensed, Arial Narrow, sans-serif"
+    fontSize: "19px"
+    fontWeight: 700
+    letterSpacing: "0.1em"
+  button:
+    fontFamily: "Barlow Condensed, Arial Narrow, sans-serif"
+    fontSize: "22px"
+    fontWeight: 700
+    lineHeight: 1
+    letterSpacing: "0.06em"
+rounded:
+  tag: "4px"
+  step: "10px"
+  control: "12px"
+  card: "16px"
+  shell: "28px"
+  pill: "999px"
+spacing:
+  gap-sm: "10px"
+  gap-md: "16px"
+  gap-lg: "24px"
+  gutter: "clamp(16px, 3.4vw, 48px)"
+  band: "92px"
+  control-height: "56px"
+components:
+  button-on-card:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    typography: "{typography.button}"
+    rounded: "{rounded.control}"
+    padding: "12px 22px"
+    height: "56px"
+  button-on-card-hover:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.card}"
+  button-on-shell:
+    backgroundColor: "transparent"
+    textColor: "{colors.on-shell}"
+    typography: "{typography.button}"
+    rounded: "{rounded.control}"
+    padding: "12px 22px"
+    height: "56px"
+  button-on-shell-hover:
+    backgroundColor: "{colors.on-shell}"
+    textColor: "{colors.ink}"
+  button-primary:
+    backgroundColor: "{colors.tomato}"
+    textColor: "{colors.on-tomato}"
+    typography: "{typography.button}"
+    rounded: "{rounded.control}"
+    padding: "12px 22px"
+    height: "56px"
+  button-primary-hover:
+    backgroundColor: "{colors.tomato-deep}"
+  button-big:
+    padding: "16px 32px"
+    height: "72px"
+  card:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.card}"
+  tag:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.tag}"
+    padding: "10px 16px"
+  chip:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.pill}"
+    padding: "6px 16px"
+    height: "44px"
+  chip-selected:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.card}"
+  player-chip:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    typography: "{typography.script-name}"
+    rounded: "{rounded.pill}"
+    height: "56px"
+  player-chip-selected:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.card}"
+  input-field:
+    backgroundColor: "{colors.field}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.control}"
+    padding: "0 14px"
+    height: "56px"
+  stepper:
+    textColor: "{colors.ink}"
+    rounded: "{rounded.control}"
+    height: "56px"
+  cassette-shell:
+    backgroundColor: "{colors.shell}"
+    rounded: "{rounded.shell}"
+  cassette-window:
+    backgroundColor: "{colors.window}"
+    textColor: "{colors.saffron}"
+    typography: "{typography.counter}"
+    rounded: "{rounded.pill}"
+    width: "min(100%, 900px)"
+---
+
+# Design System: Adivina la canción
+
+## Overview
+
+**Creative North Star: "Casete grabado"**
+
+Cada partida es un casete grabado en casa. La pantalla es la carcasa índigo; lo que la familia escribe vive en una carátula de cartulina; tres rayas de cinta (azafrán, tomate, cielo) cruzan cabeceras, lomos y bandas de cierre. La ronda corre en la cinta: dos bobinas se pasan el rollo y un contador mecánico baja dígito a dígito. El sistema rechaza el tablero de trivia de fiesta (temporizador circular, fichas de colores, morado) y el oscuro con verde de las apps de streaming.
+
+La densidad es de salón, no de escritorio: todo se lee a varios metros. La jerarquía se construye solo por escala y por voz tipográfica: lo mecánico (contadores, etiquetas, botones) habla en condensada mayúscula; lo humano (nombres, títulos de canción) está escrito a mano. La profundidad es plana: no hay sombras; la separación la dan el cambio de material (carcasa, ventana, cartulina) y los trazos de tinta de 3px.
+
+**Key Characteristics:**
+- Carcasa índigo de fondo, carátula de cartulina como superficie de trabajo.
+- Banda de tres rayas de cinta como firma reutilizable.
+- Tres voces tipográficas: condensada mayúscula, manuscrita, texto.
+- Trazos de tinta de 3px en lugar de sombras.
+- Numerales tabulares en todo lo que cuenta.
+- Movimiento que nunca oculta contenido.
+
+## Colors
+
+Una carcasa índigo profunda con papel crema encima y tres colores de cinta que cargan significado, no decoración.
+
+### Primary
+- **Tomate de cinta** (tomato): la acción principal de cada pantalla (Registrar, Grabar, Empezar) y el contador cuando queda poco tiempo. **Tomate hondo** (tomato-deep) es su hover y la tinta de acento sobre cartulina: números de puesto, «vale N pts», el nombre del ganador. El texto sobre tomate es blanco (on-tomato), siempre a tamaño de botón o mayor.
+
+### Secondary
+- **Azafrán de cinta** (saffron): el tiempo y lo activo. Dígitos del contador, cuenta atrás del entreacto, la marca de pista encendida, el borde superior de la barra de acción fija, el destello de la fila que suma, la selección de texto y el anillo de foco sobre la carcasa.
+
+### Tertiary
+- **Cielo de cinta** (sky): marcas y rótulos secundarios sobre la carcasa: la leyenda bajo el contador, «Pista N de M» en el entreacto, «Era» en la revelación, iconos de requisitos.
+
+### Neutral
+- **Tinta índigo** (ink): fondo de página, tinta de todo lo escrito sobre cartulina y color de los trazos.
+- **Carcasa** (shell) y **brillo de carcasa** (shell-hi): el cuerpo del casete y sus tornillos, la pista de marcas apagada, el borde punteado de la estantería vacía.
+- **Ventana** (window): la ventana de las bobinas y la barra de acción fija.
+- **Cartulina** (card): carátulas, etiquetas, cubos de las bobinas. **Raya de cartulina** (card-rule) para separadores punteados de 2px. **Tinta suave** (card-ink-soft) para títulos de carátula, etiquetas de campo y metadatos. **Campo** (field) es el papel algo más claro dentro de inputs y selects.
+- **Papel sobre carcasa** (on-shell) y **papel suave** (on-shell-soft): texto principal y secundario sobre índigo.
+- **Cinta marrón** (tape-brown): el rollo magnético de las bobinas y algunos recortes del confeti.
+- **Bien** (ok) y **mal** (bad): estados de acierto («+N» del marcador) y de error; siempre acompañados de texto.
+
+### Named Rules
+**The Three Stripes Rule.** Las rayas van siempre en el mismo orden, azafrán, tomate, cielo, de arriba abajo, en tercios iguales (0 33.4%, 33.4% 66.7%, 66.7% 100%). Solo existen como banda: cabecera, tapa de carátula, lomo de casete, banda de final.
+
+**The Stripe Roles Rule.** Tomate es acción, azafrán es tiempo y estado activo, cielo es marca. Un color de cinta no cambia de rol entre pantallas. La única excepción deliberada es el podio, donde los tres colores identifican 1º, 2º y 3º junto al número.
+
+## Typography
+
+**Display Font:** Barlow Condensed (con Arial Narrow)
+**Body Font:** Barlow (con system-ui)
+**Script Font:** Kalam (con cursive)
+
+**Character:** La condensada es la rotulación impresa de la cinta: mecánica, en mayúsculas, espaciada. Kalam es el rotulador del anfitrión en la carátula. Barlow sostiene las frases sin llamar la atención.
+
+### Hierarchy
+- **Display** (800, clamp(56px, 7.4vw, 104px), 0.92, mayúsculas): titulares de pantalla de conexión y de escena única (hasta 120px en el entreacto).
+- **Counter** (800, clamp(40px, 15cqw, 150px), 0.95, tabular): el contador de la ventana; la cuenta atrás del entreacto llega a clamp(180px, 34vh, 360px). El mismo dígito sirve para reloj, puntos (46px en el marcador) y ronda.
+- **Headline** (800, clamp(44px, 5vw, 72px), 0.95, mayúsculas): títulos de página (estantería, grabar partida, final).
+- **Title** (800, 28px, 0.04em, mayúsculas): encabezados de sección dentro de una carátula.
+- **Script name / Script title** (Kalam 700): nombres de jugador (26 a 36px en el marcador, 30px al escribirlos), título de canción en la etiqueta y en la revelación (hasta 64px), pistas reveladas.
+- **Body** (400, 18px, 1.45): texto corrido; ledes a 20 a 24px con máximo 34 a 46ch.
+- **Label** (700, 18 a 20px, 0.1em, mayúsculas): etiquetas de campo y metadatos; los títulos de carátula usan 0.18em.
+- **Button** (700, 22px, 0.06em, mayúsculas; 28px en la variante grande).
+
+### Named Rules
+**The Two Hands Rule.** Lo que escribe una persona (nombres, títulos, pistas) va en Kalam; lo que mide la máquina (tiempo, puntos, puestos, botones, etiquetas) va en Barlow Condensed mayúscula. Los placeholders de campos manuscritos van en Barlow para que un hueco vacío no parezca un nombre escrito.
+
+**The Tabular Rule.** Todo número que cambia o se compara (contador, marcador, stepper, años, puestos) usa numerales tabulares.
+
+## Layout
+
+Contenedor máximo de 1440px centrado con margen lateral fluido (gutter). La banda superior mide 92px (72px en móvil). En juego, columna principal flexible y columna lateral de 320 a 460px para el marcador, pegajosa arriba; pasa a una columna por debajo de 1100px. Grabar partida reparte 5fr y 7fr y se apila por debajo de 1000px, con una barra de acción fija abajo sobre ventana. La estantería es una rejilla auto-fill de casetes de mínimo 600px. Los separadores internos son líneas punteadas de 2px en raya de cartulina. Los controles miden 56px de alto como mínimo (48px en móvil para fichas y botones secundarios). Breakpoints observados: 1100px, 1000px, 900px y 640px.
+
+## Elevation & Depth
+
+Sistema plano. No hay box-shadow ni text-shadow en ninguna parte. La profundidad la da el material: ventana (más oscura) dentro de carcasa, dentro de tinta de fondo; la cartulina se separa por contraste y por su banda de rayas. Los tornillos de la carcasa son círculos de brillo de carcasa en sus cuatro esquinas, no relieve.
+
+### Named Rules
+**The No Block Shadow Rule.** Sin sombras de bloque ni sombras ambientales; si algo necesita separarse, cambia de material o lleva un trazo de tinta de 3px.
+
+## Shapes
+
+Esquinas de objeto físico: la carcasa a 28px, la carátula a 16px, los controles a 12px, las etiquetas de cinta (marca, catálogo, lomo) casi rectas a 4px, los escalones del podio a 10px arriba. La ventana de las bobinas y las fichas son píldoras (999px); bobinas y cubos son círculos. Los bordes de control son de 3px en el color del texto (currentColor); los chips de filtro bajan a 2px. Las carátulas recortan su contenido (overflow hidden) para que la banda de rayas llegue al borde.
+
+## Components
+
+### Buttons
+Etiquetas de cinta que se pulsan: condensada mayúscula, trazo de 3px, sin relleno salvo la acción principal.
+- **Shape:** esquinas de control (12px), alto mínimo 56px, icono SVG a la izquierda con 10px de separación.
+- **Sobre cartulina:** tinta índigo con trazo; al hover se rellena de tinta y el texto pasa a cartulina.
+- **Sobre carcasa:** papel con trazo; al hover se rellena de papel y el texto pasa a tinta.
+- **Principal:** relleno tomate, texto blanco; hover a tomate hondo. Una por pantalla.
+- **Grande:** 72px de alto, 28px de texto, para la acción decisiva.
+- **Estados:** al pulsar baja 2px (translateY); deshabilitado al 45% de opacidad.
+
+### Chips
+- **Filtro:** píldora de 44px con trazo de 2px en tinta, Barlow 600 a 17px; seleccionado (aria-pressed) se rellena de tinta.
+- **Fichas de jugador:** radios ocultos sobre píldoras de 56px con trazo de 3px y nombre en Kalam; marcada se rellena de tinta; atajo de teclado (1 a 9) en condensada al 60%. Foco con anillo tomate.
+- **Segmentado:** grupo con trazo de 3px y divisores internos; el botón activo se rellena de tinta.
+
+### Cards / Containers
+- **Carátula:** cartulina, esquinas de 16px, tapa de rayas de 36px y título en condensada de 20px a 0.18em en tinta suave. Sin sombra, sin borde.
+- **Lomo de casete (estantería):** carátula con banda de rayas que lleva etiquetas de cartulina (fecha, número de catálogo C-NNN a 34px tabular) y podio compacto a la derecha.
+- **Estantería vacía:** borde punteado de 3px en brillo de carcasa y banda al 50%.
+- **Avisos:** trazo de 3px, icono y texto; error sobre carcasa en rosa sobre burdeos, sobre cartulina en mal sobre rosa pálido.
+
+### Inputs / Fields
+- **Campo de texto y select:** fondo campo, trazo de 3px en tinta, esquinas de 12px, 56px, texto a 20px; el select dibuja su flecha con gradientes.
+- **Campo manuscrito (nombres, respuestas):** solo subrayado de 3px, texto en Kalam; al foco el subrayado pasa a tomate y el fondo toma un lavado de azafrán al 18%.
+- **Stepper:** tres celdas (− valor +) de 56px dentro de un trazo de 3px, valor en condensada 800 a 38px tabular.
+
+### Navigation
+- **Banda superior:** banda de rayas de borde a borde, 92px; a la izquierda la marca y a la derecha el estado («C-014 · Lado A · Pista 3 de 10») como etiquetas de cartulina con esquinas de 4px en condensada 800 mayúscula.
+
+### Cassette (signature)
+La carcasa (28px, tornillos) lleva una etiqueta de cartulina con el título manuscrito y «vale N pts» en tomate hondo. La ventana es una píldora de hasta 900px que se mide a sí misma (container query): bobinas de clamp(48px, 16cqw, 150px) y contador de clamp(40px, 15cqw, 150px), así el contador nunca invade una bobina. El rollo de cada bobina cambia de radio según la cinta que le queda; los dientes del eje giran solo mientras suena. El contador va en azafrán y pasa a tomate con poco tiempo. Debajo, tres marcas de pista (20, 40 y 60 s) con borde superior de 6px que se encienden en azafrán y escriben la pista en Kalam.
+
+### Scoreboard
+Carátula con filas: puesto en tomate hondo, nombre manuscrito, puntos a 46px tabulares. Cuando alguien suma, aparece «+N» en verde y la fila se ilumina de azafrán 1,2 s; al reordenarse, las filas se deslizan a su puesto (FLIP con transform) en vez de saltar.
+
+### Podium
+Orden 2º, 1º, 3º. Escalones en azafrán (1º), cielo (2º) y tomate con texto blanco (3º), siempre con el número de puesto escrito y corona sobre el primero. Los empates comparten puesto, color de escalón y corona. Si nadie tiene puntos, no se corona a nadie: se escribe «Aún sin puntos» en Kalam. Versiones compacta (estantería) y grande (final), y tono para cartulina o para carcasa.
+
+### Motion
+- Las entradas solo desplazan o escalan (transform); nunca parten de opacidad 0, así el contenido es visible aunque la animación no corra. Revelación sube 14px, podio sube 24px escalón a escalón (3º, 2º, 1º), el final se pliega con un leve rotateX, la cuenta atrás late desde 1.35.
+- Curva única ease-out cubic-bezier(0.16, 1, 0.3, 1); 140 a 160ms para estados, 400 a 700ms para entradas.
+- Confeti final: recortes de cinta (tiras de 6 a 12 por 18 a 44px) en los tres colores, cartulina y cinta marrón, 5,2 s con desvanecimiento en el último segundo, sin interceptar clics.
+- Con prefers-reduced-motion todas las animaciones y transiciones se reducen a 0.01ms y el confeti no se dibuja.
+
+## Do's and Don'ts
+
+### Do:
+- **Do** usar la banda de tres rayas (azafrán, tomate, cielo, en tercios) para cabeceras, tapas de carátula, lomos y la banda de final.
+- **Do** reservar tomate para la única acción principal de la pantalla, con texto blanco a 22px o más.
+- **Do** escribir nombres, títulos de canción y pistas en Kalam 700, y contadores, puntos, etiquetas y botones en Barlow Condensed mayúscula.
+- **Do** usar numerales tabulares en todo número que cambia o se compara.
+- **Do** usar trazos de tinta de 3px (currentColor) en controles y separadores punteados de 2px en raya de cartulina.
+- **Do** mantener controles de 56px de alto mínimo (48px en móvil).
+- **Do** usar anillo de foco azafrán de 3px con 3px de separación sobre la carcasa, y tomate sobre cartulina.
+- **Do** acompañar todo color de estado con texto o número: puesto escrito en el podio, «+N» en el marcador, leyenda bajo el contador.
+- **Do** animar entradas solo con transform y respetar prefers-reduced-motion.
+
+### Don't:
+- **Don't** usar temporizadores circulares, fichas de colores de trivia ni morado.
+- **Don't** usar fondos oscuros con acento verde al estilo de las apps de streaming ni imitar la identidad de Spotify.
+- **Don't** añadir sombras de bloque ni sombras ambientales; la profundidad es de material.
+- **Don't** reordenar las rayas ni cambiar el rol de un color de cinta entre pantallas.
+- **Don't** hacer entradas que partan de opacidad 0.
+- **Don't** escribir placeholders en Kalam: un hueco vacío no debe parecer un nombre escrito.

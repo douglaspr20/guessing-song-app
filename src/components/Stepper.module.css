@@ -1,0 +1,47 @@
+.stepper {
+  display: inline-grid;
+  grid-template-columns: 56px minmax(96px, auto) 56px;
+  align-items: center;
+  border: var(--stroke) solid var(--ink);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+
+.btn {
+  height: 56px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  transition: background-color 160ms var(--ease-out);
+}
+
+.btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.btn:disabled {
+  opacity: 0.3;
+}
+
+.value {
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 38px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  border-inline: var(--stroke) solid var(--ink);
+  height: 100%;
+  display: grid;
+  place-items: center;
+  grid-auto-flow: column;
+  gap: 4px;
+  padding: 0 10px;
+}
+
+.value small {
+  font-size: 0.5em;
+  font-weight: 700;
+}

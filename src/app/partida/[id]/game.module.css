@@ -1,0 +1,581 @@
+.main {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: clamp(20px, 3vw, 32px) var(--gutter) 48px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 460px);
+  gap: clamp(20px, 2.8vw, 40px);
+  align-items: start;
+}
+
+.deck {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 20px;
+}
+
+/* ---------- Formulario de respuesta (carátula) ---------- */
+
+.answer {
+  padding: 16px 24px 20px;
+}
+
+.answerHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.who {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  border: 0;
+}
+
+.who legend {
+  margin-bottom: 10px;
+}
+
+.whoOption {
+  position: relative;
+}
+
+.whoOption input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
+}
+
+.whoOption span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 56px;
+  padding: 8px 12px;
+  border: var(--stroke) solid var(--ink);
+  border-radius: 999px;
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.05;
+  text-align: center;
+  transition: background-color 140ms var(--ease-out);
+}
+
+.whoOption kbd {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+.whoOption input:checked + span {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.whoOption input:focus-visible + span {
+  outline: 3px solid var(--tomato);
+  outline-offset: 2px;
+}
+
+.fields {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fieldLabel {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--card-ink-soft);
+}
+
+.fieldLabel b {
+  color: var(--tomato-deep);
+}
+
+.handInput {
+  width: 100%;
+  min-height: 56px;
+  background: transparent;
+  border: 0;
+  border-bottom: var(--stroke) solid var(--ink);
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: 30px;
+  color: var(--ink);
+  padding: 4px 2px 0;
+}
+
+.handInput::placeholder {
+  color: #6b6a63;
+  font-weight: 400;
+}
+
+.handInput:focus-visible {
+  outline: none;
+  border-bottom-color: var(--tomato);
+  background: color-mix(in srgb, var(--saffron) 18%, transparent);
+}
+
+/* Una sola fila: controles de la cinta y, al final, la acción principal. */
+.submitRow {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.register {
+  margin-left: auto;
+}
+
+.feedback {
+  margin-top: 12px;
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+.feedbackGood {
+  color: var(--ok);
+}
+
+.feedbackBad {
+  color: var(--bad);
+}
+
+/* ---------- Intentos ---------- */
+
+.attempts {
+  padding: 4px 24px 18px;
+}
+
+.attempts summary {
+  cursor: pointer;
+  padding: 14px 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--card-ink-soft);
+}
+
+.attemptList {
+  list-style: none;
+}
+
+.attempt {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 2px dashed var(--card-rule);
+  align-items: baseline;
+}
+
+.attemptAt {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  color: var(--card-ink-soft);
+}
+
+.attemptBody {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+}
+
+.attemptWho {
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: 22px;
+}
+
+.attemptPart {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 18px;
+}
+
+.attemptPart svg {
+  flex: none;
+}
+
+.ok {
+  color: var(--ok);
+}
+
+.no {
+  color: var(--bad);
+}
+
+.accept {
+  min-height: 40px;
+  padding: 6px 12px;
+  font-size: 16px;
+  border-width: 2px;
+}
+
+.attemptPts {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 22px;
+  color: var(--ok);
+}
+
+/* ---------- Revelación ---------- */
+
+.revealCard {
+  display: grid;
+  grid-template-columns: minmax(160px, 260px) minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+  background: var(--shell);
+  border-radius: var(--radius-shell);
+  padding: clamp(18px, 2.4vw, 32px);
+  animation: unfold 600ms var(--ease-out) both;
+}
+
+/* Sube a su sitio; visible desde el primer fotograma. */
+@keyframes unfold {
+  from {
+    transform: translateY(14px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.cover {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--window);
+}
+
+.revealTitle {
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: clamp(38px, 4.6vw, 64px);
+  line-height: 1.02;
+  color: var(--card);
+  overflow-wrap: anywhere;
+}
+
+/* "Era" va en la misma línea que el título, en la letra de la cinta. */
+.revealEra {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.6em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--sky);
+}
+
+.revealArtist {
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(24px, 2.4vw, 34px);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--saffron);
+}
+
+.revealResult {
+  margin-top: 18px;
+  font-size: 22px;
+  color: var(--on-shell);
+}
+
+.revealResult strong {
+  font-family: var(--font-script);
+  font-size: 28px;
+}
+
+.nextRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Pantallas de un solo mensaje: listo, entreacto ---------- */
+
+.stage {
+  min-height: calc(100vh - 92px - 80px);
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.stageInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.stageLabel {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(22px, 2.6vw, 36px);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sky);
+}
+
+.stageTitle {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(56px, 8vw, 120px);
+  line-height: 0.92;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.stageNote {
+  font-size: 22px;
+  color: var(--on-shell-soft);
+  max-width: 40ch;
+}
+
+/* Entreacto: la cuenta atrás de 3 s antes de que suene la siguiente pista. */
+.countdown {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(180px, 34vh, 360px);
+  line-height: 0.85;
+  color: var(--saffron);
+  font-variant-numeric: tabular-nums;
+}
+
+.tick {
+  animation: tick 1000ms var(--ease-out);
+}
+
+@keyframes tick {
+  from {
+    transform: scale(1.35);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* ---------- Final: la carátula cerrada ---------- */
+
+.finale {
+  animation: close 700ms var(--ease-out) both;
+}
+
+/* La carátula se pliega hasta su sitio. */
+@keyframes close {
+  from {
+    transform: perspective(1400px) rotateX(-6deg) translateY(10px);
+    transform-origin: top center;
+  }
+  to {
+    transform: none;
+  }
+}
+
+.finaleBand {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px clamp(16px, 2.4vw, 32px);
+  background: linear-gradient(
+    to bottom,
+    var(--saffron) 0 33.4%,
+    var(--tomato) 33.4% 66.7%,
+    var(--sky) 66.7% 100%
+  );
+}
+
+.finaleTag {
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(16px, 1.6vw, 22px);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 4px;
+}
+
+.finaleBody {
+  padding: clamp(16px, 2.4vw, 32px) clamp(16px, 3vw, 44px) clamp(20px, 2.6vw, 36px);
+}
+
+.finaleTitle {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(40px, 5vw, 76px);
+  line-height: 1;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.finaleName {
+  font-family: var(--font-script);
+  font-weight: 700;
+  text-transform: none;
+  color: var(--tomato-deep);
+}
+
+.finaleGrid {
+  margin-top: clamp(12px, 2vw, 28px);
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(260px, 2fr);
+  gap: clamp(20px, 3vw, 48px);
+  align-items: end;
+}
+
+.finaleSide {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.restList {
+  list-style: none;
+}
+
+.restList li {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 2px dashed var(--card-rule);
+}
+
+.restPos {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 24px;
+  color: var(--tomato-deep);
+}
+
+.restName {
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: 28px;
+  overflow-wrap: anywhere;
+}
+
+.restPts {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 34px;
+  font-variant-numeric: tabular-nums;
+}
+
+.finaleActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.playerError {
+  margin-bottom: 20px;
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .side {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .fields {
+    grid-template-columns: 1fr;
+  }
+  .revealCard {
+    grid-template-columns: 1fr;
+  }
+  .finaleGrid {
+    grid-template-columns: 1fr;
+  }
+  .cover {
+    max-width: 220px;
+  }
+  /* Móvil: fichas a dos columnas y controles compactos para que Registrar quede a mano. */
+  .who {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .whoOption span {
+    min-height: 48px;
+    font-size: 19px;
+    padding: 6px 8px;
+  }
+  .answer {
+    padding: 14px 14px 16px;
+  }
+  .handInput {
+    font-size: 24px;
+    min-height: 48px;
+  }
+  .submitRow {
+    gap: 8px;
+  }
+  .submitRow > * {
+    flex: 1 1 28%;
+    min-width: 0;
+    min-height: 48px;
+    padding: 8px 6px;
+    font-size: 17px;
+    gap: 6px;
+  }
+  .register {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+}

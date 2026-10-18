@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Tokens de la cuenta de Spotify del anfitrión (una sola fila, id = "default").
+model SpotifyAuth {
+  id           String   @id @default("default")
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+  updatedAt    DateTime @updatedAt
+}
+
+model Game {
+  id               String   @id @default(cuid())
+  // Código corto para que en el futuro los jugadores se unan desde el móvil.
+  code             String   @unique
+  // LOBBY | PLAYING | FINISHED
+  status           String   @default("LOBBY")
+  totalRounds      Int
+  currentRound     Int      @default(0)
+  fragmentSeconds  Int
+  // GameFilters serializado como JSON.
+  filters          String
+  // Siguiente canción ya elegida en segundo plano (JSON de PickedTrack) y filtros con que se eligió.
+  nextTrack        String?
+  nextTrackFilters String?
+  createdAt        DateTime @default(now())
+
+  players Player[]
+  rounds  Round[]
+}
+
+model Player {
+  id     String @id @default(cuid())
+  gameId String
+  name   String
+  score  Int    @default(0)
+
+  game       Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  guesses    Guess[]
+  wins       Round[] @relation("RoundWinner")
+  artistWins Round[] @relation("RoundArtistWinner")
+
+  @@unique([gameId, name])
+}
+
+model Round {
+  id                   String    @id @default(cuid())
+  gameId               String
+  number               Int
+  trackId              String
+  trackUri             String
+  trackName            String
+  artists              String
+  // JSON con los ids de Spotify de los artistas.
+  artistIds            String    @default("[]")
+  // Género para la pista (puede faltar si Spotify no lo da).
+  genre                String?
+  albumImage           String?
+  durationMs           Int
+  startMs              Int
+  // PLAYING | WON | REVEALED
+  status               String    @default("PLAYING")
+  winnerPlayerId       String?
+  // Quien se llevó el punto de artista (solo uno por ronda).
+  artistWinnerPlayerId String?
+  // Primera vez que sonó el fragmento: marca el reloj de puntos y pistas.
+  playStartedAt        DateTime?
+  // Pausa del anfitrión: congela el reloj de puntos y pistas.
+  pausedAt             DateTime?
+  pausedMs             Int       @default(0)
+  createdAt            DateTime  @default(now())
+
+  game         Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  winner       Player? @relation("RoundWinner", fields: [winnerPlayerId], references: [id])
+  artistWinner Player? @relation("RoundArtistWinner", fields: [artistWinnerPlayerId], references: [id])
+  guesses      Guess[]
+
+  @@unique([gameId, number])
+}
+
+model Guess {
+  id            String   @id @default(cuid())
+  roundId       String
+  playerId      String
+  titleText     String?
+  artistText    String?
+  titleCorrect  Boolean  @default(false)
+  artistCorrect Boolean  @default(false)
+  // Puntos que dio este intento (tramo de velocidad + artista).
+  points        Int      @default(0)
+  // El anfitrión lo dio por bueno manualmente.
+  overridden    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  round  Round  @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+}
