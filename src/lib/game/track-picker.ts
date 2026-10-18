@@ -27,6 +27,8 @@ export interface PickedTrack {
   startMs: number;
   /** Género del filtro con el que se encontró (para la pista); `null` si no se buscó por género. */
   genre: string | null;
+  /** Audio a reproducir en el navegador (modo abierto); sin él suena por Spotify. */
+  audioUrl?: string | null;
 }
 
 /** Margen al final de la canción para que el fragmento no se quede sin audio. */

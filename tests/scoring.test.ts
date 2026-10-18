@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { artistAvailable, elapsedMs, pointsForElapsed, titleLetters, titleWordCount, unlockedHints } from "@/lib/game/scoring";
+import {
+  artistAvailable,
+  elapsedMs,
+  OPEN_RULES,
+  pointsForElapsed,
+  rulesFor,
+  SPOTIFY_RULES,
+  titleLetters,
+  titleWordCount,
+  unlockedHints,
+} from "@/lib/game/scoring";
 
 const start = new Date("2026-10-16T12:00:00Z");
 const at = (s: number) => new Date(start.getTime() + s * 1000);
@@ -85,5 +95,38 @@ describe("artistAvailable", () => {
   it("vale hasta que sale la pista del artista (40 s)", () => {
     expect(artistAvailable(round, at(39.9))).toBe(true);
     expect(artistAvailable(round, at(40))).toBe(false);
+  });
+});
+
+describe("reglas del modo abierto (vistas previas de 30 s)", () => {
+  it.each([
+    [0, 3],
+    [9.9, 3],
+    [10, 2],
+    [19.9, 2],
+    [20, 1],
+    [29, 1],
+  ])("a los %d s vale %d", (s, pts) => {
+    expect(pointsForElapsed(s * 1000, OPEN_RULES)).toBe(pts);
+  });
+
+  it("desbloquea las pistas a los 10, 20 y 25 s", () => {
+    expect(unlockedHints(round, at(9), false, OPEN_RULES).hints).toEqual([]);
+    expect(unlockedHints(round, at(10), false, OPEN_RULES).hints.map((h) => h.type)).toEqual(["words"]);
+    expect(unlockedHints(round, at(20), false, OPEN_RULES).hints.map((h) => h.type)).toEqual(["words", "artist"]);
+    const late = unlockedHints(round, at(25), false, OPEN_RULES);
+    expect(late.hints.map((h) => h.type)).toEqual(["words", "artist", "letters"]);
+    expect(late.nextHintAt).toBeNull();
+  });
+
+  it("el artista suma hasta los 20 s", () => {
+    expect(artistAvailable(round, at(19.9), OPEN_RULES)).toBe(true);
+    expect(artistAvailable(round, at(20), OPEN_RULES)).toBe(false);
+  });
+
+  it("rulesFor elige por modo", () => {
+    expect(rulesFor("open")).toBe(OPEN_RULES);
+    expect(rulesFor("spotify")).toBe(SPOTIFY_RULES);
+    expect(rulesFor(undefined)).toBe(SPOTIFY_RULES);
   });
 });

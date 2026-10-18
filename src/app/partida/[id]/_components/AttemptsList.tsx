@@ -1,7 +1,6 @@
 import { Check, X } from "lucide-react";
 import ui from "@/components/ui.module.css";
 import type { GuessRow, Round } from "@/lib/client/api";
-import { ARTIST_DEADLINE_MS } from "../_lib/constants";
 import styles from "../game.module.css";
 
 /**
@@ -12,12 +11,15 @@ export function AttemptsList({
   round,
   guesses,
   open,
+  artistDeadlineMs,
   busy,
   onAccept,
 }: {
   round: Round;
   guesses: GuessRow[];
   open: boolean;
+  /** Hasta cuándo (ms de ronda) un artista dicho aún puede darse por bueno. */
+  artistDeadlineMs: number;
   busy: boolean;
   onAccept: (guess: GuessRow, part: "title" | "artist") => void;
 }) {
@@ -44,7 +46,7 @@ export function AttemptsList({
                 <AttemptPart
                   correct={g.artistCorrect}
                   label={`artista «${g.artist}»`}
-                  canAccept={!g.artistCorrect && !round.artistWinnerPlayerId && g.atMs < ARTIST_DEADLINE_MS}
+                  canAccept={!g.artistCorrect && !round.artistWinnerPlayerId && g.atMs < artistDeadlineMs}
                   busy={busy}
                   onAccept={() => onAccept(g, "artist")}
                 />

@@ -1,11 +1,12 @@
-import { HINT_INTERVAL_MS, pointsForElapsed } from "@/lib/game/scoring";
+import { nextTierInMs, pointsForElapsed, type RoundRules } from "@/lib/game/scoring";
 import type { FragmentPhase } from "@/hooks/useSpotifyPlayer";
 import type { Round } from "@/lib/client/api";
-import { ARTIST_DEADLINE_MS } from "./constants";
 
 export interface RoundClockInput {
   round: Round | null;
   fragmentSeconds: number;
+  /** Tramos de puntos y pistas del modo de la partida. */
+  rules: RoundRules;
   /** Cuándo llegó el estado del servidor (ms). */
   fetchedAt: number;
   /** Reloj de pantalla (ms); 0 antes del primer tick. */
@@ -42,7 +43,7 @@ export interface RoundClockView {
 }
 
 /** Deriva todo lo que la pantalla de juego necesita saber del reloj de la ronda. */
-export function deriveRoundClock({ round, fragmentSeconds, fetchedAt, now, player }: RoundClockInput): RoundClockView {
+export function deriveRoundClock({ round, fragmentSeconds, rules, fetchedAt, now, player }: RoundClockInput): RoundClockView {
   const open = round?.status === "PLAYING";
   const started = !!round?.playStartedAt;
   const fragmentMs = fragmentSeconds * 1000;
@@ -51,9 +52,9 @@ export function deriveRoundClock({ round, fragmentSeconds, fetchedAt, now, playe
   const sinceFetch = round?.paused || !now ? 0 : Math.max(0, now - fetchedAt);
   const elapsedMs = started && open ? round!.elapsedMs + sinceFetch : (round?.elapsedMs ?? 0);
 
-  const pointsNow = pointsForElapsed(elapsedMs);
-  const nextDropInMs = pointsNow > 1 ? HINT_INTERVAL_MS - (elapsedMs % HINT_INTERVAL_MS) : null;
-  const artistOpen = !!round?.artistAvailable && elapsedMs < ARTIST_DEADLINE_MS;
+  const pointsNow = pointsForElapsed(elapsedMs, rules);
+  const nextDropInMs = nextTierInMs(elapsedMs, rules);
+  const artistOpen = !!round?.artistAvailable && elapsedMs < rules.hintAtMs.artist;
 
   const orphan = open && started && player.phase === "idle";
   const orphanLeftMs = orphan ? Math.max(0, fragmentMs - elapsedMs) : 0;

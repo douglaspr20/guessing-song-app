@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { describeGuess } from "@/app/partida/[id]/_lib/feedback";
 import { deriveRoundClock, type RoundClockInput } from "@/app/partida/[id]/_lib/roundClock";
 import type { GuessResult, Round } from "@/lib/client/api";
+import { OPEN_RULES, SPOTIFY_RULES } from "@/lib/game/scoring";
 
 const round = (patch: Partial<Round> = {}): Round =>
   ({
@@ -26,6 +27,7 @@ const round = (patch: Partial<Round> = {}): Round =>
 const input = (patch: Partial<RoundClockInput> = {}): RoundClockInput => ({
   round: round(),
   fragmentSeconds: 60,
+  rules: SPOTIFY_RULES,
   fetchedAt: 1_000_000,
   now: 1_000_000,
   player: { phase: "playing", remainingMs: 50_000, fragmentMs: 60_000 },
@@ -78,6 +80,19 @@ describe("deriveRoundClock", () => {
     expect(c.orphanLeftMs).toBe(0);
     expect(c.canResume).toBe(false);
     expect(c.caption).toBe("se acabó la cinta");
+  });
+
+  it("con las reglas del modo abierto los tramos son de 10 s", () => {
+    const c = deriveRoundClock(
+      input({ rules: OPEN_RULES, fragmentSeconds: 30, round: round({ elapsedMs: 12_000 }), player: { phase: "playing", remainingMs: 18_000, fragmentMs: 30_000 } }),
+    );
+    expect(c.pointsNow).toBe(2);
+    expect(c.nextDropInMs).toBe(8_000);
+    expect(c.artistOpen).toBe(true);
+    const late = deriveRoundClock(input({ rules: OPEN_RULES, fragmentSeconds: 30, round: round({ elapsedMs: 21_000 }) }));
+    expect(late.pointsNow).toBe(1);
+    expect(late.nextDropInMs).toBeNull();
+    expect(late.artistOpen).toBe(false);
   });
 
   it("antes de sonar indica que aún no ha sonado", () => {

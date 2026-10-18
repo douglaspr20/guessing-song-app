@@ -8,6 +8,7 @@ import { Stepper } from "@/components/Stepper";
 import { TopBar } from "@/components/TopBar";
 import ui from "@/components/ui.module.css";
 import { api, type AuthStatus, type Catalog, type Game, type Playlist } from "@/lib/client/api";
+import type { GameMode } from "@/lib/game/filters";
 import styles from "./setup.module.css";
 
 const MAX_PLAYERS = 20;
@@ -27,7 +28,8 @@ export default function NewGamePage() {
 function NewGame() {
   const router = useRouter();
   /** Partida aún sin empezar que se está editando (desde «Editar ajustes» del juego). */
-  const editId = useSearchParams().get("editar");
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("editar");
   const ids = useId();
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [playlists, setPlaylists] = useState<Playlist[] | null>(null);
@@ -35,6 +37,9 @@ function NewGame() {
   const [players, setPlayers] = useState<string[]>(["", ""]);
   const [rounds, setRounds] = useState(10);
   const [fragmentSeconds, setFragmentSeconds] = useState(60);
+  /** "spotify": canción completa (necesita cuenta). "open": vistas previas de 30 s, sin cuenta. */
+  const [mode, setMode] = useState<GameMode>(searchParams.get("modo") === "abierto" ? "open" : "spotify");
+  const [connected, setConnected] = useState<boolean | null>(null);
   const [source, setSource] = useState<Source>("search");
   const [genres, setGenres] = useState<string[]>([]);
   const [language, setLanguage] = useState("");
@@ -48,15 +53,23 @@ function NewGame() {
   const [sample, setSample] = useState<string | null>(null);
 
   useEffect(() => {
-    api<AuthStatus>("/api/auth/status").then((a) => {
-      if (!a.connected) router.replace("/");
-    });
-    api<Catalog>("/api/spotify/genres").then(setCatalog);
-    api<{ playlists: Playlist[] }>("/api/spotify/playlists").then(
-      (d) => setPlaylists(d.playlists),
-      () => setPlaylists([]),
+    api<AuthStatus>("/api/auth/status").then(
+      (a) => {
+        setConnected(a.connected);
+        // Sin Spotify solo se puede jugar en modo abierto.
+        if (!a.connected) return setMode("open");
+        api<{ playlists: Playlist[] }>("/api/spotify/playlists").then(
+          (d) => setPlaylists(d.playlists),
+          () => setPlaylists([]),
+        );
+      },
+      () => {
+        setConnected(false);
+        setMode("open");
+      },
     );
-  }, [router]);
+    api<Catalog>("/api/spotify/genres").then(setCatalog);
+  }, []);
 
   // Editar: rellena el formulario con los ajustes de la partida sin empezar.
   useEffect(() => {
@@ -67,6 +80,7 @@ function NewGame() {
         setPlayers(g.players.map((p) => p.name));
         setRounds(g.totalRounds);
         setFragmentSeconds(g.fragmentSeconds);
+        setMode(g.mode);
         setSource(g.filters.source);
         setGenres(g.filters.genres ?? []);
         setLanguage(g.filters.language ?? "");
@@ -91,17 +105,21 @@ function NewGame() {
     return [...dups];
   }, [names]);
 
+  const open = mode === "open";
+  // El modo abierto solo tiene búsqueda (no hay playlists sin cuenta).
+  const effectiveSource: Source = open ? "search" : source;
+
   // Solo cuentan las playlists que Spotify deja leer (una partida editada puede traer alguna ajena).
   const usableIds = playlistIds.filter((id) => !playlists || playlists.find((p) => p.id === id)?.readable);
 
   const filters = () => ({
-    source,
-    genres: source === "search" ? genres : [],
-    language: source === "search" && language ? language : undefined,
-    yearFrom: source === "search" && yearFrom ? Number(yearFrom) : undefined,
-    yearTo: source === "search" && yearTo ? Number(yearTo) : undefined,
-    keywords: source === "search" && keywords.trim() ? keywords.trim() : undefined,
-    playlistIds: source === "playlists" ? usableIds : [],
+    source: effectiveSource,
+    genres: effectiveSource === "search" ? genres : [],
+    language: effectiveSource === "search" && language ? language : undefined,
+    yearFrom: effectiveSource === "search" && yearFrom ? Number(yearFrom) : undefined,
+    yearTo: effectiveSource === "search" && yearTo ? Number(yearTo) : undefined,
+    keywords: effectiveSource === "search" && keywords.trim() ? keywords.trim() : undefined,
+    playlistIds: effectiveSource === "playlists" ? usableIds : [],
   });
 
   const yearsInvalid = !!yearFrom && !!yearTo && Number(yearFrom) > Number(yearTo);
@@ -110,7 +128,7 @@ function NewGame() {
       ? "Escribe el nombre de al menos un jugador."
       : duplicates.length
         ? "Hay nombres repetidos."
-        : source === "playlists" && usableIds.length === 0
+        : effectiveSource === "playlists" && usableIds.length === 0
           ? "Elige al menos una playlist."
           : yearsInvalid
             ? "El año «desde» es mayor que el año «hasta»."
@@ -128,7 +146,7 @@ function NewGame() {
     setError(null);
     try {
       const game = await api<Game>("/api/games", {
-        json: { players: names, rounds, fragmentSeconds, filters: filters() },
+        json: { mode, players: names, rounds, fragmentSeconds, filters: filters() },
       });
       // Al editar se graba un casete nuevo y se tira el anterior (aún no tenía pistas).
       if (editId) await api(`/api/games/${editId}`, { method: "DELETE" }).catch(() => {});
@@ -148,7 +166,7 @@ function NewGame() {
     setSample(null);
     try {
       const r = await api<{ track: { name: string; artists: string[] } }>("/api/spotify/sample", {
-        json: { filters: filters(), fragmentSeconds },
+        json: { mode, filters: filters(), fragmentSeconds },
       });
       setSample(`${r.track.name} — ${r.track.artists.join(", ")}`);
     } catch (e) {
@@ -241,41 +259,69 @@ function NewGame() {
                     Cómo se juega
                   </h2>
                 </div>
+                <div className={styles.segment} role="group" aria-label="Modo de juego">
+                  <button type="button" aria-pressed={!open} onClick={() => setMode("spotify")} disabled={connected === false}>
+                    Spotify · canción completa
+                  </button>
+                  <button type="button" aria-pressed={open} onClick={() => setMode("open")}>
+                    Sin cuenta · 30 s
+                  </button>
+                </div>
+                <p className={styles.hint} style={{ margin: "10px 0 18px" }}>
+                  {open ? (
+                    <>
+                      Suenan vistas previas de 30 s de iTunes, sin cuenta. El título vale 3, 2 o 1 punto antes de los 10 s,
+                      de los 20 s o después.
+                      {connected === false && (
+                        <>
+                          {" "}
+                          Para canciones enteras, <a href="/api/auth/login">conecta tu Spotify Premium</a>.
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    "Suena la canción entera desde tu Spotify Premium, desde un punto al azar."
+                  )}
+                </p>
                 <div className={styles.settingsRow}>
                   <div className={styles.field}>
                     <span className={styles.fieldLabel}>Rondas</span>
                     <Stepper label="Rondas" value={rounds} min={1} max={50} onChange={setRounds} />
                   </div>
-                  <div className={styles.field}>
-                    <span className={styles.fieldLabel}>Fragmento</span>
-                    <Stepper
-                      label="Segundos de fragmento"
-                      value={fragmentSeconds}
-                      min={60}
-                      max={180}
-                      step={10}
-                      unit="s"
-                      onChange={setFragmentSeconds}
-                    />
+                  {!open && (
+                    <div className={styles.field}>
+                      <span className={styles.fieldLabel}>Fragmento</span>
+                      <Stepper
+                        label="Segundos de fragmento"
+                        value={fragmentSeconds}
+                        min={60}
+                        max={180}
+                        step={10}
+                        unit="s"
+                        onChange={setFragmentSeconds}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {!open && (
+                <div className={styles.section}>
+                  <div className={styles.sectionHead}>
+                    <h2 className={styles.h}>De dónde salen las canciones</h2>
+                  </div>
+                  <div className={styles.segment} role="group" aria-label="Fuente de canciones">
+                    <button type="button" aria-pressed={source === "search"} onClick={() => setSource("search")}>
+                      Búsqueda general
+                    </button>
+                    <button type="button" aria-pressed={source === "playlists"} onClick={() => setSource("playlists")}>
+                      Mis playlists
+                    </button>
                   </div>
                 </div>
-              </div>
+              )}
 
-              <div className={styles.section}>
-                <div className={styles.sectionHead}>
-                  <h2 className={styles.h}>De dónde salen las canciones</h2>
-                </div>
-                <div className={styles.segment} role="group" aria-label="Fuente de canciones">
-                  <button type="button" aria-pressed={source === "search"} onClick={() => setSource("search")}>
-                    Búsqueda general
-                  </button>
-                  <button type="button" aria-pressed={source === "playlists"} onClick={() => setSource("playlists")}>
-                    Mis playlists
-                  </button>
-                </div>
-              </div>
-
-              {source === "search" ? (
+              {effectiveSource === "search" ? (
                 <>
                   <div className={styles.section}>
                     <div className={styles.sectionHead}>
@@ -403,7 +449,7 @@ function NewGame() {
           <div>
             <div className={styles.summary}>
               {names.length || "Sin"} {names.length === 1 ? "jugador" : "jugadores"} · {rounds}{" "}
-              {rounds === 1 ? "ronda" : "rondas"} · {fragmentSeconds} s por canción
+              {rounds === 1 ? "ronda" : "rondas"} · {open ? 30 : fragmentSeconds} s por canción
             </div>
             {(blocker || error) && (
               <div className={styles.why} role="status">
@@ -412,7 +458,7 @@ function NewGame() {
             )}
           </div>
           <div className={styles.dockActions}>
-            <button type="button" className={`${ui.btn} ${ui.onShell}`} onClick={tryFilters} disabled={busy || (source === "playlists" && !usableIds.length)}>
+            <button type="button" className={`${ui.btn} ${ui.onShell}`} onClick={tryFilters} disabled={busy || (effectiveSource === "playlists" && !usableIds.length)}>
               <Shuffle size={22} aria-hidden />
               Probar filtros
             </button>

@@ -21,6 +21,8 @@ model Game {
   id               String   @id @default(cuid())
   // Código corto para que en el futuro los jugadores se unan desde el móvil.
   code             String   @unique
+  // "spotify" (canción completa con el SDK) | "open" (vista previa de 30 s de iTunes, sin cuenta)
+  mode             String   @default("spotify")
   // LOBBY | PLAYING | FINISHED
   status           String   @default("LOBBY")
   totalRounds      Int
@@ -64,6 +66,8 @@ model Round {
   // Género para la pista (puede faltar si Spotify no lo da).
   genre                String?
   albumImage           String?
+  // URL de la vista previa (solo modo abierto).
+  audioUrl             String?
   durationMs           Int
   startMs              Int
   // PLAYING | WON | REVEALED
