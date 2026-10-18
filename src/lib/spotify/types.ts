@@ -8,6 +8,10 @@ export interface Track {
   durationMs: number;
   albumImage: string | null;
   popularity: number | null;
+  /** Vista previa de 30 s (solo fuentes del modo abierto). */
+  previewUrl?: string | null;
+  /** Año de lanzamiento, si la fuente lo da (para filtrar por años en el modo abierto). */
+  releaseYear?: number | null;
   /** `false` si no se puede reproducir en el mercado pedido; `null` si Spotify no lo indica. */
   isPlayable: boolean | null;
 }
