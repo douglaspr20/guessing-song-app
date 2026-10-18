@@ -156,3 +156,21 @@ describe("pickTrack con playlists bloqueadas", () => {
     ).rejects.toMatchObject({ code: "PLAYLISTS_FORBIDDEN" });
   });
 });
+
+describe("pickTrack con géneros que Spotify no reconoce", () => {
+  it("busca el género como palabra clave si el filtro genre: no devuelve nada", async () => {
+    const search = vi.fn(async ({ q }: { q: string }) =>
+      q.startsWith("genre:") ? { items: [], total: 0 } : { items: [track("salsa-1")], total: 1 },
+    );
+    const picked = await pickTrack({
+      filters: filters({ genres: ["salsa"] }),
+      fragmentMs: 60_000,
+      usedTrackIds: new Set(),
+      source: { search, playlist: vi.fn() },
+    });
+    expect(search.mock.calls[0][0].q).toBe('genre:"salsa"');
+    expect(search.mock.calls[1][0].q).toBe("salsa");
+    expect(picked.track.id).toBe("salsa-1");
+    expect(picked.genre).toBe("salsa");
+  });
+});

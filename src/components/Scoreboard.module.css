@@ -10,7 +10,10 @@
   padding: 18px 24px 6px;
 }
 
+/* Posicionada: las filas miden su offsetTop respecto a la lista, así el deslizamiento
+   solo se anima cuando cambia el orden, no cuando se mueve el marcador entero. */
 .list {
+  position: relative;
   list-style: none;
 }
 
