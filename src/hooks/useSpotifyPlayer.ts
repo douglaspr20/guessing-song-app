@@ -7,11 +7,11 @@ export type { PlayerStatus } from "@/lib/client/spotifyDevice";
 /** Estado del fragmento: sin sonar, sonando, en pausa o terminado. */
 export type FragmentPhase = "idle" | "playing" | "paused" | "ended";
 
-async function requestPlay(gameId: string, roundId: string, deviceId: string) {
+async function requestPlay(gameId: string, roundId: string, deviceId: string, offsetMs: number) {
   const res = await fetch(`/api/games/${gameId}/rounds/${roundId}/play`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ deviceId }),
+    body: JSON.stringify({ deviceId, offsetMs }),
   });
   const data = await res.json();
   return { ok: res.ok, status: res.status, data };
@@ -78,22 +78,25 @@ export function useSpotifyPlayer() {
     await getPlayer()?.activateElement().catch(() => {});
   }, []);
 
-  /** Reproduce el fragmento de la ronda desde el principio. */
+  /**
+   * Reproduce el fragmento de la ronda desde el principio, o desde `offsetMs`
+   * para retomarlo a medias (al volver tras recargar la página).
+   */
   const playFragment = useCallback(
-    async (gameId: string, roundId: string) => {
+    async (gameId: string, roundId: string, offsetMs = 0) => {
       let deviceId = getState().deviceId;
       if (!deviceId) throw new Error("El reproductor aún no está listo");
       setError(null);
       clearTimers();
-      let res = await requestPlay(gameId, roundId, deviceId);
+      let res = await requestPlay(gameId, roundId, deviceId, offsetMs);
       // Spotify olvidó el dispositivo (p. ej. tras una reconexión): se registra de nuevo y se reintenta.
       if (res.status === 404 && res.data.error === "SPOTIFY_API_ERROR") {
         deviceId = await reconnect();
-        res = await requestPlay(gameId, roundId, deviceId);
+        res = await requestPlay(gameId, roundId, deviceId, offsetMs);
       }
       if (!res.ok) throw new Error(res.data.message ?? "No se pudo reproducir");
       setFragmentMs(res.data.fragmentMs);
-      runCountdown(res.data.fragmentMs);
+      runCountdown(res.data.remainingMs ?? res.data.fragmentMs);
       return res.data;
     },
     [clearTimers, runCountdown],

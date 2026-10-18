@@ -19,9 +19,9 @@ The interface is designed around a **home-recorded cassette**: every game is a n
 - **Song sources:** general search (genres, language/market, year range, keyword) or your own playlists, including *Liked Songs*.
 - **Speed-based scoring:** title worth 3 / 2 / 1 points depending on whether it is guessed before 20 s, 40 s or later; **+1 for the artist**, independent from the title, only before the artist hint appears.
 - **Progressive hints every 20 s:** number of words in the title → artist → first letters (`D_ M_____ L_____`).
-- **Forgiving answer matching:** ignores accents, case, `- Remastered 2011`, `(feat. …)` and small typos (Levenshtein similarity).
+- **Forgiving answer matching:** ignores accents, case, `- Remastered 2011`, `(feat. …)` and small typos (Levenshtein similarity); a distinctive word of the artist's name is enough (`soda` → *Soda Stereo*).
 - **Host override:** accept an answer the matcher rejected (great for people who describe an English song they can't spell); points are computed from the moment the answer was given.
-- **Pause that really pauses:** the server-side clock for points and hints freezes too.
+- **Pause that really pauses:** the server-side clock for points and hints freezes too. Reloading mid-round leaves the round paused and **Seguir** resumes the clip where it stopped.
 - **Instant next round:** the next song is picked in the background while the current one plays.
 - **Shelf of past games** with a podium (ties share a place), a 3-second suspense countdown between rounds, and a final podium with tape-strip confetti.
 
@@ -94,8 +94,9 @@ Requirements: Node 20+, a Spotify Premium account.
 | POST | `/api/spotify/sample` | Preview which song a set of filters would pick |
 | GET / POST | `/api/games` | Recent games with podium / create a game |
 | GET · PATCH · DELETE | `/api/games/:id` | Game state / change filters / delete |
+| POST | `/api/games/:id/players` | Add a player `{ name }` |
 | POST | `/api/games/:id/rounds` | Start the next round |
-| POST | `/api/games/:id/rounds/:rid/{play,pause,resume,reveal}` | Playback and round control |
+| POST | `/api/games/:id/rounds/:rid/{play,pause,resume,reveal}` | Playback and round control (`play` takes `{ deviceId, offsetMs? }` to resume mid-clip) |
 | GET / POST | `/api/games/:id/rounds/:rid/guesses` | List / submit `{ playerId, title?, artist? }` |
 | POST | `/api/games/:id/rounds/:rid/guesses/:gid/accept` | Host override `{ title?, artist? }` |
 

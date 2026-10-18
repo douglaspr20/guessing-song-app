@@ -48,6 +48,11 @@ describe("isCorrectArtist", () => {
     ["acdc", ["AC/DC"]],
     ["Beyonce", ["Beyoncé"]],
     ["ABBA", ["ABBA"]],
+    ["soda", ["Soda Stereo"]],
+    ["lavoe", ["Héctor Lavoe"]],
+    ["lavoé", ["Héctor Lavoe"]],
+    ["gaynor", ["Gloria Gaynor"]],
+    ["Gaynorr", ["Gloria Gaynor"]],
   ])("acepta %j para %j", (guess, artists) => {
     expect(isCorrectArtist(guess, artists)).toBe(true);
   });
@@ -56,6 +61,10 @@ describe("isCorrectArtist", () => {
     ["queen", ["The Beatles"]],
     ["", ["Soda Stereo"]],
     ["abb", ["ABBA"]],
+    ["band", ["The Band Perry"]],
+    ["los", ["Los Prisioneros"]],
+    ["gang", ["Kool & The Gang"]],
+    ["sod", ["Soda Stereo"]],
   ])("rechaza %j para %j", (guess, artists) => {
     expect(isCorrectArtist(guess, artists)).toBe(false);
   });

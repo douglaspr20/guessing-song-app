@@ -262,12 +262,6 @@ export async function listGames(limit = 12) {
   };
 }
 
-export async function getGameByCode(code: string): Promise<PublicGame> {
-  const game = await db.game.findUnique({ where: { code: code.toUpperCase() } });
-  if (!game) throw new AppError("Partida no encontrada", 404, "GAME_NOT_FOUND");
-  return getGame(game.id);
-}
-
 /** Borra una partida (y sus rondas e intentos). */
 export async function deleteGame(gameId: string) {
   await loadGame(gameId);
@@ -354,17 +348,22 @@ export async function startNextRound(gameId: string) {
  * Ordena a Spotify reproducir el fragmento en el dispositivo del navegador (Web Playback SDK).
  * La primera vez arranca el reloj de la ronda (puntos y pistas); repetir no lo reinicia.
  */
-export async function playRound(gameId: string, roundId: string, deviceId: string) {
+export async function playRound(gameId: string, roundId: string, deviceId: string, offsetMs = 0) {
   const round = await loadRound(gameId, roundId);
   if (round.status !== "PLAYING") throw new AppError("La ronda ya está cerrada", 409, "ROUND_CLOSED");
-  const usedDeviceId = await startPlayback(deviceId, round.trackUri, round.startMs);
+  // `offsetMs` > 0 retoma el fragmento a medias (p. ej. tras recargar la página).
+  const fragmentMs = round.game.fragmentSeconds * 1000;
+  const offset = Math.min(Math.max(0, Math.round(offsetMs)), fragmentMs);
+  const usedDeviceId = await startPlayback(deviceId, round.trackUri, round.startMs + offset);
   await db.round.updateMany({ where: { id: roundId, playStartedAt: null }, data: { playStartedAt: new Date() } });
   // Volver a reproducir también reanuda el reloj si estaba en pausa.
   if (round.pausedAt) await resumeClock(roundId);
   const updated = await db.round.findUniqueOrThrow({ where: { id: roundId } });
   return {
     startMs: round.startMs,
-    fragmentMs: round.game.fragmentSeconds * 1000,
+    fragmentMs,
+    /** Lo que queda de fragmento desde el punto en que se reanudó. */
+    remainingMs: fragmentMs - offset,
     deviceId: usedDeviceId,
     round: toPublicRound(updated, round.game.fragmentSeconds),
   };

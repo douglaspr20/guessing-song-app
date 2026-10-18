@@ -48,18 +48,18 @@ export function Cassette({
 
       <div className={`${styles.window} ${running ? styles.running : ""} ${low ? styles.low : ""}`}>
         <div className={styles.windowInner}>
-        <div className={styles.reel} aria-hidden>
-          <span className={styles.tape} style={{ "--r": `${left}%` } as CSSProperties} />
-          <span className={styles.hub} />
-        </div>
-        <div className={styles.counter} role="timer" aria-live="off">
-          <span className={styles.digits}>{formatClock(remainingMs)}</span>
-          <span className={styles.caption}>{caption}</span>
-        </div>
-        <div className={styles.reel} aria-hidden>
-          <span className={styles.tape} style={{ "--r": `${right}%` } as CSSProperties} />
-          <span className={styles.hub} />
-        </div>
+          <div className={styles.reel} aria-hidden>
+            <span className={styles.tape} style={{ "--r": `${left}%` } as CSSProperties} />
+            <span className={styles.hub} />
+          </div>
+          <div className={styles.counter} role="timer" aria-live="off">
+            <span className={styles.digits}>{formatClock(remainingMs)}</span>
+            <span className={styles.caption}>{caption}</span>
+          </div>
+          <div className={styles.reel} aria-hidden>
+            <span className={styles.tape} style={{ "--r": `${right}%` } as CSSProperties} />
+            <span className={styles.hub} />
+          </div>
         </div>
       </div>
 
