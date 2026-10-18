@@ -38,8 +38,24 @@ export type GameFilters = z.infer<typeof gameFiltersSchema>;
 
 export const MIN_FRAGMENT_SECONDS = 60;
 export const MAX_FRAGMENT_SECONDS = 180;
+/** Las vistas previas de iTunes duran siempre 30 s. */
+export const OPEN_FRAGMENT_SECONDS = 30;
 
-export const createGameSchema = z.object({
+export const gameModeSchema = z.enum(["spotify", "open"]);
+
+/** En modo abierto el fragmento es la vista previa entera y solo hay búsqueda (no hay playlists sin cuenta). */
+function applyOpenModeDefaults(input: unknown) {
+  if (!input || typeof input !== "object" || (input as { mode?: unknown }).mode !== "open") return input;
+  const data = input as { filters?: Record<string, unknown> };
+  return {
+    ...data,
+    fragmentSeconds: OPEN_FRAGMENT_SECONDS,
+    filters: { ...(data.filters ?? {}), source: "search", playlistIds: [] },
+  };
+}
+
+const gameSettingsSchema = z.object({
+  mode: gameModeSchema.default("spotify"),
   players: z
     .array(z.string().trim().min(1).max(30))
     .min(1)
@@ -48,8 +64,17 @@ export const createGameSchema = z.object({
       message: "Los nombres de los jugadores deben ser distintos",
     }),
   rounds: z.number().int().min(1).max(50),
-  fragmentSeconds: z.number().int().min(MIN_FRAGMENT_SECONDS).max(MAX_FRAGMENT_SECONDS).default(MIN_FRAGMENT_SECONDS),
+  fragmentSeconds: z.number().int().min(OPEN_FRAGMENT_SECONDS).max(MAX_FRAGMENT_SECONDS).default(MIN_FRAGMENT_SECONDS),
   filters: gameFiltersSchema.default({ source: "search", genres: [], playlistIds: [] }),
 });
 
-export type CreateGameInput = z.input<typeof createGameSchema>;
+export const createGameSchema = z.preprocess(
+  applyOpenModeDefaults,
+  gameSettingsSchema.refine((g) => g.mode === "open" || g.fragmentSeconds >= MIN_FRAGMENT_SECONDS, {
+    message: `Con Spotify el fragmento dura al menos ${MIN_FRAGMENT_SECONDS} s`,
+    path: ["fragmentSeconds"],
+  }),
+);
+
+export type CreateGameInput = z.input<typeof gameSettingsSchema>;
+export type GameMode = z.infer<typeof gameModeSchema>;

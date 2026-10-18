@@ -39,6 +39,14 @@
   grid-auto-flow: column;
   gap: 4px;
   padding: 0 10px;
+  background: transparent;
+  border-top: none;
+  border-bottom: none;
+  max-width: 100px;
+}
+
+.value:focus {
+  outline: none;
 }
 
 .value small {

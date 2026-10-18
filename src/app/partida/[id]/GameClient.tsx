@@ -23,7 +23,7 @@ export function GameClient() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const ctl = useGameController(id);
-  const { game, round, clock, player, actions } = ctl;
+  const { game, round, clock, player, rules, actions } = ctl;
 
   if (ctl.loadError) return <LoadErrorScreen message={ctl.loadError} />;
   if (!game) return <LoadingScreen />;
@@ -59,7 +59,7 @@ export function GameClient() {
 
             {round && clock.open && (
               <>
-                <RoundCassette round={round} clock={clock} running={playing} />
+                <RoundCassette round={round} clock={clock} rules={rules} running={playing} />
                 <AnswerForm
                   key={round.id}
                   players={game.players}
@@ -102,6 +102,7 @@ export function GameClient() {
                 round={round}
                 guesses={ctl.guesses}
                 open={clock.open}
+                artistDeadlineMs={rules.hintAtMs.artist}
                 busy={ctl.busy}
                 onAccept={actions.acceptGuess}
               />
