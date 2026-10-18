@@ -96,6 +96,8 @@ export async function pickTrack(opts: PickOptions): Promise<PickedTrack> {
   const totals = new Map<string, number>();
   // Playlists que Spotify deja leer (las de otras personas pueden dar 403 y se descartan).
   const playlists = [...filters.playlistIds];
+  // Géneros que Spotify no reconoce en el filtro `genre:` (0 resultados): se buscan como texto.
+  const genresAsText = new Set<string>();
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     let page: Page<Track>;
@@ -127,12 +129,21 @@ export async function pickTrack(opts: PickOptions): Promise<PickedTrack> {
     } else {
       genre = pickFrom(filters.genres, random) ?? null;
       const limit = opts.searchPageSize ?? 10;
-      const q = buildSearchQuery(filters, genre ?? undefined);
+      const asText = !!genre && genresAsText.has(genre);
+      const q = asText
+        ? buildSearchQuery({ ...filters, keywords: [genre, filters.keywords].filter(Boolean).join(" ") }, undefined)
+        : buildSearchQuery(filters, genre ?? undefined);
       key = `q:${q}`;
       const total = totals.get(key);
       const maxOffset = Math.min(total ?? 0, opts.maxSearchOffset ?? 1000) - limit;
       const offset = total === undefined || maxOffset <= 0 ? 0 : randomInt(maxOffset + 1, random);
       page = await opts.source.search({ q, market, offset, limit });
+      if (page.total === 0 && genre && !asText) {
+        // p. ej. `genre:"salsa"` no devuelve nada, pero «salsa» como palabra sí.
+        genresAsText.add(genre);
+        attempt--; // no gasta intento
+        continue;
+      }
     }
 
     const firstVisit = !totals.has(key);

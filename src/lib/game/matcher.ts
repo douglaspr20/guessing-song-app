@@ -92,8 +92,33 @@ function canonicalArtist(name: string): string {
   return basicNormalize(name).replace(LEADING_ARTICLES, "");
 }
 
+/** Palabras que no identifican a un artista por sí solas ("Los", "Band", "Orquesta"...). */
+const GENERIC_ARTIST_WORDS = new Set([
+  "the", "and", "los", "las", "del", "les", "die", "der", "y", "de", "la", "el",
+  "band", "banda", "orquesta", "orchestra", "grupo", "group", "conjunto", "feat",
+  "boys", "girls", "brothers", "hermanos", "family", "familia", "club", "gang",
+  "music", "sound", "project", "trio", "quartet", "dj", "mc",
+]);
+/** Una palabra suelta solo cuenta si es lo bastante larga para no acertar por casualidad. */
+const MIN_ARTIST_WORD = 4;
+
+/** ¿La respuesta es una palabra distintiva del nombre? ("soda" para "Soda Stereo", "lavoe" para "Héctor Lavoe"). */
+function matchesArtistWord(guess: string, artist: string): boolean {
+  const g = basicNormalize(guess).replace(/\s/g, "");
+  if (g.length < MIN_ARTIST_WORD) return false;
+  return basicNormalize(artist)
+    .split(" ")
+    .filter((w) => w.length >= MIN_ARTIST_WORD && !GENERIC_ARTIST_WORDS.has(w))
+    .some((w) => w === g || (g.length >= 5 && similarity(g, w) >= SIMILARITY_THRESHOLD));
+}
+
 /** ¿La respuesta corresponde a alguno de los artistas de la pista? ("beatles" vale para "The Beatles"). */
 export function isCorrectArtist(guess: string, artists: string[]): boolean {
   const g = canonicalArtist(guess);
-  return artists.some((a) => matches(g, canonicalArtist(a)) || matches(basicNormalize(guess), basicNormalize(a)));
+  return artists.some(
+    (a) =>
+      matches(g, canonicalArtist(a)) ||
+      matches(basicNormalize(guess), basicNormalize(a)) ||
+      matchesArtistWord(guess, a),
+  );
 }
