@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useSpotifyPlayer } from "@/hooks/useSpotifyPlayer";
+import { useEffect, useState } from "react";
+import { useGamePlayer } from "@/hooks/useGamePlayer";
+import { rulesFor } from "@/lib/game/scoring";
 import { api, type GuessResult, type GuessRow, type Round } from "@/lib/client/api";
 import { GAIN_FLASH_MS, INTERMISSION_MS } from "./constants";
 import { acceptedFeedback, describeGuess, type Feedback } from "./feedback";
@@ -24,12 +25,14 @@ export interface GuessInput {
  * de la ronda y las acciones del anfitrión (empezar, repetir, pausar, revelar, registrar).
  */
 export function useGameController(gameId: string) {
-  const player = useSpotifyPlayer();
   const [showFinale, setShowFinale] = useState(false);
   const { game, guesses, fetchedAt, loadError, refresh } = useGame(gameId, (g) => {
     // Una partida terminada se abre directamente en el podio.
     if (g.status === "FINISHED" && g.round?.status !== "PLAYING") setShowFinale(true);
   });
+  // Spotify (SDK) o vista previa de iTunes (<audio>), según el modo de la partida.
+  const player = useGamePlayer(game?.mode ?? null);
+  const rules = rulesFor(game?.mode);
   const now = useNow();
 
   const [busy, setBusy] = useState(false);
@@ -42,6 +45,7 @@ export function useGameController(gameId: string) {
   const clock = deriveRoundClock({
     round,
     fragmentSeconds: game?.fragmentSeconds ?? 0,
+    rules,
     fetchedAt,
     now,
     player,
@@ -60,10 +64,10 @@ export function useGameController(gameId: string) {
     }
   };
 
-  const flashGain = useCallback((playerId: string, points: number) => {
+  const flashGain = (playerId: string, points: number) => {
     setGains({ [playerId]: points });
     setTimeout(() => setGains({}), GAIN_FLASH_MS);
-  }, []);
+  };
 
   // Al recargar a mitad de una ronda el audio se corta: se pausa el reloj para no perder puntos.
   const roundId = round?.id;
@@ -172,6 +176,7 @@ export function useGameController(gameId: string) {
     guesses,
     loadError,
     player,
+    rules,
     clock,
     now,
     busy,

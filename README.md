@@ -13,12 +13,24 @@ The interface is designed around a **home-recorded cassette**: every game is a n
 
 > The UI is in Spanish: the game was built for Spanish-speaking families.
 
+## Two ways to play
+
+| | Spotify mode | Open mode (no account) |
+|---|---|---|
+| Music | Full tracks from the host's Spotify (Web Playback SDK) | 30-second previews from the public iTunes Search API |
+| Needs | Spotify Premium, Chrome or Edge, a dashboard-authorized account | Nothing: any browser, including mobile and Safari |
+| Clip | 60–180 s from a random point | The 30 s preview |
+| Title points | 3 / 2 / 1 before 20 s, 40 s or later | 3 / 2 / 1 before 10 s, 20 s or later |
+| Hints | words 20 s · artist 40 s · letters 60 s | words 10 s · artist 20 s · letters 25 s |
+| Sources | Search filters or your own playlists | Search filters (genre, language/store, years, keyword) |
+
 ## Features
 
 - **Spotify playback in the browser** through the Web Playback SDK: clips of 60–180 s from a random point of the song (skipping long intros).
+- **Open mode without any account:** 30-second iTunes previews played with a plain `<audio>` element, so anyone can try the game.
 - **Song sources:** general search (genres, language/market, year range, keyword) or your own playlists, including *Liked Songs*.
-- **Speed-based scoring:** title worth 3 / 2 / 1 points depending on whether it is guessed before 20 s, 40 s or later; **+1 for the artist**, independent from the title, only before the artist hint appears.
-- **Progressive hints every 20 s:** number of words in the title → artist → first letters (`D_ M_____ L_____`).
+- **Speed-based scoring:** title worth 3 / 2 / 1 points depending on how fast it is guessed (see the table above); **+1 for the artist**, independent from the title, only before the artist hint appears.
+- **Progressive hints:** number of words in the title → artist → first letters (`D_ M_____ L_____`).
 - **Forgiving answer matching:** ignores accents, case, `- Remastered 2011`, `(feat. …)` and small typos (Levenshtein similarity); a distinctive word of the artist's name is enough (`soda` → *Soda Stereo*).
 - **Host override:** accept an answer the matcher rejected (great for people who describe an English song they can't spell); points are computed from the moment the answer was given.
 - **Pause that really pauses:** the server-side clock for points and hints freezes too. Reloading mid-round leaves the round paused and **Seguir** resumes the clip where it stopped.
@@ -41,6 +53,7 @@ The interface is designed around a **home-recorded cassette**: every game is a n
 - **The server owns the clock.** Each round stores when it first started playing and how long it was paused; points, hint unlocks and the artist window are all derived from that, so they stay consistent across reloads and are ready for multi-device play.
 - **Race-safe scoring.** "First correct answer wins" is enforced with conditional updates inside a transaction (`updateMany … where winnerPlayerId IS NULL`), not with client-side checks.
 - **Background preloading.** After a round starts, `after()` picks and stores the next track (invalidated if filters change), cutting the time to start a round from ~2 s to ~15 ms.
+- **One player interface, two backends.** A shared fragment timer drives either the Spotify SDK or an `<audio>` element; the game screen doesn't know which. Scoring and hint timings come from per-mode rules (`SPOTIFY_RULES` / `OPEN_RULES`).
 - **One Spotify player for the whole app.** Next 16 keeps pages alive between navigations (React `<Activity>`), so the SDK player is a module-level singleton; if Spotify answers *Device not found*, the server looks the player up by name, transfers playback and retries.
 - **Clean domain layer.** Route handlers only validate and delegate to `src/lib/game/service.ts`; game rules (`scoring.ts`, `matcher.ts`, `track-picker.ts`) are pure functions with unit tests and an injectable track source.
 - **Living with Spotify's API limits.** Endpoints removed for new apps (recommendations, genre seeds) are replaced by a curated genre list and randomized search offsets; playlists the API can't read are detected and skipped.
@@ -116,7 +129,7 @@ Design decisions are documented in [`DESIGN.md`](DESIGN.md) and product context 
 ## Roadmap
 
 - Join from your phone with the game code (real-time answers via SSE).
-- An open mode with 30-second previews (iTunes / Deezer) so anyone can play without Spotify, plus a public deployment.
+- A public deployment (Postgres + Vercel) so the open mode can be played online.
 - Teams, cross-game stats and no repeated songs between games.
 
 ## Known issues

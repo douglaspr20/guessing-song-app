@@ -1,19 +1,22 @@
 import { Cassette, type HintMark } from "@/components/Cassette";
 import type { Round } from "@/lib/client/api";
-import { HINT_SLOTS } from "../_lib/constants";
+import type { RoundRules } from "@/lib/game/scoring";
+import { hintSlots } from "../_lib/constants";
 import type { RoundClockView } from "../_lib/roundClock";
 
 /** El casete de la ronda abierta: lo que vale, el contador-cinta y las pistas desbloqueadas. */
 export function RoundCassette({
   round,
   clock,
+  rules,
   running,
 }: {
   round: Round;
   clock: RoundClockView;
+  rules: RoundRules;
   running: boolean;
 }) {
-  const hints: HintMark[] = HINT_SLOTS.map((slot) => {
+  const hints: HintMark[] = hintSlots(rules).map((slot) => {
     const got = round.hints.find((h) => h.type === slot.key);
     return { ...slot, value: got?.value ?? null, unlocked: !!got };
   });

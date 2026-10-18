@@ -4,6 +4,7 @@ import { after } from "next/server";
 import { Prisma, type Game, type Player, type Round } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
+import { searchSongs } from "@/lib/itunes/search";
 import { startPlayback } from "@/lib/spotify/playback";
 import {
   getPlaylistTracks,
@@ -13,9 +14,18 @@ import {
   PLAYLIST_PAGE_SIZE,
 } from "@/lib/spotify/sources";
 import { emit } from "./events";
-import { createGameSchema, gameFiltersSchema, type CreateGameInput, type GameFilters } from "./filters";
+import { createGameSchema, gameFiltersSchema, type CreateGameInput, type GameFilters, type GameMode } from "./filters";
 import { isCorrectArtist, isCorrectGuess } from "./matcher";
-import { ARTIST_POINTS, artistAvailable, elapsedMs, pointsForElapsed, unlockedHints, type RoundClock } from "./scoring";
+import { pickOpenTrack, type OpenTrackSource } from "./open-picker";
+import {
+  ARTIST_POINTS,
+  artistAvailable,
+  elapsedMs,
+  pointsForElapsed,
+  rulesFor,
+  unlockedHints,
+  type RoundClock,
+} from "./scoring";
 import { pickTrack, type PickedTrack, type TrackSource } from "./track-picker";
 
 export type GameStatus = "LOBBY" | "PLAYING" | "FINISHED";
@@ -25,6 +35,8 @@ export const spotifySource: TrackSource = {
   search: (p) => searchTracks(p),
   playlist: ({ playlistId, ...rest }) => getPlaylistTracks(playlistId, rest),
 };
+
+export const itunesSource: OpenTrackSource = { search: (p) => searchSongs(p) };
 
 // ---------- Vistas públicas (lo que devuelve la API) ----------
 
@@ -39,25 +51,29 @@ function roundClock(round: Round): RoundClock {
   };
 }
 
-export function toPublicRound(round: Round, fragmentSeconds: number, now = new Date()) {
+/** La partida a la que pertenece la ronda: su modo fija las reglas y su fragmento, la duración. */
+type RoundGame = Pick<Game, "fragmentSeconds" | "mode">;
+
+export function toPublicRound(round: Round, game: RoundGame, now = new Date()) {
   const closed = round.status !== "PLAYING";
+  const rules = rulesFor(game.mode);
   const clock = roundClock(round);
   const elapsed = elapsedMs(clock, now);
-  const { hints, nextHintAt } = unlockedHints(clock, now, closed);
+  const { hints, nextHintAt } = unlockedHints(clock, now, closed, rules);
   return {
     id: round.id,
     number: round.number,
     status: round.status as RoundStatus,
     startMs: round.startMs,
-    fragmentMs: fragmentSeconds * 1000,
+    fragmentMs: game.fragmentSeconds * 1000,
     /** `null` hasta que suena por primera vez. */
     playStartedAt: round.playStartedAt,
     /** El anfitrión pausó: el reloj de puntos y pistas está parado. */
     paused: !!round.pausedAt,
     elapsedMs: elapsed,
     /** Lo que vale acertar el título ahora mismo (null si la ronda está cerrada). */
-    pointsNow: closed ? null : pointsForElapsed(elapsed),
-    artistAvailable: !closed && !round.artistWinnerPlayerId && artistAvailable(clock, now),
+    pointsNow: closed ? null : pointsForElapsed(elapsed, rules),
+    artistAvailable: !closed && !round.artistWinnerPlayerId && artistAvailable(clock, now, rules),
     hints,
     nextHintAt: closed ? null : nextHintAt,
     winnerPlayerId: round.winnerPlayerId,
@@ -93,6 +109,8 @@ function toPublicGame(game: Game & { players: Player[]; rounds: Round[] }, catal
     /** Número correlativo de la partida (la primera es la 1), para mostrarla como "C-014". */
     catalogNumber,
     createdAt: game.createdAt,
+    /** "spotify" (canción completa) o "open" (vista previa de 30 s, sin cuenta). */
+    mode: game.mode as GameMode,
     status: game.status as GameStatus,
     totalRounds: game.totalRounds,
     currentRound: game.currentRound,
@@ -101,11 +119,11 @@ function toPublicGame(game: Game & { players: Player[]; rounds: Round[] }, catal
     /** Si la siguiente canción ya está elegida (la próxima ronda empezará sin espera). */
     nextTrackReady: !!game.nextTrack && game.nextTrackFilters === game.filters,
     players: toPublicPlayers(game.players),
-    round: current ? toPublicRound(current, game.fragmentSeconds, now) : null,
+    round: current ? toPublicRound(current, game, now) : null,
     history: game.rounds
       .filter((r) => r.status !== "PLAYING")
       .sort((a, b) => a.number - b.number)
-      .map((r) => toPublicRound(r, game.fragmentSeconds, now)),
+      .map((r) => toPublicRound(r, game, now)),
   };
 }
 
@@ -156,10 +174,13 @@ async function finishIfLastRound(tx: Prisma.TransactionClient, game: Game, round
 type PreparedTrack = PickedTrack;
 
 async function chooseTrack(game: Game & { rounds: Round[] }, exclude: string[] = []): Promise<PreparedTrack> {
+  const filters = gameFiltersSchema.parse(JSON.parse(game.filters));
+  const usedTrackIds = new Set([...game.rounds.map((r) => r.trackId), ...exclude]);
+  if (game.mode === "open") return pickOpenTrack({ filters, usedTrackIds, source: itunesSource });
   const picked = await pickTrack({
-    filters: gameFiltersSchema.parse(JSON.parse(game.filters)),
+    filters,
     fragmentMs: game.fragmentSeconds * 1000,
-    usedTrackIds: new Set([...game.rounds.map((r) => r.trackId), ...exclude]),
+    usedTrackIds,
     source: spotifySource,
     searchPageSize: SEARCH_PAGE_SIZE,
     playlistPageSize: PLAYLIST_PAGE_SIZE,
@@ -209,6 +230,7 @@ export async function createGame(input: CreateGameInput): Promise<PublicGame> {
       const game = await db.game.create({
         data: {
           code: generateCode(),
+          mode: data.mode,
           totalRounds: data.rounds,
           fragmentSeconds: data.fragmentSeconds,
           filters: JSON.stringify(data.filters),
@@ -251,6 +273,7 @@ export async function listGames(limit = 12) {
         id: g.id,
         catalogNumber: total - i,
         createdAt: g.createdAt,
+        mode: g.mode as GameMode,
         status: g.status as GameStatus,
         totalRounds: g.totalRounds,
         playedRounds: g._count.rounds,
@@ -306,7 +329,7 @@ export async function startNextRound(gameId: string) {
     throw new AppError("Ya se jugaron todas las rondas", 409, "NO_MORE_ROUNDS");
   }
 
-  const { track, startMs, genre } = await takeNextTrack(game);
+  const { track, startMs, genre, audioUrl } = await takeNextTrack(game);
 
   const number = game.currentRound + 1;
   try {
@@ -322,6 +345,7 @@ export async function startNextRound(gameId: string) {
           artistIds: JSON.stringify(track.artistIds ?? []),
           genre,
           albumImage: track.albumImage,
+          audioUrl: audioUrl ?? null,
           durationMs: track.durationMs,
           startMs,
         },
@@ -334,7 +358,7 @@ export async function startNextRound(gameId: string) {
     });
     emit({ type: "round_started", gameId, roundId: round.id, number });
     if (number < game.totalRounds) schedulePreload(gameId);
-    return toPublicRound(round, game.fragmentSeconds);
+    return toPublicRound(round, game);
   } catch (err) {
     // Doble clic en "siguiente ronda": la restricción única (gameId, number) evita duplicarla.
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
@@ -345,16 +369,21 @@ export async function startNextRound(gameId: string) {
 }
 
 /**
- * Ordena a Spotify reproducir el fragmento en el dispositivo del navegador (Web Playback SDK).
- * La primera vez arranca el reloj de la ronda (puntos y pistas); repetir no lo reinicia.
+ * Hace sonar el fragmento. En modo Spotify se lo ordena al reproductor del navegador (Web Playback SDK);
+ * en modo abierto el navegador reproduce `audioUrl` por su cuenta. La primera vez arranca el reloj
+ * de la ronda (puntos y pistas); repetir no lo reinicia.
  */
-export async function playRound(gameId: string, roundId: string, deviceId: string, offsetMs = 0) {
+export async function playRound(gameId: string, roundId: string, deviceId: string | undefined, offsetMs = 0) {
   const round = await loadRound(gameId, roundId);
   if (round.status !== "PLAYING") throw new AppError("La ronda ya está cerrada", 409, "ROUND_CLOSED");
   // `offsetMs` > 0 retoma el fragmento a medias (p. ej. tras recargar la página).
   const fragmentMs = round.game.fragmentSeconds * 1000;
   const offset = Math.min(Math.max(0, Math.round(offsetMs)), fragmentMs);
-  const usedDeviceId = await startPlayback(deviceId, round.trackUri, round.startMs + offset);
+  let usedDeviceId: string | null = null;
+  if (round.game.mode !== "open") {
+    if (!deviceId) throw new AppError("Falta el reproductor de Spotify", 422, "DEVICE_REQUIRED");
+    usedDeviceId = await startPlayback(deviceId, round.trackUri, round.startMs + offset);
+  }
   await db.round.updateMany({ where: { id: roundId, playStartedAt: null }, data: { playStartedAt: new Date() } });
   // Volver a reproducir también reanuda el reloj si estaba en pausa.
   if (round.pausedAt) await resumeClock(roundId);
@@ -365,7 +394,8 @@ export async function playRound(gameId: string, roundId: string, deviceId: strin
     /** Lo que queda de fragmento desde el punto en que se reanudó. */
     remainingMs: fragmentMs - offset,
     deviceId: usedDeviceId,
-    round: toPublicRound(updated, round.game.fragmentSeconds),
+    audioUrl: round.audioUrl,
+    round: toPublicRound(updated, round.game),
   };
 }
 
@@ -385,7 +415,7 @@ export async function pauseRound(gameId: string, roundId: string) {
   if (!round.playStartedAt) throw new AppError("La canción aún no ha empezado a sonar", 409, "ROUND_NOT_STARTED");
   await db.round.updateMany({ where: { id: roundId, pausedAt: null }, data: { pausedAt: new Date() } });
   const updated = await db.round.findUniqueOrThrow({ where: { id: roundId } });
-  return toPublicRound(updated, round.game.fragmentSeconds);
+  return toPublicRound(updated, round.game);
 }
 
 /** Reanuda el reloj de la ronda tras una pausa. */
@@ -393,7 +423,7 @@ export async function resumeRound(gameId: string, roundId: string) {
   const round = await loadRound(gameId, roundId);
   if (round.status !== "PLAYING") throw new AppError("La ronda ya está cerrada", 409, "ROUND_CLOSED");
   const updated = await resumeClock(roundId);
-  return toPublicRound(updated, round.game.fragmentSeconds);
+  return toPublicRound(updated, round.game);
 }
 
 interface Award {
@@ -414,8 +444,9 @@ async function award(
   { title, artist, at }: { title: boolean; artist: boolean; at: Date },
 ): Promise<Award> {
   const result: Award = { points: 0, titleAwarded: false, artistAwarded: false, gameFinished: false };
+  const rules = rulesFor(round.game.mode);
 
-  if (artist && artistAvailable(round, at)) {
+  if (artist && artistAvailable(round, at, rules)) {
     const claimed = await tx.round.updateMany({
       where: { id: round.id, artistWinnerPlayerId: null },
       data: { artistWinnerPlayerId: playerId },
@@ -433,7 +464,7 @@ async function award(
       data: { status: "WON", winnerPlayerId: playerId },
     });
     if (won.count) {
-      result.points += pointsForElapsed(elapsedMs(round, at));
+      result.points += pointsForElapsed(elapsedMs(round, at), rules);
       result.titleAwarded = true;
       // Si estaba revelada, la partida ya se cerró (o no) al revelarla.
       if (round.status === "PLAYING") result.gameFinished = await finishIfLastRound(tx, round.game, round.number);
@@ -456,7 +487,7 @@ async function guessResult(gameId: string, roundId: string) {
   const game = await loadGame(gameId);
   const round = game.rounds.find((r) => r.id === roundId)!;
   return {
-    round: toPublicRound(round, game.fragmentSeconds),
+    round: toPublicRound(round, game),
     players: toPublicPlayers(game.players),
     gameStatus: game.status as GameStatus,
   };
@@ -525,7 +556,7 @@ export async function overrideGuess(
   if (input.artist) {
     if (!guess.artistText) throw new AppError("Ese intento no tenía artista", 422, "NO_ARTIST_IN_GUESS");
     if (round.artistWinnerPlayerId) throw new AppError("El punto de artista ya se lo llevó alguien", 409, "ARTIST_ALREADY_TAKEN");
-    if (!artistAvailable(round, guess.createdAt)) {
+    if (!artistAvailable(round, guess.createdAt, rulesFor(round.game.mode))) {
       throw new AppError("Ese intento fue después de la pista del artista", 409, "ARTIST_HINT_SHOWN");
     }
   }

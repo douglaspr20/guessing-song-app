@@ -1,15 +1,37 @@
 import { stripTitleExtras } from "./matcher";
 
-/** Cada cuánto baja el valor del título y se desbloquea una pista. */
-export const HINT_INTERVAL_MS = 20_000;
-/** Puntos por acertar el título en cada tramo de 20 s. */
+/** Puntos por acertar el título en cada tramo de tiempo. */
 export const TITLE_POINTS = [3, 2, 1] as const;
 /** Punto extra por acertar el artista (antes de que salga como pista). */
 export const ARTIST_POINTS = 1;
 
-/** Orden de las pistas: una cada 20 s desde que empieza a sonar. */
+/** Orden de las pistas desde que empieza a sonar. */
 export const HINT_ORDER = ["words", "artist", "letters"] as const;
 export type HintType = (typeof HINT_ORDER)[number];
+
+/** Tiempos de una partida: cuándo baja el valor del título y cuándo sale cada pista. */
+export interface RoundRules {
+  /** Momentos (ms) en que el título pasa de 3 a 2 y de 2 a 1 punto. */
+  tierMs: readonly number[];
+  /** Cuándo se desbloquea cada pista (ms desde que empezó a sonar). */
+  hintAtMs: Readonly<Record<HintType, number>>;
+}
+
+/** Fragmentos de 60 s o más: tramos y pistas cada 20 s. */
+export const SPOTIFY_RULES: RoundRules = {
+  tierMs: [20_000, 40_000],
+  hintAtMs: { words: 20_000, artist: 40_000, letters: 60_000 },
+};
+
+/** Vistas previas de 30 s: todo escalado a 10 s, con las letras a los 25 s para que den tiempo. */
+export const OPEN_RULES: RoundRules = {
+  tierMs: [10_000, 20_000],
+  hintAtMs: { words: 10_000, artist: 20_000, letters: 25_000 },
+};
+
+export function rulesFor(mode: string | null | undefined): RoundRules {
+  return mode === "open" ? OPEN_RULES : SPOTIFY_RULES;
+}
 
 export interface Hint {
   type: HintType;
@@ -40,15 +62,21 @@ export function elapsedMs(round: ClockTimes, at: Date): number {
   return Math.max(0, t - round.playStartedAt.getTime() - paused);
 }
 
-/** 3 puntos antes de 20 s, 2 antes de 40 s, 1 después. */
-export function pointsForElapsed(ms: number): number {
-  const tier = Math.floor(ms / HINT_INTERVAL_MS);
+/** 3 puntos antes del primer tramo, 2 antes del segundo, 1 después (20/40 s en Spotify, 10/20 s en abierto). */
+export function pointsForElapsed(ms: number, rules: RoundRules = SPOTIFY_RULES): number {
+  const tier = rules.tierMs.filter((t) => ms >= t).length;
   return TITLE_POINTS[Math.min(tier, TITLE_POINTS.length - 1)];
 }
 
+/** Cuánto falta para que baje el valor del título; null si ya vale lo mínimo. */
+export function nextTierInMs(ms: number, rules: RoundRules = SPOTIFY_RULES): number | null {
+  const next = rules.tierMs.find((t) => t > ms);
+  return next === undefined ? null : next - ms;
+}
+
 /** Cuándo se desbloquea cada pista (ms desde que empezó a sonar). */
-export function hintUnlockMs(type: HintType): number {
-  return (HINT_ORDER.indexOf(type) + 1) * HINT_INTERVAL_MS;
+export function hintUnlockMs(type: HintType, rules: RoundRules = SPOTIFY_RULES): number {
+  return rules.hintAtMs[type];
 }
 
 /** "De Música Ligera" → "D_ M_____ L_____" (sobre el título sin "- Remastered", "(feat...)"). */
@@ -87,12 +115,12 @@ function hintValue(type: HintType, round: RoundClock): string | null {
  * Pistas visibles en `now` y cuándo sale la siguiente.
  * Con `revealAll` (ronda cerrada) se muestran todas.
  */
-export function unlockedHints(round: RoundClock, now: Date, revealAll = false) {
+export function unlockedHints(round: RoundClock, now: Date, revealAll = false, rules: RoundRules = SPOTIFY_RULES) {
   const elapsed = elapsedMs(round, now);
   const hints: Hint[] = [];
   let nextHintAt: Date | null = null;
   for (const type of HINT_ORDER) {
-    const unlock = hintUnlockMs(type);
+    const unlock = hintUnlockMs(type, rules);
     if (revealAll || (round.playStartedAt && elapsed >= unlock)) {
       hints.push({ type, value: hintValue(type, round) });
     } else if (!nextHintAt && round.playStartedAt && !round.pausedAt) {
@@ -104,6 +132,6 @@ export function unlockedHints(round: RoundClock, now: Date, revealAll = false) {
 }
 
 /** El punto de artista solo vale antes de que el artista salga como pista. */
-export function artistAvailable(round: ClockTimes, at: Date): boolean {
-  return elapsedMs(round, at) < hintUnlockMs("artist");
+export function artistAvailable(round: ClockTimes, at: Date, rules: RoundRules = SPOTIFY_RULES): boolean {
+  return elapsedMs(round, at) < hintUnlockMs("artist", rules);
 }
