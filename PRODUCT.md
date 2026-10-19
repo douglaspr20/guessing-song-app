@@ -26,7 +26,7 @@ Usa la cuenta Spotify Premium del anfitrión, sus playlists y sus canciones que 
 
 ## Capabilities and Constraints
 
-- Next.js 16 (App Router) + Prisma/SQLite; reproducción en el navegador con el Web Playback SDK (requiere Spotify Premium y un navegador con DRM: Chrome o Edge).
+- Next.js 16 (App Router) + Prisma/PostgreSQL; reproducción en el navegador con el Web Playback SDK (requiere Spotify Premium y un navegador con DRM: Chrome o Edge).
 - Puntos: título 3/2/1 según se acierte antes de 20 s, antes de 40 s o después; +1 por artista (primero que lo acierte, antes de 40 s). El reloj empieza la primera vez que suena el fragmento.
 - Pistas cada 20 s: género, artista, primeras letras del título.
 - El anfitrión puede dar por buena una respuesta rechazada.

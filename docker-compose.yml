@@ -1,0 +1,22 @@
+# Postgres para desarrollo local: `docker compose up -d`.
+# Las credenciales son solo locales (el puerto solo escucha en 127.0.0.1).
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: adivina
+      POSTGRES_PASSWORD: adivina
+      POSTGRES_DB: adivina
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U adivina -d adivina"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
