@@ -1,6 +1,9 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider   = "prisma-client"
+  output     = "../src/generated/prisma"
+  // Sin motor nativo (binario de Rust): las consultas van por el driver `pg` (src/lib/db.ts).
+  // Así no hay que empaquetar ningún .so.node en las funciones de Vercel.
+  engineType = "client"
 }
 
 datasource db {
