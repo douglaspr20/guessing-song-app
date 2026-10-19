@@ -4,8 +4,10 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Conexión directa (sin pooler) para las migraciones; en local es la misma URL.
+  directUrl = env("DIRECT_URL")
 }
 
 // Tokens de la cuenta de Spotify del anfitrión (una sola fila, id = "default").

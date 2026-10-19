@@ -42,7 +42,7 @@ The interface is designed around a **home-recorded cassette**: every game is a n
 | Layer | Choice |
 |---|---|
 | Framework | Next.js 16 (App Router, Route Handlers, `cacheComponents`) · React 19 · TypeScript |
-| Data | Prisma 6 + SQLite |
+| Data | Prisma 6 + PostgreSQL (Docker locally) |
 | Music | Spotify Web API + Web Playback SDK (OAuth Authorization Code flow, tokens refreshed server-side) |
 | Validation | Zod |
 | UI | CSS Modules with design tokens, `next/font` (Barlow, Barlow Condensed, Kalam), lucide icons |
@@ -67,16 +67,17 @@ The interface is designed around a **home-recorded cassette**: every game is a n
 
 ## Getting started
 
-Requirements: Node 20+, a Spotify Premium account.
+Requirements: Node 20+, Docker Desktop (for the local Postgres) and, for Spotify mode, a Spotify Premium account.
 
 1. Create an app at <https://developer.spotify.com/dashboard>:
    - Redirect URI: `http://127.0.0.1:3000/api/auth/callback` (Spotify doesn't accept `localhost`).
    - Enable **Web API** and **Web Playback SDK**.
    - Add your account under *User Management*.
-2. Copy `.env.example` to `.env.local` and fill in `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET`.
-3. Install and create the database:
+2. Copy `.env.example` to `.env` and fill in `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` (the database URLs already point to the local container).
+3. Install, start Postgres and create the tables:
    ```bash
    npm install
+   npm run db:up
    npm run db:migrate
    ```
 4. Run it and open **http://127.0.0.1:3000** (opening `localhost` redirects there during login):
@@ -95,6 +96,7 @@ Requirements: Node 20+, a Spotify Premium account.
 | `npm run typecheck` | Route types + `tsc --noEmit` |
 | `npm run lint` | ESLint |
 | `npm run build` | Production build |
+| `npm run db:up` | Start the local Postgres container (`docker compose up -d`) |
 | `npm run db:migrate` | Apply Prisma migrations |
 
 ## API overview
