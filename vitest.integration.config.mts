@@ -18,7 +18,7 @@ export default defineConfig({
     include: ["tests/integration/**/*.test.ts"],
     globalSetup: ["tests/integration/global-setup.ts"],
     setupFiles: ["tests/integration/setup.ts"],
-    env: { DATABASE_URL: TEST_DATABASE_URL, DIRECT_URL: TEST_DATABASE_URL, TEST_DATABASE_URL },
+    env: { DATABASE_URL: TEST_DATABASE_URL, DATABASE_URL_UNPOOLED: TEST_DATABASE_URL, TEST_DATABASE_URL },
     // Comparten la base de datos: un archivo detrás de otro.
     fileParallelism: false,
     testTimeout: 20_000,
