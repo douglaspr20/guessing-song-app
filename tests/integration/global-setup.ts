@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../src/generated/prisma/client";
 
 /** Crea la base de datos de tests si no existe y le aplica las migraciones. */
@@ -13,7 +14,7 @@ export default async function setup() {
   // Conecta a la base de datos "postgres" del mismo servidor para crear la de tests.
   const adminUrl = new URL(testUrl);
   adminUrl.pathname = "/postgres";
-  const admin = new PrismaClient({ datasourceUrl: adminUrl.toString() });
+  const admin = new PrismaClient({ adapter: new PrismaPg({ connectionString: adminUrl.toString() }) });
   try {
     const rows = await admin.$queryRawUnsafe<unknown[]>(`SELECT 1 FROM pg_database WHERE datname = '${dbName}'`);
     if (rows.length === 0) await admin.$executeRawUnsafe(`CREATE DATABASE "${dbName}"`);
