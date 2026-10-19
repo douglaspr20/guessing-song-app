@@ -14,18 +14,18 @@ interface SpotifyRequest {
 }
 
 /**
- * Llama a la Web API de Spotify con el token del anfitrión.
+ * Llama a la Web API de Spotify con el token del usuario `userId`.
  * - 401: refresca el token y reintenta una vez.
  * - 429: espera lo que indique Retry-After (si es razonable) y reintenta una vez.
  */
-export async function spotifyFetch<T>(path: string, req: SpotifyRequest = {}): Promise<T> {
+export async function spotifyFetch<T>(userId: string, path: string, req: SpotifyRequest = {}): Promise<T> {
   const url = new URL(API_URL + path);
   for (const [k, v] of Object.entries(req.query ?? {})) {
     if (v !== undefined && v !== "") url.searchParams.set(k, String(v));
   }
 
   const send = async (forceRefresh: boolean) => {
-    const token = await getValidAccessToken({ forceRefresh });
+    const token = await getValidAccessToken(userId, { forceRefresh });
     return fetch(url, {
       method: req.method ?? "GET",
       headers: {

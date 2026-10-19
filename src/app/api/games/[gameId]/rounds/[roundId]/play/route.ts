@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
+import { requireGameOwner } from "@/lib/access/owner";
 import { handle } from "@/lib/errors";
 import { playRound } from "@/lib/game/service";
 
@@ -13,6 +14,7 @@ const bodySchema = z.object({ deviceId: z.string().min(1).optional(), offsetMs: 
 export const POST = handle(
   async (req: NextRequest, ctx: RouteContext<"/api/games/[gameId]/rounds/[roundId]/play">) => {
     const { gameId, roundId } = await ctx.params;
+    await requireGameOwner(gameId);
     const { deviceId, offsetMs } = bodySchema.parse(await req.json());
     return Response.json(await playRound(gameId, roundId, deviceId, offsetMs));
   },

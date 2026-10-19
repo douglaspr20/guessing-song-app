@@ -1,11 +1,13 @@
 import { connection } from "next/server";
+import { requireUser } from "@/lib/access/session";
 import { handle } from "@/lib/errors";
-import { getTokenExpiry, getValidAccessToken } from "@/lib/spotify/auth";
+import { getSpotifyAccount, getValidAccessToken } from "@/lib/spotify/auth";
 
-/** Token para el `getOAuthToken` del Web Playback SDK (se refresca solo en el servidor). */
+/** Token del propio usuario para el `getOAuthToken` del Web Playback SDK (se refresca en el servidor). */
 export const GET = handle(async () => {
   await connection(); // siempre en tiempo de petición (lee la BD / Spotify)
-  const accessToken = await getValidAccessToken();
-  const expiresAt = await getTokenExpiry();
+  const user = await requireUser();
+  const accessToken = await getValidAccessToken(user.id);
+  const expiresAt = (await getSpotifyAccount(user.id))?.expiresAt ?? null;
   return Response.json({ accessToken, expiresAt }, { headers: { "Cache-Control": "no-store" } });
 });

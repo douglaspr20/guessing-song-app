@@ -8,9 +8,13 @@ export type GameSummary = GameList["games"][number];
 export type GuessRow = Awaited<ReturnType<typeof getRoundGuesses>>[number];
 export type Player = Game["players"][number];
 
-export interface AuthStatus {
-  connected: boolean;
-  profile?: { displayName: string | null; premium: boolean | null; country: string | null };
+/** Quién usa la app (`/api/access/status`). */
+export interface AccessStatus {
+  user: { username: string; displayName: string; role: "host" | "member" } | null;
+  /** Este navegador ya eligió «Jugar sin cuenta». */
+  guest: boolean;
+  spotify: { linked: true; displayName: string | null; premium: boolean | null } | null;
+  openModePaused: boolean;
 }
 
 export interface Catalog {

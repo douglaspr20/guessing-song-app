@@ -21,7 +21,18 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es" className={`${body.variable} ${cond.variable} ${hand.variable}`}>
-      <body>{children}</body>
+      <body>
+        {process.env.NODE_ENV !== "production" && (
+          // En desarrollo Spotify solo vuelve a 127.0.0.1, y para el navegador "localhost" es otro sitio
+          // con otras cookies (la sesión no pasaría de uno a otro): siempre usamos 127.0.0.1.
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `if(location.hostname==="localhost")location.replace(location.href.replace("//localhost","//127.0.0.1"))`,
+            }}
+          />
+        )}
+        {children}
+      </body>
     </html>
   );
 }

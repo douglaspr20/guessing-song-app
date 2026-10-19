@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
+import { requireGameOwner } from "@/lib/access/owner";
 import { handle } from "@/lib/errors";
 import { getRoundGuesses, submitGuess } from "@/lib/game/service";
 
@@ -14,6 +15,7 @@ type Ctx = RouteContext<"/api/games/[gameId]/rounds/[roundId]/guesses">;
 /** Un jugador intenta adivinar. Body: { playerId, title?, artist? } (al menos uno). */
 export const POST = handle(async (req: NextRequest, ctx: Ctx) => {
   const { gameId, roundId } = await ctx.params;
+  await requireGameOwner(gameId);
   const { playerId, title, artist } = bodySchema.parse(await req.json());
   return Response.json(await submitGuess(gameId, roundId, playerId, { title, artist }));
 });
@@ -21,5 +23,6 @@ export const POST = handle(async (req: NextRequest, ctx: Ctx) => {
 /** Intentos de la ronda. */
 export const GET = handle(async (_req: NextRequest, ctx: Ctx) => {
   const { gameId, roundId } = await ctx.params;
+  await requireGameOwner(gameId);
   return Response.json({ guesses: await getRoundGuesses(gameId, roundId) });
 });
