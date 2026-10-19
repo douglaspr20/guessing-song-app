@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { decryptSecret, encryptSecret } from "@/lib/access/crypto";
 import { AppError } from "@/lib/errors";
 
 const ACCOUNTS_URL = "https://accounts.spotify.com";
@@ -71,57 +72,82 @@ async function requestToken(body: URLSearchParams): Promise<TokenResponse> {
   return res.json();
 }
 
-async function saveTokens(t: TokenResponse, previousRefreshToken?: string) {
-  const refreshToken = t.refresh_token ?? previousRefreshToken;
-  if (!refreshToken) throw new AppError("Spotify no devolvió refresh token", 502, "SPOTIFY_TOKEN_ERROR");
-  const data = {
-    accessToken: t.access_token,
-    refreshToken,
-    expiresAt: new Date(Date.now() + t.expires_in * 1000),
-  };
-  return db.spotifyAuth.upsert({ where: { id: "default" }, create: data, update: data });
-}
+/** Tokens recién canjeados, aún sin guardar (el callback comprueba la cuenta antes de vincularla). */
+export type FreshTokens = TokenResponse;
 
-/** Paso final del login: cambia el `code` del callback por tokens y los guarda. */
-export async function exchangeCode(code: string) {
+/** Paso final del login: cambia el `code` del callback por tokens. */
+export async function exchangeCode(code: string): Promise<FreshTokens> {
   const { redirectUri } = config();
-  const tokens = await requestToken(
-    new URLSearchParams({ grant_type: "authorization_code", code, redirect_uri: redirectUri }),
-  );
-  await saveTokens(tokens);
+  return requestToken(new URLSearchParams({ grant_type: "authorization_code", code, redirect_uri: redirectUri }));
 }
 
-// Evita refrescos simultáneos si varias peticiones llegan con el token caducado.
-let refreshing: Promise<string> | null = null;
-
-async function refresh(refreshToken: string): Promise<string> {
-  const tokens = await requestToken(
-    new URLSearchParams({ grant_type: "refresh_token", refresh_token: refreshToken }),
-  );
-  const saved = await saveTokens(tokens, refreshToken);
-  return saved.accessToken;
-}
-
-/** Devuelve un access token válido, refrescándolo si hace falta. */
-export async function getValidAccessToken(options: { forceRefresh?: boolean } = {}): Promise<string> {
-  const auth = await db.spotifyAuth.findUnique({ where: { id: "default" } });
-  if (!auth) {
-    throw new AppError("Conecta primero tu cuenta de Spotify en /api/auth/login", 401, "SPOTIFY_NOT_CONNECTED");
+/**
+ * Vincula la cuenta de Spotify al usuario (o renueva sus tokens). Una cuenta de Spotify solo puede
+ * pertenecer a un usuario de la app. Los tokens se guardan cifrados.
+ */
+export async function linkSpotifyAccount(
+  userId: string,
+  tokens: FreshTokens,
+  profile: { id: string; displayName: string | null },
+) {
+  if (!tokens.refresh_token) throw new AppError("Spotify no devolvió refresh token", 502, "SPOTIFY_TOKEN_ERROR");
+  const owner = await db.spotifyAccount.findUnique({ where: { spotifyUserId: profile.id } });
+  if (owner && owner.userId !== userId) {
+    throw new AppError("Esa cuenta de Spotify ya está vinculada a otro usuario", 409, "SPOTIFY_IN_USE");
   }
-  const fresh = auth.expiresAt.getTime() - EXPIRY_MARGIN_MS > Date.now();
-  if (fresh && !options.forceRefresh) return auth.accessToken;
+  const data = {
+    spotifyUserId: profile.id,
+    displayName: profile.displayName,
+    accessToken: encryptSecret(tokens.access_token),
+    refreshToken: encryptSecret(tokens.refresh_token),
+    expiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+  };
+  await db.spotifyAccount.upsert({ where: { userId }, create: { userId, ...data }, update: data });
+}
 
-  refreshing ??= refresh(auth.refreshToken).finally(() => {
-    refreshing = null;
+// Evita refrescos simultáneos del mismo usuario si llegan varias peticiones con el token caducado.
+const refreshing = new Map<string, Promise<string>>();
+
+async function refresh(userId: string, refreshToken: string): Promise<string> {
+  const tokens = await requestToken(new URLSearchParams({ grant_type: "refresh_token", refresh_token: refreshToken }));
+  await db.spotifyAccount.update({
+    where: { userId },
+    data: {
+      accessToken: encryptSecret(tokens.access_token),
+      // Spotify a veces rota el refresh token; si no manda uno nuevo, se conserva el anterior.
+      ...(tokens.refresh_token ? { refreshToken: encryptSecret(tokens.refresh_token) } : {}),
+      expiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+    },
   });
-  return refreshing;
+  return tokens.access_token;
 }
 
-export async function getTokenExpiry(): Promise<Date | null> {
-  const auth = await db.spotifyAuth.findUnique({ where: { id: "default" } });
-  return auth?.expiresAt ?? null;
+const notLinked = () =>
+  new AppError("Conecta primero tu cuenta de Spotify", 401, "SPOTIFY_NOT_CONNECTED");
+
+/** Devuelve un access token válido del usuario, refrescándolo si hace falta. */
+export async function getValidAccessToken(userId: string, options: { forceRefresh?: boolean } = {}): Promise<string> {
+  const account = await db.spotifyAccount.findUnique({ where: { userId } });
+  if (!account) throw notLinked();
+  const fresh = account.expiresAt.getTime() - EXPIRY_MARGIN_MS > Date.now();
+  if (fresh && !options.forceRefresh) return decryptSecret(account.accessToken);
+
+  let pending = refreshing.get(userId);
+  if (!pending) {
+    pending = refresh(userId, decryptSecret(account.refreshToken)).finally(() => refreshing.delete(userId));
+    refreshing.set(userId, pending);
+  }
+  return pending;
 }
 
-export async function disconnect() {
-  await db.spotifyAuth.deleteMany();
+export async function getSpotifyAccount(userId: string) {
+  return db.spotifyAccount.findUnique({
+    where: { userId },
+    select: { spotifyUserId: true, displayName: true, expiresAt: true },
+  });
+}
+
+/** Desvincula Spotify del usuario (no borra al usuario ni sus partidas). */
+export async function disconnect(userId: string) {
+  await db.spotifyAccount.deleteMany({ where: { userId } });
 }

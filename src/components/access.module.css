@@ -1,0 +1,110 @@
+/* Formularios de acceso: una carátula (J-card) con campos de cartulina. */
+
+.card {
+  width: 100%;
+  max-width: 560px;
+  justify-self: center;
+}
+
+.body {
+  padding: 24px clamp(20px, 3vw, 32px) 28px;
+  display: grid;
+  gap: 18px;
+}
+
+.tabs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  border: var(--stroke) solid var(--ink);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+
+.tabs button {
+  min-height: 52px;
+  padding: 0 14px;
+  background: transparent;
+  border: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.tabs button + button {
+  border-left: var(--stroke) solid var(--ink);
+}
+
+.tabs button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(30px, 3vw, 40px);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.lede {
+  font-size: 18px;
+  color: var(--card-ink-soft);
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--card-ink-soft);
+}
+
+.input {
+  width: 100%;
+  min-height: 56px;
+  border: var(--stroke) solid var(--ink);
+  border-radius: var(--radius-control);
+  background: #fffaf0;
+  color: var(--ink);
+  font-size: 20px;
+  padding: 0 14px;
+}
+
+.input::placeholder {
+  color: #6b6a63;
+}
+
+.input:focus-visible {
+  outline: 3px solid var(--tomato-deep);
+  outline-offset: 2px;
+}
+
+.code {
+  font-family: var(--font-display);
+  font-size: 30px;
+  letter-spacing: 0.3em;
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.hint {
+  font-size: 16px;
+  color: var(--card-ink-soft);
+}
