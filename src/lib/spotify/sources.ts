@@ -31,13 +31,13 @@ export function normalizeTrack(t: SpotifyTrackObject): Track | null {
   };
 }
 
-export async function searchTracks(params: {
+export async function searchTracks(userId: string, params: {
   q: string;
   market?: string;
   offset?: number;
   limit?: number;
 }): Promise<Page<Track>> {
-  const data = await spotifyFetch<{ tracks: { items: SpotifyTrackObject[]; total: number } }>("/search", {
+  const data = await spotifyFetch<{ tracks: { items: SpotifyTrackObject[]; total: number } }>(userId, "/search", {
     query: {
       q: params.q,
       type: "track",
@@ -60,9 +60,10 @@ interface PlaylistEntry {
 
 /** Lee una página de "Canciones que te gustan" (biblioteca del usuario, no es una playlist en la API). */
 export async function getLikedTracks(
+  userId: string,
   params: { offset?: number; limit?: number; market?: string } = {},
 ): Promise<Page<Track>> {
-  const data = await spotifyFetch<{ items: { track: SpotifyTrackObject | null }[]; total: number }>("/me/tracks", {
+  const data = await spotifyFetch<{ items: { track: SpotifyTrackObject | null }[]; total: number }>(userId, "/me/tracks", {
     query: { offset: params.offset ?? 0, limit: params.limit ?? PLAYLIST_PAGE_SIZE, market: params.market },
   });
   return {
@@ -75,10 +76,11 @@ export async function getLikedTracks(
 
 /** Lee una página de una playlist. Intenta /items y cae a /tracks si la API es la antigua. */
 export async function getPlaylistTracks(
+  userId: string,
   playlistId: string,
   params: { offset?: number; limit?: number; market?: string } = {},
 ): Promise<Page<Track>> {
-  if (playlistId === LIKED_TRACKS_ID) return getLikedTracks(params);
+  if (playlistId === LIKED_TRACKS_ID) return getLikedTracks(userId, params);
   const query = {
     offset: params.offset ?? 0,
     limit: params.limit ?? PLAYLIST_PAGE_SIZE,
@@ -87,10 +89,10 @@ export async function getPlaylistTracks(
   const id = encodeURIComponent(playlistId);
   let data: { items: PlaylistEntry[]; total: number };
   try {
-    data = await spotifyFetch(`/playlists/${id}/items`, { query });
+    data = await spotifyFetch(userId, `/playlists/${id}/items`, { query });
   } catch (err) {
     if (!(err instanceof AppError) || err.status !== 404) throw err;
-    data = await spotifyFetch(`/playlists/${id}/tracks`, { query });
+    data = await spotifyFetch(userId, `/playlists/${id}/tracks`, { query });
   }
   return {
     items: data.items
@@ -102,10 +104,10 @@ export async function getPlaylistTracks(
   };
 }
 
-async function likedTracksSummary(): Promise<PlaylistSummary> {
+async function likedTracksSummary(userId: string): Promise<PlaylistSummary> {
   const summary = { id: LIKED_TRACKS_ID, name: "Canciones que te gustan", owner: "", image: null, readable: true };
   try {
-    const { total } = await getLikedTracks({ limit: 1 });
+    const { total } = await getLikedTracks(userId, { limit: 1 });
     return { ...summary, totalTracks: total };
   } catch (err) {
     // Sesiones iniciadas antes de pedir `user-library-read` reciben 401/403.
@@ -120,8 +122,8 @@ async function likedTracksSummary(): Promise<PlaylistSummary> {
  * Playlists del usuario conectado, con "Canciones que te gustan" primero. Incluye las que solo
  * sigue, marcadas como no legibles: Spotify (modo desarrollo) no deja leer sus canciones.
  */
-export async function getMyPlaylists(): Promise<PlaylistSummary[]> {
-  const [liked, me] = await Promise.all([likedTracksSummary(), spotifyFetch<{ id: string }>("/me")]);
+export async function getMyPlaylists(userId: string): Promise<PlaylistSummary[]> {
+  const [liked, me] = await Promise.all([likedTracksSummary(userId), spotifyFetch<{ id: string }>(userId, "/me")]);
   const result: PlaylistSummary[] = [liked];
   let offset = 0;
   // Máximo 4 páginas (200 playlists) para no eternizarnos.
@@ -137,7 +139,7 @@ export async function getMyPlaylists(): Promise<PlaylistSummary[]> {
         images?: { url: string }[] | null;
       } | null)[];
       next: string | null;
-    }>("/me/playlists", { query: { limit: 50, offset } });
+    }>(userId, "/me/playlists", { query: { limit: 50, offset } });
 
     for (const p of data.items) {
       if (!p) continue;
@@ -165,14 +167,33 @@ export interface SpotifyProfile {
   country: string | null;
 }
 
-export async function getMe(): Promise<SpotifyProfile> {
-  const me = await spotifyFetch<{ id: string; display_name?: string | null; product?: string; country?: string }>(
-    "/me",
-  );
+type MeResponse = { id: string; display_name?: string | null; product?: string; country?: string };
+
+function toProfile(me: MeResponse): SpotifyProfile {
   return {
     id: me.id,
     displayName: me.display_name ?? null,
     premium: me.product ? me.product === "premium" : null,
     country: me.country ?? null,
   };
+}
+
+export async function getMe(userId: string): Promise<SpotifyProfile> {
+  return toProfile(await spotifyFetch<MeResponse>(userId, "/me"));
+}
+
+/**
+ * Perfil con un token recién canjeado, antes de guardarlo. En modo desarrollo Spotify responde 403
+ * a las cuentas que no están en la lista del panel: lo traducimos a SPOTIFY_NOT_ALLOWED.
+ */
+export async function getMeWithToken(accessToken: string): Promise<SpotifyProfile> {
+  const res = await fetch("https://api.spotify.com/v1/me", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: "no-store",
+  });
+  if (res.status === 403) {
+    throw new AppError("Esta cuenta de Spotify no está autorizada en la app", 403, "SPOTIFY_NOT_ALLOWED");
+  }
+  if (!res.ok) throw new AppError(`Spotify ${res.status} al leer el perfil`, 502, "SPOTIFY_API_ERROR");
+  return toProfile(await res.json());
 }

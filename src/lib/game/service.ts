@@ -2,6 +2,7 @@ import "server-only";
 import { randomInt } from "node:crypto";
 import { after } from "next/server";
 import { Prisma, type Game, type Player, type Round } from "@/generated/prisma/client";
+import { ownerData, ownerWhere, type Owner } from "@/lib/access/owner";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { searchSongs } from "@/lib/itunes/search";
@@ -31,10 +32,13 @@ import { pickTrack, type PickedTrack, type TrackSource } from "./track-picker";
 export type GameStatus = "LOBBY" | "PLAYING" | "FINISHED";
 export type RoundStatus = "PLAYING" | "WON" | "REVEALED";
 
-export const spotifySource: TrackSource = {
-  search: (p) => searchTracks(p),
-  playlist: ({ playlistId, ...rest }) => getPlaylistTracks(playlistId, rest),
-};
+/** Canciones de Spotify con la cuenta del usuario `userId`. */
+export function spotifySourceFor(userId: string): TrackSource {
+  return {
+    search: (p) => searchTracks(userId, p),
+    playlist: ({ playlistId, ...rest }) => getPlaylistTracks(userId, playlistId, rest),
+  };
+}
 
 export const itunesSource: OpenTrackSource = { search: (p) => searchSongs(p) };
 
@@ -131,14 +135,28 @@ export type PublicGame = ReturnType<typeof toPublicGame>;
 
 // ---------- Helpers ----------
 
-const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin 0/O ni 1/I
+/** Mismo tope que al crear la partida (`createGameSchema`). */
+const MAX_PLAYERS = 20;
+
+const CODE_ALPHABET ="ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin 0/O ni 1/I
 
 function generateCode(length = 6) {
   return Array.from({ length }, () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]).join("");
 }
 
+/** Mismo dueño que la partida (cada estantería numera sus casetes desde el 1). */
+function sameOwner(game: Pick<Game, "userId" | "guestId">) {
+  return game.userId ? { userId: game.userId } : { guestId: game.guestId };
+}
+
 async function catalogNumberOf(game: Game) {
-  return db.game.count({ where: { createdAt: { lte: game.createdAt } } });
+  return db.game.count({ where: { ...sameOwner(game), createdAt: { lte: game.createdAt } } });
+}
+
+/** Usuario cuyo Spotify suena en una partida de Spotify. */
+function spotifyUserOf(game: Pick<Game, "userId">) {
+  if (!game.userId) throw new AppError("Esta partida no tiene una cuenta de Spotify", 409, "SPOTIFY_NOT_CONNECTED");
+  return game.userId;
 }
 
 async function loadGame(gameId: string) {
@@ -181,7 +199,7 @@ async function chooseTrack(game: Game & { rounds: Round[] }, exclude: string[] =
     filters,
     fragmentMs: game.fragmentSeconds * 1000,
     usedTrackIds,
-    source: spotifySource,
+    source: spotifySourceFor(spotifyUserOf(game)),
     searchPageSize: SEARCH_PAGE_SIZE,
     playlistPageSize: PLAYLIST_PAGE_SIZE,
     maxSearchOffset: SEARCH_MAX_OFFSET,
@@ -222,14 +240,22 @@ async function takeNextTrack(game: Game & { rounds: Round[] }): Promise<Prepared
 
 // ---------- Casos de uso ----------
 
-export async function createGame(input: CreateGameInput): Promise<PublicGame> {
+export async function createGame(input: CreateGameInput, owner: Owner): Promise<PublicGame> {
   const data = createGameSchema.parse(input);
+  if (data.mode === "spotify") {
+    // Un invitado no tiene Spotify: para él el modo ni existe.
+    if (owner.kind !== "user") throw new AppError("No encontrado", 404, "NOT_FOUND");
+    if (!(await db.spotifyAccount.count({ where: { userId: owner.userId } }))) {
+      throw new AppError("Conecta tu Spotify para grabar partidas con canción completa", 409, "SPOTIFY_NOT_LINKED");
+    }
+  }
 
   for (let attempt = 0; attempt < 5; attempt++) {
     try {
       const game = await db.game.create({
         data: {
           code: generateCode(),
+          ...ownerData(owner),
           mode: data.mode,
           totalRounds: data.rounds,
           fragmentSeconds: data.fragmentSeconds,
@@ -255,15 +281,17 @@ export async function getGame(gameId: string): Promise<PublicGame> {
   return toPublicGame(game, await catalogNumberOf(game));
 }
 
-/** Últimas partidas con su podio (máximo 3), de la más reciente a la más antigua. */
-export async function listGames(limit = 12) {
+/** Últimas partidas del dueño con su podio (máximo 3), de la más reciente a la más antigua. */
+export async function listGames(owner: Owner, limit = 12) {
+  const where = ownerWhere(owner);
   const [games, total] = await Promise.all([
     db.game.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       take: limit,
       include: { players: true, _count: { select: { rounds: { where: { status: { not: "PLAYING" } } } } } },
     }),
-    db.game.count(),
+    db.game.count({ where }),
   ]);
   return {
     total,
@@ -297,6 +325,7 @@ export async function addPlayer(gameId: string, rawName: string) {
   if (!name || name.length > 30) throw new AppError("Nombre inválido", 422, "INVALID_NAME");
   const game = await loadGame(gameId);
   if (game.status === "FINISHED") throw new AppError("La partida ya terminó", 409, "GAME_FINISHED");
+  if (game.players.length >= MAX_PLAYERS) throw new AppError("La partida ya está completa", 409, "GAME_FULL");
   if (game.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
     throw new AppError("Ya hay un jugador con ese nombre", 409, "DUPLICATE_PLAYER");
   }
@@ -382,7 +411,7 @@ export async function playRound(gameId: string, roundId: string, deviceId: strin
   let usedDeviceId: string | null = null;
   if (round.game.mode !== "open") {
     if (!deviceId) throw new AppError("Falta el reproductor de Spotify", 422, "DEVICE_REQUIRED");
-    usedDeviceId = await startPlayback(deviceId, round.trackUri, round.startMs + offset);
+    usedDeviceId = await startPlayback(spotifyUserOf(round.game), deviceId, round.trackUri, round.startMs + offset);
   }
   await db.round.updateMany({ where: { id: roundId, playStartedAt: null }, data: { playStartedAt: new Date() } });
   // Volver a reproducir también reanuda el reloj si estaba en pausa.
