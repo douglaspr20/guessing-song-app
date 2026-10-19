@@ -21,7 +21,7 @@ export default async function setup() {
     await admin.$disconnect();
   }
 
-  const env: NodeJS.ProcessEnv = { ...process.env, DATABASE_URL: testUrl, DIRECT_URL: testUrl };
+  const env: NodeJS.ProcessEnv = { ...process.env, DATABASE_URL: testUrl, DATABASE_URL_UNPOOLED: testUrl };
   // En Windows la CLI de Prisma a veces no encuentra su motor de esquemas.
   const engine = path.resolve("node_modules/@prisma/engines/schema-engine-windows.exe");
   if (process.platform === "win32" && existsSync(engine)) env.PRISMA_SCHEMA_ENGINE_BINARY ??= engine;
