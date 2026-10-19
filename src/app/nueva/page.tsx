@@ -7,7 +7,7 @@ import { AlertTriangle, ArrowLeft, Check, Heart, Minus, Plus, Shuffle } from "lu
 import { Stepper } from "@/components/Stepper";
 import { TopBar } from "@/components/TopBar";
 import ui from "@/components/ui.module.css";
-import { api, type AuthStatus, type Catalog, type Game, type Playlist } from "@/lib/client/api";
+import { api, type AccessStatus, type Catalog, type Game, type Playlist } from "@/lib/client/api";
 import type { GameMode } from "@/lib/game/filters";
 import styles from "./setup.module.css";
 
@@ -40,6 +40,8 @@ function NewGame() {
   /** "spotify": canción completa (necesita cuenta). "open": vistas previas de 30 s, sin cuenta. */
   const [mode, setMode] = useState<GameMode>(searchParams.get("modo") === "abierto" ? "open" : "spotify");
   const [connected, setConnected] = useState<boolean | null>(null);
+  /** Con sesión (miembro o anfitrión) se puede vincular Spotify; un invitado no. */
+  const [canLink, setCanLink] = useState(false);
   const [source, setSource] = useState<Source>("search");
   const [genres, setGenres] = useState<string[]>([]);
   const [language, setLanguage] = useState("");
@@ -53,11 +55,12 @@ function NewGame() {
   const [sample, setSample] = useState<string | null>(null);
 
   useEffect(() => {
-    api<AuthStatus>("/api/auth/status").then(
+    api<AccessStatus>("/api/access/status").then(
       (a) => {
-        setConnected(a.connected);
+        setConnected(!!a.spotify);
+        setCanLink(!!a.user);
         // Sin Spotify solo se puede jugar en modo abierto.
-        if (!a.connected) return setMode("open");
+        if (!a.spotify) return setMode("open");
         api<{ playlists: Playlist[] }>("/api/spotify/playlists").then(
           (d) => setPlaylists(d.playlists),
           () => setPlaylists([]),
@@ -259,20 +262,23 @@ function NewGame() {
                     Cómo se juega
                   </h2>
                 </div>
-                <div className={styles.segment} role="group" aria-label="Modo de juego">
-                  <button type="button" aria-pressed={!open} onClick={() => setMode("spotify")} disabled={connected === false}>
-                    Spotify · canción completa
-                  </button>
-                  <button type="button" aria-pressed={open} onClick={() => setMode("open")}>
-                    Sin cuenta · 30 s
-                  </button>
-                </div>
+                {/* Un invitado solo juega con vistas previas: ni siquiera ve la opción de Spotify. */}
+                {canLink && (
+                  <div className={styles.segment} role="group" aria-label="Modo de juego">
+                    <button type="button" aria-pressed={!open} onClick={() => setMode("spotify")} disabled={connected === false}>
+                      Spotify · canción completa
+                    </button>
+                    <button type="button" aria-pressed={open} onClick={() => setMode("open")}>
+                      Sin cuenta · 30 s
+                    </button>
+                  </div>
+                )}
                 <p className={styles.hint} style={{ margin: "10px 0 18px" }}>
                   {open ? (
                     <>
                       Suenan vistas previas de 30 s de iTunes, sin cuenta. El título vale 3, 2 o 1 punto antes de los 10 s,
                       de los 20 s o después.
-                      {connected === false && (
+                      {connected === false && canLink && (
                         <>
                           {" "}
                           Para canciones enteras, <a href="/api/auth/login">conecta tu Spotify Premium</a>.

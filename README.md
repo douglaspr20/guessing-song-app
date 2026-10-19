@@ -24,6 +24,16 @@ The interface is designed around a **home-recorded cassette**: every game is a n
 | Hints | words 20 s · artist 40 s · letters 60 s | words 10 s · artist 20 s · letters 25 s |
 | Sources | Search filters or your own playlists | Search filters (genre, language/store, years, keyword) |
 
+## Who can play
+
+| Role | How they get in | What they can do |
+|---|---|---|
+| Host | A hidden page, with a password **and** a 6-digit TOTP code (both secrets live in environment variables) | Everything, plus the control panel: invitations, members, guest moderation |
+| Member | Username and password; sign-up only with a single-use invitation code from the host | Open mode, and Spotify mode with **their own** Spotify account (if the host added it to the Spotify dashboard). Only sees their own games |
+| Guest | "Jugar sin cuenta" (an anonymous cookie, no data asked) | Open mode with limits. Only sees the games created in that browser |
+
+Spotify only grants extended API access to registered businesses with 250k+ monthly users, so a hobby app stays in *development mode*: at most 5 Spotify accounts, added by hand. Each member links their own account instead of borrowing the host's (a Premium account only plays on one device at a time). Open mode is the public way in.
+
 ## Features
 
 - **Spotify playback in the browser** through the Web Playback SDK: clips of 60–180 s from a random point of the song (skipping long intros).
@@ -56,12 +66,14 @@ The interface is designed around a **home-recorded cassette**: every game is a n
 - **One player interface, two backends.** A shared fragment timer drives either the Spotify SDK or an `<audio>` element; the game screen doesn't know which. Scoring and hint timings come from per-mode rules (`SPOTIFY_RULES` / `OPEN_RULES`).
 - **One Spotify player for the whole app.** Next 16 keeps pages alive between navigations (React `<Activity>`), so the SDK player is a module-level singleton; if Spotify answers *Device not found*, the server looks the player up by name, transfers playback and retries.
 - **Clean domain layer.** Route handlers only validate and delegate to `src/lib/game/service.ts`; game rules (`scoring.ts`, `matcher.ts`, `track-picker.ts`) are pure functions with unit tests and an injectable track source.
+- **Access control without an auth library.** Sessions are random 256-bit tokens stored only as SHA-256 hashes; passwords use scrypt; the host adds a TOTP second factor with replay protection; Spotify tokens are encrypted at rest with AES-256-GCM. Every game route checks ownership and answers 404 for anything that isn't yours. State-changing requests must carry a same-origin `Origin` header (CSRF), and logins are throttled per IP and globally. All of it uses `node:crypto` only.
+- **Abuse brakes for the public mode.** Guests are rate-limited (new guests per IP, games per day, rounds per hour, a global cap sized for the free database tier); a daily cron removes inactive guests with their games, and the host can pause open mode, stop new guests, block a connection or wipe all guests from the panel.
 - **Living with Spotify's API limits.** Endpoints removed for new apps (recommendations, genre seeds) are replaced by a curated genre list and randomized search offsets; playlists the API can't read are detected and skipped.
 
 ## Spotify limitations (please read)
 
 - Playing full tracks requires **Spotify Premium** and a browser with DRM support (**Chrome or Edge**).
-- Apps in Spotify's **development mode** only work for the owner and a few users added by hand in the dashboard. Visitors can't play with their own accounts unless they are on that list.
+- Apps in Spotify's **development mode** only work for the owner and up to 5 users added by hand in the dashboard. A member whose account isn't on that list gets a clear message when linking Spotify and can still play open mode.
 - In development mode Spotify only lets the app read **playlists you own or collaborate on**; other people's playlists show up disabled.
 - While a song plays, Spotify apps logged into the same account (e.g. your phone) display the track name, so keep them out of sight.
 
@@ -80,7 +92,11 @@ Requirements: Node 20+, Docker Desktop (for the local Postgres) and, for Spotify
    npm run db:up
    npm run db:migrate
    ```
-4. Run it and open **http://127.0.0.1:3000** (opening `localhost` redirects there during login):
+4. Create the host secrets and paste the printed lines into `.env`; add the TOTP key to your authenticator app:
+   ```bash
+   npm run host:setup
+   ```
+5. Run it and open **http://127.0.0.1:3000** (opening `localhost` redirects there during login):
    ```bash
    npm run dev
    ```
@@ -93,6 +109,8 @@ Requirements: Node 20+, Docker Desktop (for the local Postgres) and, for Spotify
 |---|---|
 | `npm run dev` | Development server |
 | `npm test` | Unit tests (Vitest) |
+| `npm run test:integration` | Integration tests against Postgres (creates the `adivina_test` database; needs `npm run db:up`) |
+| `npm run host:setup` | Generate the host password hash, TOTP secret, encryption key and cron secret |
 | `npm run typecheck` | Route types + `tsc --noEmit` |
 | `npm run lint` | ESLint |
 | `npm run build` | Production build |
@@ -103,8 +121,13 @@ Requirements: Node 20+, Docker Desktop (for the local Postgres) and, for Spotify
 
 | Method | Route | Purpose |
 |---|---|---|
-| GET | `/api/auth/login` · `/api/auth/callback` | Spotify OAuth |
-| GET | `/api/auth/status` | Connected account and Premium check |
+| GET | `/api/access/status` | Who is using the app (member/host/guest) and their Spotify link |
+| POST | `/api/account/register` · `/api/account/login` · `/api/account/logout` | Member sign-up (with invitation), sign-in and sign-out |
+| POST · DELETE | `/api/guest` | Start / forget the anonymous guest of this browser |
+| GET | `/api/auth/login` · `/api/auth/callback` | Link the signed-in user's Spotify (OAuth); `POST /api/auth/logout` unlinks it |
+| POST · DELETE | `/api/host/login` · `/api/host/sessions` | Host sign-in (password + TOTP) / sign out everywhere |
+| GET · POST · PATCH · DELETE | `/api/host/{invites,members,guests}` | Host panel: invitations, members, guest moderation |
+| GET | `/api/cron/limpieza` | Daily cleanup (needs `Authorization: Bearer $CRON_SECRET`) |
 | GET | `/api/spotify/playlists` · `/api/spotify/genres` | Filter options |
 | POST | `/api/spotify/sample` | Preview which song a set of filters would pick |
 | GET / POST | `/api/games` | Recent games with podium / create a game |
@@ -119,6 +142,7 @@ Requirements: Node 20+, Docker Desktop (for the local Postgres) and, for Spotify
 
 ```
 src/lib/spotify/   OAuth + token refresh, API client with retries, sources, playback
+src/lib/access/    sessions, passwords, TOTP, encryption, guests, limits, host panel actions
 src/lib/game/      service (use cases), scoring, matcher, track picker, filters (zod), event bus
 src/lib/client/    browser API client and the shared Spotify player
 src/app/           pages (shelf, new game, game) and API route handlers

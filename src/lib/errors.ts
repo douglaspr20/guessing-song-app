@@ -27,10 +27,30 @@ export function toErrorResponse(err: unknown): Response {
   return Response.json({ error: "INTERNAL_ERROR", message: "Error interno" }, { status: 500 });
 }
 
-/** Envuelve un handler para que los errores se traduzcan automáticamente a JSON. */
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+/**
+ * Protección CSRF: una petición que cambia datos solo se acepta si la manda la propia app.
+ * Los navegadores siempre envían `Origin` en POST/PATCH/DELETE; si falta o es de otro sitio, se rechaza.
+ */
+export function assertSameOrigin(req: Request) {
+  if (SAFE_METHODS.has(req.method)) return;
+  const origin = req.headers.get("origin");
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+  let originHost: string | null = null;
+  try {
+    originHost = origin ? new URL(origin).host : null;
+  } catch {
+    originHost = null;
+  }
+  if (!host || originHost !== host) throw new AppError("Origen no permitido", 403, "BAD_ORIGIN");
+}
+
+/** Envuelve un handler: comprueba el origen y traduce los errores a JSON. */
 export function handle<A extends unknown[]>(fn: (...args: A) => Promise<Response>) {
   return async (...args: A): Promise<Response> => {
     try {
+      if (args[0] instanceof Request) assertSameOrigin(args[0]);
       return await fn(...args);
     } catch (err) {
       // Deja pasar los errores internos de Next (prerender, redirect, notFound...).

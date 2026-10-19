@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGamePlayer } from "@/hooks/useGamePlayer";
 import { rulesFor } from "@/lib/game/scoring";
 import { api, type GuessResult, type GuessRow, type Round } from "@/lib/client/api";
@@ -77,6 +77,40 @@ export function useGameController(gameId: string) {
       .then(() => refresh())
       .catch(() => {});
   }, [clock.needsFreeze, roundId, gameId, refresh]);
+
+  // Next mantiene viva esta pantalla al ir a la estantería (<Activity>) y, al ocultarla, los
+  // reproductores cortan el audio. Si estaba sonando, se pausa también el reloj del servidor (para
+  // no perder puntos) y al volver con «Seguir jugando» la canción sigue sola desde donde iba.
+  const latest = useRef({ gameId, round, player, refresh });
+  useEffect(() => {
+    latest.current = { gameId, round, player, refresh };
+  });
+  const pausedOnLeave = useRef<string | null>(null);
+  useEffect(() => {
+    // Se reanuda en el siguiente turno: al reaparecer, React (en desarrollo) monta, desmonta y vuelve
+    // a montar los efectos, y el desmontaje intermedio del reproductor cortaría el audio recién retomado.
+    const resumeTimer = pausedOnLeave.current
+      ? setTimeout(() => {
+          const leftRoundId = pausedOnLeave.current;
+          pausedOnLeave.current = null;
+          const { gameId, round, player, refresh } = latest.current;
+          if (!leftRoundId || round?.id !== leftRoundId || round.status !== "PLAYING" || player.phase !== "paused") return;
+          player
+            .resume()
+            .then(() => api(`/api/games/${gameId}/rounds/${leftRoundId}/resume`, { method: "POST" }))
+            .then(() => refresh())
+            .catch((e: Error) => setActionError(e.message));
+        }, 0)
+      : null;
+    return () => {
+      if (resumeTimer) clearTimeout(resumeTimer);
+      const { gameId, round, player } = latest.current;
+      if (player.phase !== "playing" || round?.status !== "PLAYING") return;
+      pausedOnLeave.current = round.id;
+      void player.pause();
+      api(`/api/games/${gameId}/rounds/${round.id}/pause`, { method: "POST" }).catch(() => {});
+    };
+  }, []);
 
   // Fin del entreacto: suena la pista.
   useEffect(() => {
