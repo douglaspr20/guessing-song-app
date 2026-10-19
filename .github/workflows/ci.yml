@@ -8,9 +8,23 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: adivina
+          POSTGRES_PASSWORD: adivina
+          POSTGRES_DB: adivina
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U adivina -d adivina"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     env:
-      # Base de datos desechable solo para compilar (las rutas que la leen son dinámicas).
-      DATABASE_URL: file:./ci.db
+      DATABASE_URL: postgresql://adivina:adivina@localhost:5432/adivina
+      DIRECT_URL: postgresql://adivina:adivina@localhost:5432/adivina
     steps:
       - uses: actions/checkout@v4
 
@@ -21,6 +35,9 @@ jobs:
 
       # `postinstall` ejecuta `prisma generate`.
       - run: npm ci
+
+      - name: Migrations
+        run: npx prisma migrate deploy
 
       - name: Lint
         run: npm run lint
