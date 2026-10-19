@@ -13,7 +13,7 @@ import styles from "./home.module.css";
 
 const LOGIN_ERRORS: Record<string, string> = {
   denied: "Cancelaste el permiso en Spotify. Vuelve a intentarlo y pulsa «Aceptar».",
-  state: "Spotify no pudo confirmar el inicio de sesión. Abre el juego en http://127.0.0.1:3000 y vuelve a conectar.",
+  state: "Spotify no pudo confirmar el inicio de sesión. Vuelve a conectar desde la dirección principal del juego.",
   failed: "Spotify no respondió bien al conectar. Prueba otra vez en un momento.",
   session: "Tu sesión caducó mientras conectabas Spotify. Entra de nuevo y vuelve a probar.",
   not_allowed:
