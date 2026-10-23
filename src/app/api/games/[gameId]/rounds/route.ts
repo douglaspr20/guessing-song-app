@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { assertGuestCanStartRound } from "@/lib/access/limits";
+import { assertOwnerCanStartRound } from "@/lib/access/limits";
 import { requireGameOwner } from "@/lib/access/owner";
 import { handle } from "@/lib/errors";
 import { startNextRound } from "@/lib/game/service";
@@ -8,6 +8,6 @@ import { startNextRound } from "@/lib/game/service";
 export const POST = handle(async (_req: NextRequest, ctx: RouteContext<"/api/games/[gameId]/rounds">) => {
   const { gameId } = await ctx.params;
   const owner = await requireGameOwner(gameId);
-  if (owner.kind === "guest") await assertGuestCanStartRound(owner.guestId);
+  await assertOwnerCanStartRound(owner);
   return Response.json(await startNextRound(gameId), { status: 201 });
 });

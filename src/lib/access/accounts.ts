@@ -51,7 +51,13 @@ export async function registerMember(input: z.input<typeof registerSchema>, now 
       if (!claimed.count) throw badInvite();
       if (await tx.user.findUnique({ where: { username: data.username } })) throw taken();
       const user = await tx.user.create({
-        data: { username: data.username, passwordHash, displayName: data.displayName ?? data.username, role: "member" },
+        data: {
+          username: data.username,
+          passwordHash,
+          displayName: data.displayName ?? data.username,
+          role: "member",
+          spotifyAllowed: true,
+        },
       });
       await tx.invite.update({ where: { codeHash }, data: { usedByUserId: user.id } });
       return user;
@@ -61,6 +67,23 @@ export async function registerMember(input: z.input<typeof registerSchema>, now 
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") throw taken();
     throw err;
   }
+}
+
+/** Una cuenta que ya existe (p. ej. gratis con Google) canjea una invitación: gana el modo Spotify. */
+export async function redeemInvite(userId: string, rawCode: string, now = new Date()) {
+  const codeHash = sha256(normalizeInviteCode(rawCode));
+  return db.$transaction(async (tx) => {
+    const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
+    if (user.spotifyAllowed || user.role === "host") {
+      throw new AppError("Tu cuenta ya tiene el modo Spotify", 409, "ALREADY_INVITED");
+    }
+    const claimed = await tx.invite.updateMany({
+      where: { codeHash, usedAt: null, expiresAt: { gt: now } },
+      data: { usedAt: now, usedByUserId: userId },
+    });
+    if (!claimed.count) throw badInvite();
+    return tx.user.update({ where: { id: userId }, data: { spotifyAllowed: true } });
+  });
 }
 
 /**

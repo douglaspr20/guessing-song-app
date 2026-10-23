@@ -6,6 +6,7 @@ import { AlertTriangle, Info, Plus, Play, Trash2 } from "lucide-react";
 import { AccountCard, type AccountTab } from "@/components/AccountCard";
 import { Cassette } from "@/components/Cassette";
 import { useConfirm, useToast } from "@/components/feedback/FeedbackProvider";
+import { RedeemInvite } from "@/components/RedeemInvite";
 import { RetryNotice } from "@/components/RetryNotice";
 import { Podium } from "@/components/Podium";
 import { BandStatus } from "@/components/band/BandStatus";
@@ -29,6 +30,13 @@ const LOGIN_ERRORS: Record<string, string> = {
   not_allowed:
     "Esta cuenta de Spotify no está autorizada en la app. Pide al anfitrión que te añada en el panel de Spotify.",
   in_use: "Esa cuenta de Spotify ya está vinculada a otro usuario de la app.",
+  spotify_invite: "El modo Spotify es solo con invitación. Si el anfitrión te dio un código, canjéalo en tu estantería.",
+  google_denied: "Cancelaste el acceso con Google. Vuelve a intentarlo cuando quieras.",
+  google_state: "Google no pudo confirmar el inicio de sesión. Vuelve a probar desde la dirección principal del juego.",
+  google_failed: "Google no respondió bien al entrar. Prueba otra vez en un momento.",
+  google_in_use: "Esa cuenta de Google ya está vinculada a otro usuario de la app.",
+  google_disabled: "Esta cuenta está desactivada. Habla con el anfitrión.",
+  google_host: "La cuenta de anfitrión entra solo con su contraseña y su código.",
 };
 
 const SHELF_TITLE_ID = "estanteria";
@@ -44,6 +52,8 @@ export default function Home() {
   const [listError, setListError] = useState<string | null>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  /** Formulario para canjear una invitación (cuentas gratis), abierto desde el pie de la estantería. */
+  const [redeeming, setRedeeming] = useState(false);
 
   const refresh = useCallback(async () => {
     setList(null);
@@ -57,12 +67,15 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get("error");
-    // Lee el error del login de Spotify una vez al montar (viene en la URL).
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("error");
+    // Lee el resultado del login de Spotify o Google una vez al montar (viene en la URL).
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (code) setLoginError(LOGIN_ERRORS[code] ?? LOGIN_ERRORS.failed);
+    if (params.get("google") === "linked") toast({ text: "Google vinculado: ya puedes entrar con él." });
+    if (code || params.has("google")) window.history.replaceState(null, "", "/");
     refresh();
-  }, [refresh]);
+  }, [refresh, toast]);
 
   // La estantería solo aparece con sesión o tras elegir jugar sin cuenta.
   const view = accessError ? "error" : !access ? "loading" : access.user ? "account" : access.guest ? "guest" : "connect";
@@ -155,6 +168,29 @@ export default function Home() {
     await api("/api/auth/logout", { method: "POST" }).catch(() => undefined);
     await refresh();
   };
+  const unlinkGoogle = async () => {
+    const ok = await confirm({
+      title: "¿Desvincular tu Google?",
+      body: "Seguirás entrando con tu usuario y contraseña.",
+      confirmLabel: "Desvincular",
+      tone: "danger",
+    });
+    if (!ok) return;
+    try {
+      await api("/api/auth/google/unlink", { method: "POST" });
+      toast({ text: "Google desvinculado." });
+    } catch (err) {
+      toast({ text: errorText(err), tone: "error" });
+    }
+    await refresh();
+  };
+  const redeemed = async () => {
+    setRedeeming(false);
+    toast({ text: "Invitación canjeada: ya puedes usar el modo Spotify." });
+    await refresh();
+  };
+
+  const user = access?.user ?? null;
 
   const status =
     view === "account" && access?.user
@@ -176,7 +212,13 @@ export default function Home() {
           </div>
         )}
         {view === "connect" && (
-          <Connect error={loginError ?? notice} paused={!!access?.openModePaused} onGuest={playAsGuest} onSignedIn={refresh} />
+          <Connect
+            error={loginError ?? notice}
+            paused={!!access?.openModePaused}
+            googleEnabled={!!access?.googleEnabled}
+            onGuest={playAsGuest}
+            onSignedIn={refresh}
+          />
         )}
         {view === "account" && (
           <Shelf
@@ -188,9 +230,10 @@ export default function Home() {
             premium={access?.spotify?.premium ?? null}
             newGameHref={access?.spotify ? "/nueva" : "/nueva?modo=abierto"}
             notice={loginError}
+            aside={redeeming && <RedeemInvite onDone={redeemed} onCancel={() => setRedeeming(false)} />}
             footer={
               <>
-                {access?.user?.role === "host" && (
+                {user?.role === "host" && (
                   <Link href="/anfitrion" className={styles.linkBtn}>
                     Panel del anfitrión
                   </Link>
@@ -199,10 +242,26 @@ export default function Home() {
                   <button type="button" className={styles.linkBtn} onClick={unlinkSpotify}>
                     Desvincular Spotify
                   </button>
-                ) : (
+                ) : user?.spotifyAllowed ? (
                   <a href="/api/auth/login" className={styles.linkBtn}>
                     Conectar mi Spotify
                   </a>
+                ) : (
+                  !redeeming && (
+                    <button type="button" className={styles.linkBtn} onClick={() => setRedeeming(true)}>
+                      ¿Tienes una invitación?
+                    </button>
+                  )
+                )}
+                {access?.googleEnabled && user?.role === "member" && !user.google && (
+                  <a href="/api/auth/google/login" className={styles.linkBtn}>
+                    Vincular Google
+                  </a>
+                )}
+                {user?.google && user.hasPassword && (
+                  <button type="button" className={styles.linkBtn} onClick={unlinkGoogle}>
+                    Desvincular Google
+                  </button>
                 )}
                 <button type="button" className={styles.linkBtn} onClick={signOut}>
                   Salir
@@ -236,11 +295,13 @@ export default function Home() {
 function Connect({
   error,
   paused,
+  googleEnabled,
   onGuest,
   onSignedIn,
 }: {
   error: string | null;
   paused: boolean;
+  googleEnabled: boolean;
   onGuest: () => void;
   onSignedIn: () => void;
 }) {
@@ -282,7 +343,13 @@ function Connect({
         )}
       </div>
       {account ? (
-        <AccountCard key={account} initialTab={account} onDone={onSignedIn} onCancel={() => setAccount(null)} />
+        <AccountCard
+          key={account}
+          initialTab={account}
+          googleEnabled={googleEnabled}
+          onDone={onSignedIn}
+          onCancel={() => setAccount(null)}
+        />
       ) : (
         <Cassette
           title="Lado A · Pista 1"
@@ -312,6 +379,7 @@ function Shelf({
   onRetryList,
   onDelete,
   onDeleteAll,
+  aside,
   premium,
   newGameHref,
   notice,
@@ -323,6 +391,8 @@ function Shelf({
   onRetryList: () => Promise<void>;
   onDelete: (game: GameSummary) => void;
   onDeleteAll: () => void;
+  /** Bloque extra encima de los casetes (p. ej. canjear una invitación). */
+  aside?: ReactNode;
   premium: boolean | null;
   /** A qué formulario lleva «Grabar partida nueva» (sin Spotify, directo al modo abierto). */
   newGameHref: string;
@@ -353,6 +423,8 @@ function Shelf({
           Grabar partida nueva
         </Link>
       </div>
+
+      {aside}
 
       {listError && (
         <div className={styles.shelfNotice}>

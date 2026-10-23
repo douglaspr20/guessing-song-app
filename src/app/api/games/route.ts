@@ -1,5 +1,5 @@
 import { connection, type NextRequest } from "next/server";
-import { assertGuestCanCreateGame } from "@/lib/access/limits";
+import { assertOwnerCanCreateGame } from "@/lib/access/limits";
 import { currentOwner, requireOwner } from "@/lib/access/owner";
 import { handle } from "@/lib/errors";
 import { z } from "zod";
@@ -20,7 +20,7 @@ export const GET = handle(async (req: NextRequest) => {
  */
 export const POST = handle(async (req: Request) => {
   const owner = await requireOwner();
-  if (owner.kind === "guest") await assertGuestCanCreateGame(owner.guestId);
+  await assertOwnerCanCreateGame(owner);
   const game = await createGame(await req.json(), owner);
   return Response.json(game, { status: 201 });
 });

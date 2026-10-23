@@ -45,7 +45,7 @@ export async function authenticateHost(password: string, code: string, ipHash: s
 
   return db.user.upsert({
     where: { id: HOST_USER_ID },
-    create: { id: HOST_USER_ID, role: "host", username: "anfitrion", displayName: "Anfitrión" },
+    create: { id: HOST_USER_ID, role: "host", username: "anfitrion", displayName: "Anfitrión", spotifyAllowed: true },
     update: { disabledAt: null },
   });
 }

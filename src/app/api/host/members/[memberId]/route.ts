@@ -1,20 +1,25 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
-import { deleteMember, setMemberDisabled } from "@/lib/access/admin";
+import { deleteMember, setMemberDisabled, setMemberSpotify } from "@/lib/access/admin";
 import { requireHost, revokeSessions } from "@/lib/access/session";
 import { handle } from "@/lib/errors";
 
 type Ctx = RouteContext<"/api/host/members/[memberId]">;
 
-const patchSchema = z.object({ disabled: z.boolean().optional(), revokeSessions: z.literal(true).optional() });
+const patchSchema = z.object({
+  disabled: z.boolean().optional(),
+  revokeSessions: z.literal(true).optional(),
+  spotifyAllowed: z.boolean().optional(),
+});
 
-/** Desactiva/reactiva al miembro o le cierra las sesiones. Body: { disabled?, revokeSessions? } */
+/** Desactiva/reactiva, cierra sesiones o da/quita el modo Spotify. Body: { disabled?, revokeSessions?, spotifyAllowed? } */
 export const PATCH = handle(async (req: NextRequest, ctx: Ctx) => {
   await requireHost();
   const { memberId } = await ctx.params;
   const body = patchSchema.parse(await req.json());
   if (body.disabled !== undefined) await setMemberDisabled(memberId, body.disabled);
   if (body.revokeSessions) await revokeSessions(memberId);
+  if (body.spotifyAllowed !== undefined) await setMemberSpotify(memberId, body.spotifyAllowed);
   return new Response(null, { status: 204 });
 });
 
