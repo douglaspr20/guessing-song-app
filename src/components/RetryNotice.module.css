@@ -1,0 +1,21 @@
+.notice {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.text {
+  flex: 1 1 24ch;
+  font-size: 18px;
+}
+
+.retry {
+  min-height: 56px;
+  font-size: 19px;
+  padding: 8px 18px;
+}
+
+@media (max-width: 640px) {
+  .retry {
+    min-height: 48px;
+  }
+}
