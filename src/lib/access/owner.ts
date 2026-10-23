@@ -6,7 +6,9 @@ import { assertOpenModeAvailable } from "./limits";
 import { currentUser, notFound, type Role } from "./session";
 
 /** Dueño de partidas: un usuario con sesión o un invitado anónimo. */
-export type Owner = { kind: "user"; userId: string; role: Role } | { kind: "guest"; guestId: string };
+export type Owner =
+  | { kind: "user"; userId: string; role: Role; spotifyAllowed: boolean }
+  | { kind: "guest"; guestId: string };
 
 export function ownerWhere(owner: Owner) {
   return owner.kind === "user" ? { userId: owner.userId } : { guestId: owner.guestId };
@@ -19,7 +21,7 @@ export function ownerData(owner: Owner) {
 /** La sesión manda sobre la cookie de invitado. */
 export async function currentOwner(): Promise<Owner | null> {
   const user = await currentUser();
-  if (user) return { kind: "user", userId: user.id, role: user.role };
+  if (user) return { kind: "user", userId: user.id, role: user.role, spotifyAllowed: user.spotifyAllowed };
   const guest = await currentGuest();
   return guest ? { kind: "guest", guestId: guest.id } : null;
 }

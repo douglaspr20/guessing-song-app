@@ -19,19 +19,22 @@ datasource db {
 // Anfitrión (id "host", entra con la contraseña y el código TOTP de las variables de entorno)
 // o miembro (registrado con una invitación, entra con usuario y contraseña).
 model User {
-  id           String    @id @default(cuid())
+  id             String    @id @default(cuid())
   // "host" | "member"
-  role         String    @default("member")
-  username     String    @unique
-  // scrypt; null en el anfitrión (su contraseña vive en HOST_PASSWORD_HASH).
-  passwordHash String?
-  displayName  String
-  disabledAt   DateTime?
-  failedLogins Int       @default(0)
-  lockedUntil  DateTime?
-  createdAt    DateTime  @default(now())
+  role           String    @default("member")
+  username       String    @unique
+  // scrypt; null en el anfitrión (su contraseña vive en HOST_PASSWORD_HASH) y en las cuentas solo de Google.
+  passwordHash   String?
+  // Permiso para el modo Spotify: solo con invitación (las cuentas gratis de Google empiezan sin él).
+  spotifyAllowed Boolean   @default(false)
+  displayName    String
+  disabledAt     DateTime?
+  failedLogins   Int       @default(0)
+  lockedUntil    DateTime?
+  createdAt      DateTime  @default(now())
 
   spotify  SpotifyAccount?
+  google   GoogleAccount?
   sessions Session[]
   games    Game[]
   invites  Invite[]
@@ -47,6 +50,18 @@ model SpotifyAccount {
   refreshToken  String
   expiresAt     DateTime
   updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Cuenta de Google con la que se entra (OpenID Connect). Solo guardamos su identidad, nunca sus tokens.
+model GoogleAccount {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  // "sub" del id_token: el identificador estable de la cuenta de Google.
+  googleSub String   @unique
+  email     String
+  createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

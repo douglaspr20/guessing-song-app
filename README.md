@@ -26,11 +26,12 @@ The interface is designed around a **home-recorded cassette**: every game is a n
 
 ## Who can play
 
-| Role   | How they get in                                                                                         | What they can do                                                                                                                          |
-| ------ | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Host   | A hidden page, with a password **and** a 6-digit TOTP code (both secrets live in environment variables) | Everything, plus the control panel: invitations, members, guest moderation                                                                |
-| Member | Username and password; sign-up only with a single-use invitation code from the host                     | Open mode, and Spotify mode with **their own** Spotify account (if the host added it to the Spotify dashboard). Only sees their own games |
-| Guest  | "Jugar sin cuenta" (an anonymous cookie, no data asked)                                                 | Open mode with limits. Only sees the games created in that browser                                                                        |
+| Role | How they get in | What they can do |
+| --- | --- | --- |
+| Host | A hidden page, with a password **and** a 6-digit TOTP code (both secrets live in environment variables). Never through Google | Everything, plus the control panel: invitations, members, Spotify permission, guest moderation |
+| Invited member | Username and password with a single-use invitation code, or a free account that redeemed one (or got it from the host) | Open mode, and Spotify mode with **their own** Spotify account (if the host added it to the Spotify dashboard) |
+| Free account | "Continuar con Google": open to anyone, no invitation | Open mode with its own history across devices, same limits as guests |
+| Guest | "Jugar sin cuenta" (an anonymous cookie, no data asked) | Open mode with limits. Only sees the games created in that browser |
 
 Spotify only grants extended API access to registered businesses with 250k+ monthly users, so a hobby app stays in _development mode_: at most 5 Spotify accounts, added by hand. Each member links their own account instead of borrowing the host's (a Premium account only plays on one device at a time). Open mode is the public way in.
 
@@ -66,6 +67,7 @@ Spotify only grants extended API access to registered businesses with 250k+ mont
 - **One player interface, two backends.** A shared fragment timer drives either the Spotify SDK or an `<audio>` element; the game screen doesn't know which. Scoring and hint timings come from per-mode rules (`SPOTIFY_RULES` / `OPEN_RULES`).
 - **One Spotify player for the whole app.** Next 16 keeps pages alive between navigations (React `<Activity>`), so the SDK player is a module-level singleton; if Spotify answers _Device not found_, the server looks the player up by name, transfers playback and retries.
 - **Clean domain layer.** Route handlers only validate and delegate to `src/lib/game/service.ts`; game rules (`scoring.ts`, `matcher.ts`, `track-picker.ts`) are pure functions with unit tests and an injectable track source.
+- **Sign in with Google without an auth library.** OpenID Connect with PKCE and a `nonce`; the id_token comes straight from Google's token endpoint and its audience, issuer, expiry, nonce and verified email are checked. Accounts are never merged by email, and the host account can't sign in through Google (it would skip the TOTP factor).
 - **Access control without an auth library.** Sessions are random 256-bit tokens stored only as SHA-256 hashes; passwords use scrypt; the host adds a TOTP second factor with replay protection; Spotify tokens are encrypted at rest with AES-256-GCM. Every game route checks ownership and answers 404 for anything that isn't yours. State-changing requests must carry a same-origin `Origin` header (CSRF), and logins are throttled per IP and globally. All of it uses `node:crypto` only.
 - **Abuse brakes for the public mode.** Guests are rate-limited (new guests per IP, games per day, rounds per hour, a global cap sized for the free database tier); a daily cron removes inactive guests with their games, and the host can pause open mode, stop new guests, block a connection or wipe all guests from the panel.
 - **Living with Spotify's API limits.** Endpoints removed for new apps (recommendations, genre seeds) are replaced by a curated genre list and randomized search offsets; playlists the API can't read are detected and skipped.
@@ -112,6 +114,7 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
 3. **Environment variables** (_Settings → Environment Variables_, mark the secrets as _Sensitive_):
    - `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`
    - `SPOTIFY_REDIRECT_URI` = `https://<your-domain>/api/auth/callback`
+   - Optional, for Google sign-in: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and `GOOGLE_REDIRECT_URI` = `https://<your-domain>/api/auth/google/callback` (register that URI in the OAuth client and publish the consent screen with the basic `openid email profile` scopes)
    - `HOST_PASSWORD_HASH`, `HOST_TOTP_SECRET`, `TOKEN_ENCRYPTION_KEY`, `CRON_SECRET` from `npm run host:setup`. You can reuse your local values or generate new ones for production; a different `TOKEN_ENCRYPTION_KEY` only means linking Spotify again there.
 4. **Spotify dashboard:** add the production redirect URI next to the local one. Under _User Management_ keep your account plus up to 4 members.
 5. **Deploy**, open `https://<your-domain>/<host page>`, sign in and link your Spotify. Vercel calls the cleanup every day with `Authorization: Bearer $CRON_SECRET`.
@@ -138,6 +141,8 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
 | --------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | GET                         | `/api/access/status`                                                   | Who is using the app (member/host/guest) and their Spotify link                        |
 | POST                        | `/api/account/register` · `/api/account/login` · `/api/account/logout` | Member sign-up (with invitation), sign-in and sign-out                                 |
+| GET · POST | `/api/auth/google/{login,callback}` · `/api/auth/google/unlink` | Sign in (or link) with Google / unlink it |
+| POST | `/api/account/invite` | A signed-in free account redeems an invitation `{ invite }` to unlock Spotify mode |
 | POST · DELETE               | `/api/guest`                                                           | Start / forget the anonymous guest of this browser                                     |
 | GET                         | `/api/auth/login` · `/api/auth/callback`                               | Link the signed-in user's Spotify (OAuth); `POST /api/auth/logout` unlinks it          |
 | POST · DELETE               | `/api/host/login` · `/api/host/sessions`                               | Host sign-in (password + TOTP) / sign out everywhere                                   |

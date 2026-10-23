@@ -40,7 +40,7 @@ function NewGame() {
   /** "spotify": canción completa (necesita cuenta). "open": vistas previas de 30 s, sin cuenta. */
   const [mode, setMode] = useState<GameMode>(searchParams.get("modo") === "abierto" ? "open" : "spotify");
   const [connected, setConnected] = useState<boolean | null>(null);
-  /** Con sesión (miembro o anfitrión) se puede vincular Spotify; un invitado no. */
+  /** Con permiso de Spotify (invitación o anfitrión) se ofrece el modo; sin él, ni aparece. */
   const [canLink, setCanLink] = useState(false);
   const [source, setSource] = useState<Source>("search");
   const [genres, setGenres] = useState<string[]>([]);
@@ -58,7 +58,7 @@ function NewGame() {
     api<AccessStatus>("/api/access/status").then(
       (a) => {
         setConnected(!!a.spotify);
-        setCanLink(!!a.user);
+        setCanLink(!!a.user?.spotifyAllowed);
         // Sin Spotify solo se puede jugar en modo abierto.
         if (!a.spotify) return setMode("open");
         api<{ playlists: Playlist[] }>("/api/spotify/playlists").then(

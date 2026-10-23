@@ -1,0 +1,44 @@
+.card {
+  margin-bottom: 24px;
+}
+
+/* En escritorio, texto a la izquierda y el código con sus botones a la derecha. */
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  grid-template-areas:
+    "copy field"
+    "copy actions"
+    "error error";
+  gap: 16px clamp(20px, 3vw, 40px);
+  align-items: end;
+  padding: 22px clamp(20px, 3vw, 32px) 26px;
+}
+
+.copy {
+  grid-area: copy;
+  align-self: start;
+}
+
+.field {
+  grid-area: field;
+}
+
+.actions {
+  grid-area: actions;
+}
+
+.error {
+  grid-area: error;
+}
+
+@media (max-width: 900px) {
+  .body {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "copy"
+      "field"
+      "actions"
+      "error";
+  }
+}

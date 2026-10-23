@@ -153,6 +153,9 @@ async function catalogNumberOf(game: Game) {
   return db.game.count({ where: { ...sameOwner(game), createdAt: { lte: game.createdAt } } });
 }
 
+export const spotifyInviteRequired = () =>
+  new AppError("El modo Spotify es solo con invitación", 403, "SPOTIFY_INVITE_REQUIRED");
+
 /** Usuario cuyo Spotify suena en una partida de Spotify. */
 function spotifyUserOf(game: Pick<Game, "userId">) {
   if (!game.userId) throw new AppError("Esta partida no tiene una cuenta de Spotify", 409, "SPOTIFY_NOT_CONNECTED");
@@ -245,6 +248,7 @@ export async function createGame(input: CreateGameInput, owner: Owner): Promise<
   if (data.mode === "spotify") {
     // Un invitado no tiene Spotify: para él el modo ni existe.
     if (owner.kind !== "user") throw new AppError("No encontrado", 404, "NOT_FOUND");
+    if (!owner.spotifyAllowed) throw spotifyInviteRequired();
     if (!(await db.spotifyAccount.count({ where: { userId: owner.userId } }))) {
       throw new AppError("Conecta tu Spotify para grabar partidas con canción completa", 409, "SPOTIFY_NOT_LINKED");
     }
