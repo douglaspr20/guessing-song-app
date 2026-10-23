@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useConfirm, useToast, type ConfirmOptions } from "@/components/feedback/FeedbackProvider";
 import { RetryNotice } from "@/components/RetryNotice";
 import ui from "@/components/ui.module.css";
@@ -15,6 +16,26 @@ export function MembersSection() {
   const confirm = useConfirm();
   const toast = useToast();
   const { data, error, reload } = useHostData<{ members: Member[] }>("/api/host/members");
+  /** Contraseña temporal recién creada: se enseña una sola vez, bajo su miembro. */
+  const [reset, setReset] = useState<{ id: string; username: string; password: string } | null>(null);
+
+  const resetPassword = async (m: Member) => {
+    const ok = await confirm({
+      title: `¿Restablecer la contraseña de @${m.username}?`,
+      body: "Se crea una contraseña temporal y se cierran todas sus sesiones. Al entrar con ella se le pedirá ponerse una suya.",
+      confirmLabel: "Restablecer",
+      tone: "danger",
+    });
+    if (!ok) return;
+    try {
+      const res = await api<{ password: string; username: string }>(`/api/host/members/${m.id}/password`, { method: "POST" });
+      setReset({ id: m.id, ...res });
+      toast({ text: `Contraseña de @${res.username} restablecida.` });
+    } catch (err) {
+      toast({ text: errorMessage(err), tone: "error" });
+    }
+    await reload();
+  };
 
   /** Acción sobre un miembro: confirma si hace falta, llama a la API y avisa del resultado. */
   const act = async (
@@ -101,6 +122,9 @@ export function MembersSection() {
                 >
                   {m.spotifyAllowed ? "Quitar Spotify" : "Permitir Spotify"}
                 </button>
+                <button type="button" className={`${ui.btn} ${ui.onCard} ${styles.small}`} onClick={() => resetPassword(m)}>
+                  {m.hasPassword ? "Restablecer contraseña" : "Crear contraseña"}
+                </button>
                 {m.sessions > 0 && (
                   <button
                     type="button"
@@ -154,6 +178,15 @@ export function MembersSection() {
                   Borrar
                 </button>
               </span>
+              {reset?.id === m.id && (
+                <div className={`${styles.newCode} ${styles.fullRow}`} role="status">
+                  <span className={styles.statLabel}>Contraseña temporal de @{reset.username}: cópiala ahora</span>
+                  <span className={styles.codeValue}>{reset.password}</span>
+                  <span className={styles.itemMeta}>
+                    Dásela en persona o por un canal privado. Al entrar se le pedirá cambiarla.
+                  </span>
+                </div>
+              )}
             </li>
           ))}
         </ul>

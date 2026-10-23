@@ -11,7 +11,6 @@
     "test:integration": "vitest run --config vitest.integration.config.mts",
     "db:up": "docker compose up -d --wait",
     "db:migrate": "prisma migrate dev",
-    "host:setup": "node scripts/host-setup.mjs",
     "typecheck": "next typegen && tsc --noEmit",
     "postinstall": "prisma generate"
   },

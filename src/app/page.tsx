@@ -6,6 +6,7 @@ import { AlertTriangle, Info, Plus, Play, Trash2 } from "lucide-react";
 import { AccountCard, type AccountTab } from "@/components/AccountCard";
 import { Cassette } from "@/components/Cassette";
 import { useConfirm, useToast } from "@/components/feedback/FeedbackProvider";
+import { ChangePassword } from "@/components/ChangePassword";
 import { RedeemInvite } from "@/components/RedeemInvite";
 import { RetryNotice } from "@/components/RetryNotice";
 import { Podium } from "@/components/Podium";
@@ -54,6 +55,8 @@ export default function Home() {
   const [notice, setNotice] = useState<string | null>(null);
   /** Formulario para canjear una invitación (cuentas gratis), abierto desde el pie de la estantería. */
   const [redeeming, setRedeeming] = useState(false);
+  /** Formulario para cambiar (o poner) la contraseña, abierto desde el pie de la estantería. */
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const refresh = useCallback(async () => {
     setList(null);
@@ -190,7 +193,23 @@ export default function Home() {
     await refresh();
   };
 
+  const passwordChanged = async () => {
+    setChangingPassword(false);
+    toast({ text: "Contraseña guardada. Tus otras sesiones se cerraron." });
+    await refresh();
+  };
+
   const user = access?.user ?? null;
+  // Si el anfitrión la restableció, el formulario aparece solo hasta que se ponga una propia.
+  const passwordForm =
+    user?.mustChangePassword || changingPassword ? (
+      <ChangePassword
+        hasPassword={user?.hasPassword ?? false}
+        forced={!!user?.mustChangePassword}
+        onDone={passwordChanged}
+        onCancel={() => setChangingPassword(false)}
+      />
+    ) : null;
 
   const status =
     view === "account" && access?.user
@@ -230,7 +249,7 @@ export default function Home() {
             premium={access?.spotify?.premium ?? null}
             newGameHref={access?.spotify ? "/nueva" : "/nueva?modo=abierto"}
             notice={loginError}
-            aside={redeeming && <RedeemInvite onDone={redeemed} onCancel={() => setRedeeming(false)} />}
+            aside={passwordForm ?? (redeeming && <RedeemInvite onDone={redeemed} onCancel={() => setRedeeming(false)} />)}
             footer={
               <>
                 {user?.role === "host" && (
@@ -257,6 +276,11 @@ export default function Home() {
                   <a href="/api/auth/google/login" className={styles.linkBtn}>
                     Vincular Google
                   </a>
+                )}
+                {user?.role === "member" && !passwordForm && (
+                  <button type="button" className={styles.linkBtn} onClick={() => setChangingPassword(true)}>
+                    {user.hasPassword ? "Cambiar contraseña" : "Poner contraseña"}
+                  </button>
                 )}
                 {user?.google && user.hasPassword && (
                   <button type="button" className={styles.linkBtn} onClick={unlinkGoogle}>

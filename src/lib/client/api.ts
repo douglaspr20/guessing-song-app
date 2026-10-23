@@ -18,6 +18,8 @@ export interface AccessStatus {
     spotifyAllowed: boolean;
     /** Tiene contraseña (si no, solo entra con Google y no puede desvincularlo). */
     hasPassword: boolean;
+    /** El anfitrión le restableció la contraseña: tiene que ponerse una suya. */
+    mustChangePassword: boolean;
     google: { email: string } | null;
   } | null;
   /** Este navegador ya eligió «Jugar sin cuenta». */
