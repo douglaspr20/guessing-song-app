@@ -3,7 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
 import { Scoreboard } from "@/components/Scoreboard";
-import { TopBar } from "@/components/TopBar";
+import { BandStatus } from "@/components/band/BandStatus";
 import ui from "@/components/ui.module.css";
 import { catalogLabel } from "@/lib/client/api";
 import { AnswerForm } from "./_components/AnswerForm";
@@ -25,7 +25,7 @@ export function GameClient() {
   const ctl = useGameController(id);
   const { game, round, clock, player, rules, actions } = ctl;
 
-  if (ctl.loadError) return <LoadErrorScreen message={ctl.loadError} />;
+  if (ctl.loadError) return <LoadErrorScreen error={ctl.loadError} onRetry={ctl.retryLoad} />;
   if (!game) return <LoadingScreen />;
   if (ctl.showFinale) return <Finale game={game} />;
 
@@ -49,7 +49,7 @@ export function GameClient() {
 
   return (
     <>
-      <TopBar status={status} />
+      <BandStatus text={status} />
       <main className={styles.main}>
         {player.status === "error" && player.error && <ErrorNotice className={styles.playerError} message={player.error} />}
 

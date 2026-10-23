@@ -1,13 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Barlow, Barlow_Condensed, Kalam } from "next/font/google";
+import { BandProvider } from "@/components/band/BandStatus";
+import { FeedbackProvider } from "@/components/feedback/FeedbackProvider";
+import { fontClasses } from "./fonts";
 import "./globals.css";
-
-// Texto corrido.
-const body = Barlow({ variable: "--font-body", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
-// Contadores, etiquetas y botones: la tipografía de las rayas de la cinta.
-const cond = Barlow_Condensed({ variable: "--font-cond", subsets: ["latin"], weight: ["500", "600", "700", "800"] });
-// Lo "escrito a mano" en la carátula: nombres y títulos.
-const hand = Kalam({ variable: "--font-hand", subsets: ["latin"], weight: ["400", "700"] });
 
 export const metadata: Metadata = {
   title: "Adivina la canción",
@@ -20,7 +15,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es" className={`${body.variable} ${cond.variable} ${hand.variable}`}>
+    <html lang="es" className={fontClasses}>
       <body>
         {process.env.NODE_ENV !== "production" && (
           // En desarrollo Spotify solo vuelve a 127.0.0.1, y para el navegador "localhost" es otro sitio
@@ -31,7 +26,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             }}
           />
         )}
-        {children}
+        <FeedbackProvider>
+          {/* La banda de rayas de arriba: una para toda la app; cada pantalla pone su etiqueta con <BandStatus>. */}
+          <BandProvider>{children}</BandProvider>
+        </FeedbackProvider>
       </body>
     </html>
   );

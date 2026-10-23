@@ -2,13 +2,23 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { AlertTriangle, Info, Plus, Play } from "lucide-react";
+import { AlertTriangle, Info, Plus, Play, Trash2 } from "lucide-react";
 import { AccountCard, type AccountTab } from "@/components/AccountCard";
 import { Cassette } from "@/components/Cassette";
+import { useConfirm, useToast } from "@/components/feedback/FeedbackProvider";
+import { RetryNotice } from "@/components/RetryNotice";
 import { Podium } from "@/components/Podium";
-import { TopBar } from "@/components/TopBar";
+import { BandStatus } from "@/components/band/BandStatus";
 import ui from "@/components/ui.module.css";
-import { api, ApiError, catalogLabel, formatDate, type AccessStatus, type GameList } from "@/lib/client/api";
+import {
+  api,
+  ApiError,
+  catalogLabel,
+  formatDate,
+  type AccessStatus,
+  type GameList,
+  type GameSummary,
+} from "@/lib/client/api";
 import styles from "./home.module.css";
 
 const LOGIN_ERRORS: Record<string, string> = {
@@ -21,18 +31,29 @@ const LOGIN_ERRORS: Record<string, string> = {
   in_use: "Esa cuenta de Spotify ya está vinculada a otro usuario de la app.",
 };
 
-const SIGNED_OUT: AccessStatus = { user: null, guest: false, spotify: null, openModePaused: false };
+const SHELF_TITLE_ID = "estanteria";
 const PAUSED_NOTICE = "El modo sin cuenta está en mantenimiento. Vuelve a probar en un rato.";
 
 export default function Home() {
+  const confirm = useConfirm();
+  const toast = useToast();
   const [access, setAccess] = useState<AccessStatus | null>(null);
+  /** No se pudo saber quién usa la app (API caída): se dice y se ofrece reintentar. */
+  const [accessError, setAccessError] = useState<string | null>(null);
   const [list, setList] = useState<GameList | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setList(null);
-    setAccess(await api<AccessStatus>("/api/access/status").catch(() => SIGNED_OUT));
+    try {
+      setAccess(await api<AccessStatus>("/api/access/status"));
+      setAccessError(null);
+    } catch (err) {
+      setAccess(null);
+      setAccessError(errorText(err));
+    }
   }, []);
 
   useEffect(() => {
@@ -44,11 +65,74 @@ export default function Home() {
   }, [refresh]);
 
   // La estantería solo aparece con sesión o tras elegir jugar sin cuenta.
-  const view = !access ? "loading" : access.user ? "account" : access.guest ? "guest" : "connect";
+  const view = accessError ? "error" : !access ? "loading" : access.user ? "account" : access.guest ? "guest" : "connect";
   const showsShelf = view === "account" || view === "guest";
+
+  const loadList = useCallback(async () => {
+    try {
+      setList(await api<GameList>("/api/games?limit=12"));
+      setListError(null);
+    } catch (err) {
+      setListError(errorText(err));
+    }
+  }, []);
   useEffect(() => {
-    if (showsShelf) api<GameList>("/api/games?limit=12").then(setList, () => setList({ total: 0, games: [] }));
-  }, [showsShelf, access]);
+    // La estantería se pide al saber quién es (viene del servidor).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (showsShelf) loadList();
+  }, [showsShelf, access, loadList]);
+
+  /** El botón que abrió la confirmación desaparece al borrar: el foco vuelve al título de la estantería. */
+  const focusShelf = () => document.getElementById(SHELF_TITLE_ID)?.focus();
+
+  /** Borra un casete de la estantería, con confirmación. */
+  const deleteGame = async (game: GameSummary) => {
+    const label = catalogLabel(game.catalogNumber);
+    const ok = await confirm({
+      title: `¿Borrar el casete ${label}?`,
+      body:
+        game.status === "FINISHED"
+          ? "Se borra con su podio y sus rondas. No se puede deshacer."
+          : "Está a medio grabar: se borra sin terminar. No se puede deshacer.",
+      confirmLabel: "Borrar casete",
+      tone: "danger",
+    });
+    if (!ok) return;
+    try {
+      await api(`/api/games/${game.id}`, { method: "DELETE" });
+      toast({ text: `Casete ${label} borrado.` });
+    } catch (err) {
+      toast({ text: errorText(err), tone: "error" });
+    }
+    await loadList();
+    focusShelf();
+  };
+
+  /** Vacía toda la estantería del usuario o invitado (pide escribir BORRAR). */
+  const deleteHistory = async () => {
+    const total = list?.total ?? 0;
+    const ok = await confirm({
+      title: "¿Borrar todo tu historial?",
+      body: (
+        <>
+          Se borran <strong>{total === 1 ? "el único casete" : `los ${total} casetes`}</strong> de tu estantería, con sus
+          podios. Las partidas de otras personas no se tocan. No se puede deshacer.
+        </>
+      ),
+      confirmLabel: "Borrar historial",
+      tone: "danger",
+      typeToConfirm: "BORRAR",
+    });
+    if (!ok) return;
+    try {
+      const { deleted } = await api<{ deleted: number }>("/api/games", { method: "DELETE", json: { confirm: "BORRAR" } });
+      toast({ text: deleted === 1 ? "1 casete borrado. La estantería está vacía." : `${deleted} casetes borrados. La estantería está vacía.` });
+    } catch (err) {
+      toast({ text: errorText(err), tone: "error" });
+    }
+    await loadList();
+    focusShelf();
+  };
 
   const playAsGuest = async () => {
     setNotice(null);
@@ -83,15 +167,24 @@ export default function Home() {
 
   return (
     <div className={styles.page}>
-      <TopBar status={status} />
+      <BandStatus text={status} />
       <main className={styles.main}>
         {view === "loading" && <p className={styles.loading}>Rebobinando…</p>}
+        {view === "error" && (
+          <div className={styles.errorWrap}>
+            <RetryNotice message={`No pudimos conectar con el juego. ${accessError}`} onRetry={refresh} />
+          </div>
+        )}
         {view === "connect" && (
           <Connect error={loginError ?? notice} paused={!!access?.openModePaused} onGuest={playAsGuest} onSignedIn={refresh} />
         )}
         {view === "account" && (
           <Shelf
             list={list}
+            listError={listError}
+            onRetryList={loadList}
+            onDelete={deleteGame}
+            onDeleteAll={deleteHistory}
             premium={access?.spotify?.premium ?? null}
             newGameHref={access?.spotify ? "/nueva" : "/nueva?modo=abierto"}
             notice={loginError}
@@ -121,6 +214,10 @@ export default function Home() {
         {view === "guest" && (
           <Shelf
             list={list}
+            listError={listError}
+            onRetryList={loadList}
+            onDelete={deleteGame}
+            onDeleteAll={deleteHistory}
             premium={null}
             newGameHref="/nueva?modo=abierto"
             notice={access?.openModePaused ? PAUSED_NOTICE : null}
@@ -211,12 +308,21 @@ function Connect({
 
 function Shelf({
   list,
+  listError,
+  onRetryList,
+  onDelete,
+  onDeleteAll,
   premium,
   newGameHref,
   notice,
   footer,
 }: {
   list: GameList | null;
+  /** La estantería no cargó: aviso con «Reintentar» en vez de decir que está vacía. */
+  listError: string | null;
+  onRetryList: () => Promise<void>;
+  onDelete: (game: GameSummary) => void;
+  onDeleteAll: () => void;
   premium: boolean | null;
   /** A qué formulario lleva «Grabar partida nueva» (sin Spotify, directo al modo abierto). */
   newGameHref: string;
@@ -229,9 +335,13 @@ function Shelf({
     <>
       <div className={styles.shelfHead}>
         <div>
-          <h1 className={styles.shelfTitle}>Tu estantería</h1>
+          <h1 className={styles.shelfTitle} id={SHELF_TITLE_ID} tabIndex={-1}>
+            Tu estantería
+          </h1>
           <p className={styles.shelfSub}>
-            {list
+            {listError
+              ? "No se pudo leer la estantería"
+              : list
               ? count
                 ? `${count} ${count === 1 ? "casete grabado" : "casetes grabados"}`
                 : "Todavía no hay casetes"
@@ -243,6 +353,12 @@ function Shelf({
           Grabar partida nueva
         </Link>
       </div>
+
+      {listError && (
+        <div className={styles.shelfNotice}>
+          <RetryNotice message={`No se pudieron cargar tus casetes. ${listError}`} onRetry={onRetryList} />
+        </div>
+      )}
 
       {notice && (
         <p className={`${ui.notice} ${ui.noticeError}`} role="alert" style={{ marginBottom: 24 }}>
@@ -279,9 +395,20 @@ function Shelf({
                 {/* Lomo del casete: rayas de borde a borde con el número de catálogo pegado. */}
                 <div className={styles.spineBand}>
                   <span className={styles.catalog}>{catalogLabel(g.catalogNumber)}</span>
-                  <span className={styles.spineMeta}>
-                    {g.mode === "open" ? "Sin cuenta · 30 s · " : ""}
-                    {formatDate(g.createdAt)}
+                  <span className={styles.spineTags}>
+                    <span className={styles.spineMeta}>
+                      {g.mode === "open" ? "Sin cuenta · 30 s · " : ""}
+                      {formatDate(g.createdAt)}
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.spineDelete}
+                      onClick={() => onDelete(g)}
+                      aria-label={`Borrar el casete ${catalogLabel(g.catalogNumber)}`}
+                      title="Borrar casete"
+                    >
+                      <Trash2 size={20} aria-hidden />
+                    </button>
                   </span>
                 </div>
                 <div className={styles.spineBody}>
@@ -317,7 +444,18 @@ function Shelf({
         </ul>
       )}
 
-      <div className={styles.foot}>{footer}</div>
+      <div className={styles.foot}>
+        {count > 0 && (
+          <button type="button" className={styles.linkBtn} onClick={onDeleteAll}>
+            Borrar mi historial
+          </button>
+        )}
+        {footer}
+      </div>
     </>
   );
+}
+
+function errorText(err: unknown) {
+  return err instanceof ApiError ? err.message : "No se pudo conectar. Prueba otra vez.";
 }

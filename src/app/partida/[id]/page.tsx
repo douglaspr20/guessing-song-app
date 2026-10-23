@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { TopBar } from "@/components/TopBar";
 import { GameClient } from "./GameClient";
 import styles from "./game.module.css";
 
@@ -9,7 +8,6 @@ export default function GamePage() {
     <Suspense
       fallback={
         <>
-          <TopBar />
           <main className={styles.main}>
             <div className={styles.stage}>
               <p className={styles.stageLabel}>Rebobinando…</p>
