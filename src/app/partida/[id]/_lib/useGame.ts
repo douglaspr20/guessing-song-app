@@ -12,7 +12,8 @@ export function useGame(gameId: string, onFirstLoad?: (game: Game) => void) {
   const [game, setGame] = useState<Game | null>(null);
   const [guesses, setGuesses] = useState<GuessRow[]>([]);
   const [fetchedAt, setFetchedAt] = useState(0);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  /** Por qué no se pudo abrir: la partida no existe (o no es tuya) o falló la conexión. */
+  const [loadError, setLoadError] = useState<{ missing: boolean; message: string } | null>(null);
 
   const refresh = useCallback(async () => {
     const g = await api<Game>(`/api/games/${gameId}`);
@@ -27,16 +28,29 @@ export function useGame(gameId: string, onFirstLoad?: (game: Game) => void) {
     return g;
   }, [gameId]);
 
+  const firstLoad = useCallback(
+    () =>
+      refresh().then(
+        (g) => {
+          setLoadError(null);
+          onFirstLoad?.(g);
+        },
+        (e) =>
+          setLoadError({
+            missing: e instanceof ApiError && e.status === 404,
+            message: e instanceof ApiError ? e.message : "No se pudo conectar. Prueba otra vez.",
+          }),
+      ),
+    // Solo depende de la partida; onFirstLoad no debe relanzar la carga.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [refresh],
+  );
+
   useEffect(() => {
     // Carga inicial de la partida desde la API.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    refresh().then(
-      (g) => onFirstLoad?.(g),
-      (e) => setLoadError(e instanceof ApiError && e.status === 404 ? "Esta partida no existe." : (e as Error).message),
-    );
-    // Solo al cargar la partida; onFirstLoad no debe relanzarla.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refresh]);
+    firstLoad();
+  }, [firstLoad]);
 
   // La siguiente pista la desbloquea el servidor: se le pregunta justo cuando toca.
   const nextHintAt = game?.round?.nextHintAt;
@@ -47,7 +61,7 @@ export function useGame(gameId: string, onFirstLoad?: (game: Game) => void) {
     return () => clearTimeout(t);
   }, [nextHintAt, refresh]);
 
-  return { game, guesses, fetchedAt, loadError, refresh };
+  return { game, guesses, fetchedAt, loadError, retryLoad: firstLoad, refresh };
 }
 
 /** Reloj de pantalla que avanza cada `intervalMs`. Vale 0 hasta el primer tick (prerender). */

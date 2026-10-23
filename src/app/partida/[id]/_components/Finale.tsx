@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Podium } from "@/components/Podium";
 import { TapeConfetti } from "@/components/TapeConfetti";
-import { TopBar } from "@/components/TopBar";
+import { BandStatus } from "@/components/band/BandStatus";
 import ui from "@/components/ui.module.css";
 import { catalogLabel, formatDate, type Game, type Player } from "@/lib/client/api";
 import styles from "../game.module.css";
@@ -17,7 +17,7 @@ export function Finale({ game }: { game: Game }) {
   return (
     <>
       {!nobody && <TapeConfetti />}
-      <TopBar status={`${cat} · Fin de la cinta`} />
+      <BandStatus text={`${cat} · Fin de la cinta`} />
       <main className={styles.main}>
         <section className={`${ui.card} ${styles.finale}`} aria-live="polite">
           <div className={styles.finaleBand}>

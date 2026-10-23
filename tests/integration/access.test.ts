@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { authenticateMember, MEMBER_LOCK, registerMember } from "@/lib/access/accounts";
-import { blockIp, deleteAllGuests, runCleanup } from "@/lib/access/admin";
+import { blockIp, deleteAllGuests, deleteMemberGames, runCleanup } from "@/lib/access/admin";
 import { guestForToken, registerGuest } from "@/lib/access/guest";
 import { authenticateHost } from "@/lib/access/host";
 import { createInvite } from "@/lib/access/invites";
@@ -13,7 +13,7 @@ import { setAppFlags } from "@/lib/access/state";
 import { LOGIN_LIMITS } from "@/lib/access/throttle";
 import { base32Encode, hotp, totpCounter } from "@/lib/access/totp";
 import { db } from "@/lib/db";
-import { createGame, getGame, listGames } from "@/lib/game/service";
+import { createGame, deleteAllGames, getGame, listGames } from "@/lib/game/service";
 
 const openGame = (owner: Owner) => createGame({ mode: "open", rounds: 3, players: ["Ana", "Luis"] }, owner);
 
@@ -172,6 +172,38 @@ describe("sesiones", () => {
     expect(await userForSessionToken(token, new Date(Date.now() + 8 * 24 * 60 * 60_000))).toBeNull();
     await db.user.update({ where: { id: user.id }, data: { disabledAt: new Date() } });
     expect(await userForSessionToken(token)).toBeNull();
+  });
+});
+
+describe("gestión del historial", () => {
+  it("cada dueño borra todo lo suyo y nada de los demás", async () => {
+    const a = await newGuest("ip-a");
+    const b = await newGuest("ip-b");
+    const { owner: member } = await newMember();
+    await openGame(a.owner);
+    await openGame(a.owner);
+    await openGame(b.owner);
+    await openGame(member);
+
+    expect(await deleteAllGames(a.owner)).toBe(2);
+    expect((await listGames(a.owner)).total).toBe(0);
+    expect((await listGames(b.owner)).total).toBe(1);
+    expect((await listGames(member)).total).toBe(1);
+    expect(await deleteAllGames(a.owner)).toBe(0);
+  });
+
+  it("el anfitrión borra el historial de un miembro sin tocar su cuenta", async () => {
+    const { user, owner } = await newMember("pablo");
+    const other = await newMember("rosa");
+    await openGame(owner);
+    await openGame(owner);
+    await openGame(other.owner);
+
+    expect(await deleteMemberGames(user.id)).toBe(2);
+    expect(await db.user.findUnique({ where: { id: user.id } })).not.toBeNull();
+    expect((await listGames(owner)).total).toBe(0);
+    expect((await listGames(other.owner)).total).toBe(1);
+    expect(await fails(deleteMemberGames("no-existe"))).toMatchObject({ code: "MEMBER_NOT_FOUND", status: 404 });
   });
 });
 

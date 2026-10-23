@@ -26,7 +26,7 @@ export interface GuessInput {
  */
 export function useGameController(gameId: string) {
   const [showFinale, setShowFinale] = useState(false);
-  const { game, guesses, fetchedAt, loadError, refresh } = useGame(gameId, (g) => {
+  const { game, guesses, fetchedAt, loadError, retryLoad, refresh } = useGame(gameId, (g) => {
     // Una partida terminada se abre directamente en el podio.
     if (g.status === "FINISHED" && g.round?.status !== "PLAYING") setShowFinale(true);
   });
@@ -209,6 +209,7 @@ export function useGameController(gameId: string) {
     round,
     guesses,
     loadError,
+    retryLoad,
     player,
     rules,
     clock,

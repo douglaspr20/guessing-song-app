@@ -55,6 +55,8 @@ export class ApiError extends Error {
   }
 }
 
+export const SERVER_DOWN = "El servidor no respondió. Prueba otra vez en un momento.";
+
 export async function api<T>(url: string, init: { method?: string; json?: unknown } = {}): Promise<T> {
   const res = await fetch(url, {
     method: init.method ?? (init.json !== undefined ? "POST" : "GET"),
@@ -63,7 +65,11 @@ export async function api<T>(url: string, init: { method?: string; json?: unknow
     cache: "no-store",
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new ApiError(data.message ?? "Algo salió mal", data.error ?? "UNKNOWN", res.status);
+  if (!res.ok) {
+    // Un fallo del servidor no le dice nada útil a la familia: mensaje común y que pueda reintentar.
+    const message = res.status >= 500 ? SERVER_DOWN : (data.message ?? "Algo salió mal");
+    throw new ApiError(message, data.error ?? "UNKNOWN", res.status);
+  }
   return data as T;
 }
 
