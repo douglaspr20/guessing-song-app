@@ -10,7 +10,7 @@ vi.mock("next/server", async (importOriginal) => ({
 
 beforeEach(async () => {
   await db.$executeRawUnsafe(
-    `TRUNCATE "Game", "Guest", "User", "Invite", "LoginAttempt", "BlockedIp", "AppState", "Session", "SpotifyAccount" CASCADE`,
+    `TRUNCATE "Game", "Guest", "User", "Invite", "LoginAttempt", "BlockedIp", "AppState", "Session", "SpotifyAccount", "GoogleAccount" CASCADE`,
   );
 });
 

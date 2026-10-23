@@ -108,3 +108,27 @@
   font-size: 16px;
   color: var(--card-ink-soft);
 }
+
+/* «Continuar con Google»: botón de cartulina a todo el ancho; el color lo pone solo la «G». */
+.google {
+  width: 100%;
+}
+
+.or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--card-ink-soft);
+}
+
+.or::before,
+.or::after {
+  content: "";
+  flex: 1;
+  border-top: 2px dashed var(--card-rule);
+}

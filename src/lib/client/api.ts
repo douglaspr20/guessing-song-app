@@ -10,11 +10,22 @@ export type Player = Game["players"][number];
 
 /** Quién usa la app (`/api/access/status`). */
 export interface AccessStatus {
-  user: { username: string; displayName: string; role: "host" | "member" } | null;
+  user: {
+    username: string;
+    displayName: string;
+    role: "host" | "member";
+    /** Puede usar el modo Spotify (invitación o anfitrión). */
+    spotifyAllowed: boolean;
+    /** Tiene contraseña (si no, solo entra con Google y no puede desvincularlo). */
+    hasPassword: boolean;
+    google: { email: string } | null;
+  } | null;
   /** Este navegador ya eligió «Jugar sin cuenta». */
   guest: boolean;
   spotify: { linked: true; displayName: string | null; premium: boolean | null } | null;
   openModePaused: boolean;
+  /** Hay credenciales de Google: se muestra «Continuar con Google». */
+  googleEnabled: boolean;
 }
 
 export interface Catalog {

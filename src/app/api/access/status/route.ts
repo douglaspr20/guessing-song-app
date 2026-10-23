@@ -1,5 +1,7 @@
 import { connection } from "next/server";
+import { googleConfig } from "@/lib/access/google";
 import { currentGuest } from "@/lib/access/guest";
+import { db } from "@/lib/db";
 import { currentUser } from "@/lib/access/session";
 import { getAppState } from "@/lib/access/state";
 import { AppError, handle } from "@/lib/errors";
@@ -22,7 +24,13 @@ export const GET = handle(async () => {
   const { openModePaused } = await getAppState();
 
   let spotify = null;
+  let login: { hasPassword: boolean; google: { email: string } | null } | null = null;
   if (user) {
+    const row = await db.user.findUnique({
+      where: { id: user.id },
+      select: { passwordHash: true, google: { select: { email: true } } },
+    });
+    login = { hasPassword: !!row?.passwordHash, google: row?.google ?? null };
     const account = await getSpotifyAccount(user.id);
     if (account) {
       // El perfil dice si es Premium; si Spotify falla, al menos sabemos que está vinculado.
@@ -32,9 +40,17 @@ export const GET = handle(async () => {
   }
 
   return Response.json({
-    user: user && { username: user.username, displayName: user.displayName, role: user.role },
+    user: user && {
+      username: user.username,
+      displayName: user.displayName,
+      role: user.role,
+      spotifyAllowed: user.spotifyAllowed,
+      hasPassword: login?.hasPassword ?? false,
+      google: login?.google ?? null,
+    },
     guest,
     spotify,
     openModePaused,
+    googleEnabled: !!googleConfig(),
   });
 });

@@ -48,6 +48,7 @@ export function MembersSection() {
                 </span>
                 <span className={styles.itemMeta}>
                   {m.disabled ? "Desactivado · " : ""}
+                  {loginMethod(m)} · {m.spotifyAllowed ? "con invitación" : "cuenta gratis"} ·{" "}
                   {m.spotify !== null ? `Spotify${m.spotify ? ` (${m.spotify})` : ""}` : "Sin Spotify"} ·{" "}
                   {plural(m.games, "partida", "partidas")}
                   {m.lastSeenAt ? ` · visto el ${formatDate(m.lastSeenAt)}` : ""}
@@ -73,6 +74,32 @@ export function MembersSection() {
                   }
                 >
                   {m.disabled ? "Reactivar" : "Desactivar"}
+                </button>
+                <button
+                  type="button"
+                  className={`${ui.btn} ${ui.onCard} ${styles.small}`}
+                  onClick={() =>
+                    act(
+                      member(m, { method: "PATCH", json: { spotifyAllowed: !m.spotifyAllowed } }),
+                      m.spotifyAllowed
+                        ? `@${m.username} ya no puede usar el modo Spotify.`
+                        : `@${m.username} ya puede usar el modo Spotify.`,
+                      m.spotifyAllowed
+                        ? {
+                            title: `¿Quitarle el modo Spotify a @${m.username}?`,
+                            body: "También se desvincula su cuenta de Spotify. Sus partidas se conservan y puede seguir jugando sin cuenta.",
+                            confirmLabel: "Quitar Spotify",
+                            tone: "danger",
+                          }
+                        : {
+                            title: `¿Darle el modo Spotify a @${m.username}?`,
+                            body: "Podrá vincular su propia cuenta Premium. Recuerda añadirla también en el panel de Spotify.",
+                            confirmLabel: "Permitir Spotify",
+                          },
+                    )
+                  }
+                >
+                  {m.spotifyAllowed ? "Quitar Spotify" : "Permitir Spotify"}
                 </button>
                 {m.sessions > 0 && (
                   <button
@@ -133,4 +160,11 @@ export function MembersSection() {
       )}
     </Section>
   );
+}
+
+/** Cómo entra cada miembro: con Google, con contraseña o de las dos formas. */
+function loginMethod(m: Member) {
+  if (m.google && m.hasPassword) return `Google (${m.google}) y contraseña`;
+  if (m.google) return `Google (${m.google})`;
+  return "Contraseña";
 }

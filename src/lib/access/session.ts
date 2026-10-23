@@ -17,6 +17,8 @@ export interface SessionUser {
   role: Role;
   username: string;
   displayName: string;
+  /** Puede usar el modo Spotify (invitación o anfitrión). */
+  spotifyAllowed: boolean;
 }
 
 /** Quien no tiene permiso recibe un 404: así no se sabe ni que la ruta existe. */
@@ -44,8 +46,8 @@ export async function userForSessionToken(token: string, now = new Date()): Prom
   if (now.getTime() - session.lastSeenAt.getTime() > TOUCH_EVERY_MS) {
     await db.session.update({ where: { id: session.id }, data: { lastSeenAt: now } });
   }
-  const { id, role, username, displayName } = session.user;
-  return { id, role: role as Role, username, displayName };
+  const { id, role, username, displayName, spotifyAllowed } = session.user;
+  return { id, role: role as Role, username, displayName, spotifyAllowed: role === "host" || spotifyAllowed };
 }
 
 export async function currentUser(): Promise<SessionUser | null> {

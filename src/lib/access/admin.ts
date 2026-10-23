@@ -15,6 +15,7 @@ export async function listMembers() {
     orderBy: { createdAt: "asc" },
     include: {
       spotify: { select: { displayName: true } },
+      google: { select: { email: true } },
       sessions: { select: { lastSeenAt: true }, orderBy: { lastSeenAt: "desc" }, take: 1 },
       _count: { select: { games: true, sessions: true } },
     },
@@ -25,6 +26,9 @@ export async function listMembers() {
     displayName: u.displayName,
     createdAt: u.createdAt,
     disabled: !!u.disabledAt,
+    spotifyAllowed: u.spotifyAllowed,
+    google: u.google?.email ?? null,
+    hasPassword: !!u.passwordHash,
     spotify: u.spotify?.displayName ?? (u.spotify ? "" : null),
     games: u._count.games,
     sessions: u._count.sessions,
@@ -43,6 +47,13 @@ export async function setMemberDisabled(id: string, disabled: boolean) {
   await loadMember(id);
   await db.user.update({ where: { id }, data: { disabledAt: disabled ? new Date() : null } });
   if (disabled) await revokeSessions(id);
+}
+
+/** Da o quita el modo Spotify. Quitarlo también desvincula su cuenta de Spotify. */
+export async function setMemberSpotify(id: string, allowed: boolean) {
+  await loadMember(id);
+  await db.user.update({ where: { id }, data: { spotifyAllowed: allowed } });
+  if (!allowed) await db.spotifyAccount.deleteMany({ where: { userId: id } });
 }
 
 /** Borra todas las partidas del miembro; su cuenta y su Spotify se mantienen. */

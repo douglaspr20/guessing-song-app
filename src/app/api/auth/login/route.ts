@@ -18,8 +18,9 @@ export const GET = handle(async (req: NextRequest) => {
     }
   }
 
-  // Solo quien tiene sesión puede vincular un Spotify (y solo al suyo).
-  await requireUser();
+  // Solo quien tiene sesión puede vincular un Spotify (y solo al suyo), y solo con invitación.
+  const user = await requireUser();
+  if (!user.spotifyAllowed) return NextResponse.redirect(new URL("/?error=spotify_invite", requestOrigin(req)));
 
   const state = randomBytes(16).toString("hex");
   const res = NextResponse.redirect(buildAuthorizeUrl(state));
