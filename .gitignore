@@ -53,3 +53,5 @@ next-env.d.ts
 *.claude/*
 .impeccable/*
 .qoder/*
+
+.private/*
