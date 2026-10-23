@@ -1,0 +1,204 @@
+/* Confirmaciones y avisos propios: carátula de cartulina y etiquetas de cinta, nunca diálogos del navegador. */
+
+/* ---------- Confirmación ---------- */
+
+.dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--card);
+  color: var(--ink);
+  overflow: hidden;
+  animation: rise 420ms var(--ease-out);
+}
+
+/* Sobre cartulina el azafrán no contrasta: todo el foco del diálogo va en tomate hondo. */
+.dialog :focus-visible {
+  outline-color: var(--tomato-deep);
+}
+
+/* Tinta de la ventana de las bobinas: la pantalla se oscurece como si se cerrara la tapa. */
+.dialog::backdrop {
+  background: rgb(15 22 48 / 0.76);
+}
+
+.body {
+  display: grid;
+  gap: 16px;
+  padding: 22px clamp(20px, 3vw, 30px) 26px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.text {
+  font-size: 19px;
+  line-height: 1.45;
+  color: var(--card-ink-soft);
+  max-width: 46ch;
+}
+
+.text strong {
+  color: var(--ink);
+}
+
+.typeField {
+  display: grid;
+  gap: 6px;
+}
+
+.typeLabel {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--card-ink-soft);
+}
+
+.typeLabel b {
+  color: var(--tomato-deep);
+}
+
+.typeInput {
+  width: 100%;
+  min-height: 56px;
+  border: var(--stroke) solid var(--ink);
+  border-radius: var(--radius-control);
+  background: #fffaf0;
+  color: var(--ink);
+  padding: 0 14px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.typeInput:focus-visible {
+  outline: 3px solid var(--tomato-deep);
+  outline-offset: 2px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 2px dashed var(--card-rule);
+  margin-top: 4px;
+  padding-top: 18px;
+}
+
+/* ---------- Avisos (toasts) ---------- */
+
+/* Dos regiones vivas siempre montadas (educada y urgente): los lectores de pantalla anuncian lo que entra. */
+.region {
+  display: contents;
+}
+
+.stack {
+  position: fixed;
+  z-index: 50;
+  left: 50%;
+  bottom: 24px;
+  width: min(560px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 12px 10px 16px;
+  background: var(--card);
+  color: var(--ink);
+  border: var(--stroke) solid var(--ink);
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.3;
+  animation: rise 420ms var(--ease-out);
+}
+
+/* Lomo de cinta a la izquierda: el mismo recurso de rayas que cabeceras y casetes. */
+.toast::before {
+  content: "";
+  align-self: stretch;
+  flex: none;
+  width: 12px;
+  margin: -10px 0 -10px -16px;
+  background: linear-gradient(
+    to right,
+    var(--saffron) 0 33.4%,
+    var(--tomato) 33.4% 66.7%,
+    var(--sky) 66.7% 100%
+  );
+}
+
+.toast svg {
+  flex: none;
+}
+
+.ok svg {
+  color: var(--ok);
+}
+
+.error svg {
+  color: var(--bad);
+}
+
+.toastText {
+  flex: 1;
+  min-width: 0;
+}
+
+.close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink);
+}
+
+.close:hover {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.close:focus-visible {
+  outline: 3px solid var(--tomato-deep);
+  outline-offset: 2px;
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(14px);
+  }
+}
+
+@media (max-width: 640px) {
+  .stack {
+    bottom: 16px;
+  }
+}

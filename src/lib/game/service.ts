@@ -319,6 +319,12 @@ export async function deleteGame(gameId: string) {
   await db.game.delete({ where: { id: gameId } });
 }
 
+/** Borra todo el historial de un dueño (y nada de nadie más). Devuelve cuántas partidas eran. */
+export async function deleteAllGames(owner: Owner) {
+  const { count } = await db.game.deleteMany({ where: ownerWhere(owner) });
+  return count;
+}
+
 /** Añade un jugador (en el futuro, lo usará el flujo de "unirse con el móvil"). */
 export async function addPlayer(gameId: string, rawName: string) {
   const name = rawName.trim();

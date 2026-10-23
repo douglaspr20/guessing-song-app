@@ -53,6 +53,8 @@ html {
 
 body {
   min-height: 100%;
+  display: flex;
+  flex-direction: column;
   background: var(--ink);
   color: var(--on-shell);
   font-family: var(--font-text);

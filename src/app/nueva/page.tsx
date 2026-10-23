@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useId, useMemo, useState } from "react";
 import { AlertTriangle, ArrowLeft, Check, Heart, Minus, Plus, Shuffle } from "lucide-react";
 import { Stepper } from "@/components/Stepper";
-import { TopBar } from "@/components/TopBar";
+import { BandStatus } from "@/components/band/BandStatus";
 import ui from "@/components/ui.module.css";
 import { api, type AccessStatus, type Catalog, type Game, type Playlist } from "@/lib/client/api";
 import type { GameMode } from "@/lib/game/filters";
@@ -183,7 +183,7 @@ function NewGame() {
 
   return (
     <>
-      <TopBar status={editId ? "Editando casete" : "Casete nuevo · Lado A"} />
+      <BandStatus text={editId ? "Editando casete" : "Casete nuevo · Lado A"} />
       <main className={styles.main}>
         <Link href="/" className={styles.back}>
           <ArrowLeft size={22} aria-hidden />

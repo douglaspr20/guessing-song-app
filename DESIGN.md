@@ -287,6 +287,16 @@ Carátula con filas: puesto en tomate hondo, nombre manuscrito, puntos a 46px ta
 ### Podium
 Orden 2º, 1º, 3º. Escalones en azafrán (1º), cielo (2º) y tomate con texto blanco (3º), siempre con el número de puesto escrito y corona sobre el primero. Los empates comparten puesto, color de escalón y corona. Si nadie tiene puntos, no se corona a nadie: se escribe «Aún sin puntos» en Kalam. Versiones compacta (estantería) y grande (final), y tono para cartulina o para carcasa.
 
+### Confirmación y avisos
+- **Confirmación:** `<dialog>` nativo con `showModal()` (foco atrapado, Esc, fondo inerte). Carátula de cartulina con tapa de rayas, título en condensada 800 de 30px en mayúsculas, texto en Barlow a 19px y separador punteado antes de los botones. «Cancelar» sobre cartulina y la acción en tomate. En las peligrosas el foco empieza en «Cancelar». Los borrados masivos e irreversibles (todo un historial, todos los invitados, un miembro) piden escribir BORRAR; borrar un solo casete basta con confirmar. Todo el foco dentro del diálogo usa el anillo tomate hondo de la cartulina. Si lo que abrió el diálogo desaparece (un casete borrado), el foco vuelve al título de la estantería. Fondo en tinta de ventana al 76%, sin desenfoque. Entra subiendo 14px. Nunca se usan `window.confirm`, `alert` ni `prompt`.
+- **Avisos (toasts):** etiqueta de cartulina con trazo de 3px y esquinas de 4px, abajo al centro, con un lomo de rayas a la izquierda (la única banda vertical del sistema: se lee como el lomo de un casete). Icono en bien o mal junto al texto. Los de éxito se van solos a los 4 s; los de error se quedan con botón de cerrar. Máximo tres apilados.
+- **Reintentar:** cuando una carga falla, aviso de error (sobre carcasa o sobre cartulina) con el problema y un botón «Reintentar». Una lista que no cargó nunca se presenta como vacía.
+
+### Pantallas de error
+Mismo encuadre que la portada: titular display a la izquierda (segunda línea en azafrán) y un objeto a la derecha; en móvil el objeto va arriba y más pequeño. El código («Error 404», «Error 500») va en la etiqueta de estado de la banda, no encima del titular.
+- **404, «Esta cinta se perdió»:** cartel de «SE BUSCA» en cartulina, inclinado, pegado con cinta de carrocero (raya de cartulina), con la silueta punteada de un casete, «Casete C-404» en Kalam tomate hondo y «Recompensa: otra partida». Un cabo de cinta marrón se escapa por debajo.
+- **500, «Se enredó la cinta»:** casete partido por una grieta, la cinta enredada saliendo por la ventana y un lápiz clavado en la bobina; la carcasa da un respingo al aparecer y el lápiz gira de vez en cuando (solo transform; quieto con movimiento reducido). «Rebobinar» reintenta.
+
 ### Motion
 - Las entradas solo desplazan o escalan (transform); nunca parten de opacidad 0, así el contenido es visible aunque la animación no corra. Revelación sube 14px, podio sube 24px escalón a escalón (3º, 2º, 1º), el final se pliega con un leve rotateX, la cuenta atrás late desde 1.35.
 - Curva única ease-out cubic-bezier(0.16, 1, 0.3, 1); 140 a 160ms para estados, 400 a 700ms para entradas.

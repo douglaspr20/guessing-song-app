@@ -1,0 +1,245 @@
+/* Escenas de error: el mismo encuadre que la portada (titular a la izquierda, objeto a la derecha). */
+
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* El cartel inclinado y su cinta asoman por los lados sin abrir scroll horizontal. */
+  overflow-x: clip;
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: clamp(24px, 4vw, 56px) var(--gutter) 48px;
+}
+
+.scene {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(32px, 5vw, 80px);
+  align-items: center;
+  min-height: calc(100vh - 92px - 104px);
+}
+
+.headline {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(56px, 7.4vw, 104px);
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.headline em {
+  font-style: normal;
+  color: var(--saffron);
+}
+
+.lede {
+  margin-top: 24px;
+  max-width: 36ch;
+  font-size: clamp(20px, 1.7vw, 24px);
+  color: var(--on-shell-soft);
+}
+
+.actions {
+  margin-top: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.digest {
+  margin-top: 20px;
+  font-size: 16px;
+  color: var(--on-shell-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.art {
+  position: relative;
+  justify-self: center;
+  width: min(100%, 520px);
+}
+
+/* ---------- 404: cartel de «Se busca» ---------- */
+
+.poster {
+  position: relative;
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 6px;
+  transform: rotate(-2.5deg);
+  overflow: visible;
+}
+
+.posterStripes {
+  height: 28px;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(
+    to bottom,
+    var(--saffron) 0 33.4%,
+    var(--tomato) 33.4% 66.7%,
+    var(--sky) 66.7% 100%
+  );
+}
+
+.posterBody {
+  padding: 18px clamp(20px, 4vw, 36px) 28px;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.wanted {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(54px, 7vw, 84px);
+  line-height: 0.9;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.silhouette {
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+}
+
+.missingName {
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: clamp(30px, 3.4vw, 40px);
+  line-height: 1.05;
+  color: var(--tomato-deep);
+}
+
+.missingNote {
+  font-family: var(--font-script);
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.reward {
+  margin-top: 6px;
+  padding-top: 12px;
+  width: 100%;
+  border-top: 2px dashed var(--card-rule);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--card-ink-soft);
+}
+
+/* Cinta de carrocero que sujeta el cartel a la pared. */
+.masking {
+  position: absolute;
+  top: -14px;
+  width: 112px;
+  height: 30px;
+  background: var(--card-rule);
+}
+
+.maskingLeft {
+  left: -18px;
+  transform: rotate(-14deg);
+}
+
+.maskingRight {
+  right: -18px;
+  transform: rotate(11deg);
+}
+
+/* El cabo de cinta que se escapa por debajo del cartel. */
+.loose {
+  position: absolute;
+  right: -6%;
+  bottom: -118px;
+  width: 62%;
+  height: auto;
+  pointer-events: none;
+}
+
+/* ---------- 500: casete roto ---------- */
+
+.broken {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.shell {
+  transform-box: view-box;
+  transform-origin: 210px 130px;
+  animation: jolt 700ms var(--ease-out) 200ms both;
+}
+
+.pencil {
+  transform-box: view-box;
+  transform-origin: 150px 153px;
+  animation: crank 2.4s var(--ease-out) 900ms infinite;
+}
+
+@keyframes jolt {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-2.5deg) translateY(-6px);
+  }
+  55% {
+    transform: rotate(1.8deg);
+  }
+  80% {
+    transform: rotate(-0.8deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes crank {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(32deg);
+  }
+  70% {
+    transform: rotate(-6deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .scene {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+  /* En móvil el objeto va arriba y más pequeño, para que el titular asome en la primera pantalla. */
+  .art {
+    order: -1;
+    width: min(78%, 320px);
+    margin-top: 12px;
+    margin-bottom: 72px;
+  }
+  .loose {
+    right: 4%;
+    bottom: -84px;
+    width: 52%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell,
+  .pencil {
+    animation: none;
+  }
+}

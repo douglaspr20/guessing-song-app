@@ -45,6 +45,13 @@ export async function setMemberDisabled(id: string, disabled: boolean) {
   if (disabled) await revokeSessions(id);
 }
 
+/** Borra todas las partidas del miembro; su cuenta y su Spotify se mantienen. */
+export async function deleteMemberGames(id: string) {
+  await loadMember(id);
+  const { count } = await db.game.deleteMany({ where: { userId: id } });
+  return count;
+}
+
 /** Borra al miembro con sus partidas, sesiones y Spotify vinculado. */
 export async function deleteMember(id: string) {
   await loadMember(id);

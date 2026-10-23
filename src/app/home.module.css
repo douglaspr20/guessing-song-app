@@ -1,5 +1,5 @@
 .page {
-  min-height: 100vh;
+  flex: 1;
   display: flex;
   flex-direction: column;
 }
@@ -142,6 +142,54 @@
   border-radius: 4px;
 }
 
+.spineTags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Etiqueta de cartulina en el lomo, como la fecha: borrar el casete. */
+.spineDelete {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--ink);
+  transition:
+    background-color 160ms var(--ease-out),
+    color 160ms var(--ease-out),
+    transform 160ms var(--ease-out);
+}
+
+.spineDelete:hover {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.spineDelete:active {
+  transform: translateY(2px);
+}
+
+/* Sobre las rayas ni el azafrán ni el tomate se distinguen: el anillo va en tinta. */
+.spineDelete:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.shelfNotice {
+  margin-bottom: 24px;
+}
+
+.errorWrap {
+  padding: 80px 0;
+  max-width: 720px;
+}
+
 .spineBody {
   flex: 1;
   display: grid;
@@ -159,6 +207,8 @@
 }
 
 .catalog {
+  flex: none;
+  white-space: nowrap;
   background: var(--card);
   font-family: var(--font-display);
   font-weight: 800;
@@ -251,6 +301,10 @@
 }
 
 .linkBtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 6px;
   background: none;
   border: 0;
   color: var(--on-shell-soft);
@@ -285,6 +339,10 @@
 }
 
 @media (max-width: 640px) {
+  .spineDelete {
+    width: 48px;
+    height: 48px;
+  }
   .spineBody {
     grid-template-columns: 1fr;
     gap: 0;
