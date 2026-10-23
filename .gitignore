@@ -54,4 +54,5 @@ next-env.d.ts
 .impeccable/*
 .qoder/*
 
-.private/*
+# notas privadas (instrucciones del anfitrión)
+.private/

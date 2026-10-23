@@ -1,6 +1,6 @@
 import { randomBytes, scrypt, timingSafeEqual, type ScryptOptions } from "node:crypto";
 
-// Formato guardado: scrypt:N:r:p:sal:hash (sal y hash en base64). Mismo formato que genera `npm run host:setup`.
+// Formato guardado: scrypt:N:r:p:sal:hash (sal y hash en base64).
 // Sin «$»: en los archivos .env Next expandiría «$algo» como si fuera una variable.
 const PARAMS = { N: 16384, r: 8, p: 1 };
 const KEY_LENGTH = 32;

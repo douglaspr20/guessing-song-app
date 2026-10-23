@@ -67,6 +67,12 @@ export async function requireHost(): Promise<SessionUser> {
   return user;
 }
 
+/** Id (hash) de la sesión de este navegador, para no cerrarla al cerrar las demás. */
+export async function currentSessionId(): Promise<string | null> {
+  const token = (await cookies()).get(SESSION_COOKIE())?.value;
+  return token ? sha256(token) : null;
+}
+
 /** Cierra la sesión de este navegador. */
 export async function endSession() {
   const store = await cookies();

@@ -28,6 +28,12 @@
   grid-area: actions;
 }
 
+/* Varios campos seguidos en la misma columna (cambiar contraseña). */
+.fields {
+  display: grid;
+  gap: 14px;
+}
+
 .error {
   grid-area: error;
 }

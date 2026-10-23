@@ -14,10 +14,12 @@ import {
 } from "@/lib/access/limits";
 import { assertOwnsGame, type Owner } from "@/lib/access/owner";
 import { hashPassword } from "@/lib/access/password";
+import { changePassword, resetMemberPassword, temporaryPassword } from "@/lib/access/passwords";
 import { openSession, userForSessionToken } from "@/lib/access/session";
 import { setAppFlags } from "@/lib/access/state";
 import { LOGIN_LIMITS } from "@/lib/access/throttle";
 import { base32Encode, hotp, totpCounter } from "@/lib/access/totp";
+import { sha256 } from "@/lib/access/hash";
 import { db } from "@/lib/db";
 import { createGame, deleteAllGames, getGame, listGames } from "@/lib/game/service";
 
@@ -278,6 +280,84 @@ describe("entrar con Google y el permiso de Spotify", () => {
     await expect(
       assertOwnerCanCreateGame({ kind: "user", userId: user.id, spotifyAllowed: true }),
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("gestión de contraseñas", () => {
+  const ctx = (keepSessionId: string | null = null) => ({ ipHash: "ip-pw", keepSessionId });
+
+  it("cambia la suya con la actual y cierra sus otras sesiones", async () => {
+    const { user } = await newMember("rosa", "la-de-siempre-1");
+    const here = await openSession(user.id, "este");
+    const other = await openSession(user.id, "otro");
+
+    expect(await fails(changePassword(user.id, { current: "mala", next: "otra-nueva-22" }, ctx()))).toMatchObject({
+      code: "WRONG_PASSWORD",
+      status: 401,
+    });
+    const keep = sha256(here);
+    expect(await changePassword(user.id, { current: "la-de-siempre-1", next: "otra-nueva-22" }, ctx(keep))).toEqual({
+      closedSessions: 1,
+    });
+    expect(await userForSessionToken(here)).not.toBeNull();
+    expect(await userForSessionToken(other)).toBeNull();
+    await expect(authenticateMember("rosa", "otra-nueva-22", "ip-x")).resolves.toMatchObject({ username: "rosa" });
+    await expect(authenticateMember("rosa", "la-de-siempre-1", "ip-x")).rejects.toMatchObject({ code: "INVALID_CREDENTIALS" });
+  });
+
+  it("valida la nueva: mínimo 8 y distinta de la actual", async () => {
+    const { user } = await newMember("tomas", "la-de-siempre-1");
+    await expect(changePassword(user.id, { current: "la-de-siempre-1", next: "corta" }, ctx())).rejects.toThrow();
+    expect(
+      await fails(changePassword(user.id, { current: "la-de-siempre-1", next: "la-de-siempre-1" }, ctx())),
+    ).toMatchObject({ code: "SAME_PASSWORD" });
+  });
+
+  it("los fallos con la contraseña actual cuentan para el límite por IP", async () => {
+    const { user } = await newMember("ines", "la-de-siempre-1");
+    for (let i = 0; i < LOGIN_LIMITS.perIp; i++) {
+      await expect(changePassword(user.id, { current: "mala", next: "otra-nueva-22" }, ctx())).rejects.toMatchObject({
+        code: "WRONG_PASSWORD",
+      });
+    }
+    expect(
+      await fails(changePassword(user.id, { current: "la-de-siempre-1", next: "otra-nueva-22" }, ctx())),
+    ).toMatchObject({ code: "TOO_MANY_ATTEMPTS", status: 429 });
+  });
+
+  it("una cuenta solo de Google se pone contraseña sin pedir la actual", async () => {
+    const { user } = await signInWithGoogle({ sub: "g-ana", email: "ana@gmail.com", name: "Ana" }, null);
+    await changePassword(user.id, { next: "mi-primera-clave" }, ctx());
+    await expect(authenticateMember(user.username, "mi-primera-clave", "ip-y")).resolves.toMatchObject({ id: user.id });
+  });
+
+  it("el anfitrión restablece: temporal que funciona, sesiones cerradas y cambio obligatorio", async () => {
+    const { user } = await newMember("pablo", "la-olvidada-11");
+    const token = await openSession(user.id, "movil");
+    await db.user.update({ where: { id: user.id }, data: { failedLogins: 3, lockedUntil: new Date(Date.now() + 60_000) } });
+
+    const { password } = await resetMemberPassword(user.id);
+    expect(password).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/);
+    expect(await userForSessionToken(token)).toBeNull();
+    const after = await db.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(after).toMatchObject({ mustChangePassword: true, failedLogins: 0, lockedUntil: null });
+
+    await expect(authenticateMember("pablo", password, "ip-z")).resolves.toMatchObject({ id: user.id });
+    await changePassword(user.id, { current: password, next: "ahora-la-mia-33" }, ctx());
+    expect((await db.user.findUniqueOrThrow({ where: { id: user.id } })).mustChangePassword).toBe(false);
+  });
+
+  it("no se restablece al anfitrión ni a quien no existe", async () => {
+    await db.user.create({ data: { id: "host", role: "host", username: "anfitrion", displayName: "Anfitrión" } });
+    expect(await fails(resetMemberPassword("host"))).toMatchObject({ code: "MEMBER_NOT_FOUND" });
+    expect(await fails(resetMemberPassword("no-existe"))).toMatchObject({ code: "MEMBER_NOT_FOUND" });
+    expect(await fails(changePassword("host", { current: "x", next: "otra-nueva-22" }, ctx()))).toMatchObject({
+      code: "NOT_FOUND",
+    });
+  });
+
+  it("las temporales no se repiten", () => {
+    expect(new Set(Array.from({ length: 200 }, temporaryPassword)).size).toBe(200);
   });
 });
 

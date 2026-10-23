@@ -24,13 +24,17 @@ export const GET = handle(async () => {
   const { openModePaused } = await getAppState();
 
   let spotify = null;
-  let login: { hasPassword: boolean; google: { email: string } | null } | null = null;
+  let login: { hasPassword: boolean; mustChangePassword: boolean; google: { email: string } | null } | null = null;
   if (user) {
     const row = await db.user.findUnique({
       where: { id: user.id },
-      select: { passwordHash: true, google: { select: { email: true } } },
+      select: { passwordHash: true, mustChangePassword: true, google: { select: { email: true } } },
     });
-    login = { hasPassword: !!row?.passwordHash, google: row?.google ?? null };
+    login = {
+      hasPassword: !!row?.passwordHash,
+      mustChangePassword: !!row?.mustChangePassword,
+      google: row?.google ?? null,
+    };
     const account = await getSpotifyAccount(user.id);
     if (account) {
       // El perfil dice si es Premium; si Spotify falla, al menos sabemos que está vinculado.
@@ -46,6 +50,7 @@ export const GET = handle(async () => {
       role: user.role,
       spotifyAllowed: user.spotifyAllowed,
       hasPassword: login?.hasPassword ?? false,
+      mustChangePassword: login?.mustChangePassword ?? false,
       google: login?.google ?? null,
     },
     guest,

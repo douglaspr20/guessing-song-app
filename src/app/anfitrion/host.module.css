@@ -203,3 +203,8 @@
   text-decoration: underline;
   font-size: 17px;
 }
+
+/* La contraseña temporal ocupa toda la fila del miembro, debajo de sus botones. */
+.fullRow {
+  flex-basis: 100%;
+}

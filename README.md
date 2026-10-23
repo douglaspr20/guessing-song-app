@@ -94,11 +94,7 @@ Requirements: Node 20+, Docker Desktop (for the local Postgres) and, for Spotify
    npm run db:up
    npm run db:migrate
    ```
-4. Create the host secrets and paste the printed lines into `.env`; add the TOTP key to your authenticator app:
-   ```bash
-   npm run host:setup
-   ```
-5. Run it and open **http://127.0.0.1:3000** (opening `localhost` redirects there during login):
+4. Run it and open **http://127.0.0.1:3000** (opening `localhost` redirects there during login):
    ```bash
    npm run dev
    ```
@@ -115,9 +111,9 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
    - `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`
    - `SPOTIFY_REDIRECT_URI` = `https://<your-domain>/api/auth/callback`
    - Optional, for Google sign-in: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and `GOOGLE_REDIRECT_URI` = `https://<your-domain>/api/auth/google/callback` (register that URI in the OAuth client and publish the consent screen with the basic `openid email profile` scopes)
-   - `HOST_PASSWORD_HASH`, `HOST_TOTP_SECRET`, `TOKEN_ENCRYPTION_KEY`, `CRON_SECRET` from `npm run host:setup`. You can reuse your local values or generate new ones for production; a different `TOKEN_ENCRYPTION_KEY` only means linking Spotify again there.
+   - The server secrets `HOST_PASSWORD_HASH`, `HOST_TOTP_SECRET`, `TOKEN_ENCRYPTION_KEY` and `CRON_SECRET` (kept outside the repo).
 4. **Spotify dashboard:** add the production redirect URI next to the local one. Under _User Management_ keep your account plus up to 4 members.
-5. **Deploy**, open `https://<your-domain>/<host page>`, sign in and link your Spotify. Vercel calls the cleanup every day with `Authorization: Bearer $CRON_SECRET`.
+5. **Deploy**, sign in as host and link your Spotify. Vercel calls the cleanup every day with `Authorization: Bearer $CRON_SECRET`.
 
 > If Prisma ever fails with _prepared statement does not exist_ through the pooler, append `&pgbouncer=true` to `DATABASE_URL`.
 
@@ -128,7 +124,6 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
 | `npm run dev`              | Development server                                                                              |
 | `npm test`                 | Unit tests (Vitest)                                                                             |
 | `npm run test:integration` | Integration tests against Postgres (creates the `adivina_test` database; needs `npm run db:up`) |
-| `npm run host:setup`       | Generate the host password hash, TOTP secret, encryption key and cron secret                    |
 | `npm run typecheck`        | Route types + `tsc --noEmit`                                                                    |
 | `npm run lint`             | ESLint                                                                                          |
 | `npm run build`            | Production build                                                                                |

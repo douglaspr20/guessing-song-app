@@ -12,7 +12,7 @@ export function encryptionKey(): Buffer {
   const key = raw ? Buffer.from(raw, "base64") : null;
   if (!key || key.length !== 32) {
     throw new AppError(
-      "Falta TOKEN_ENCRYPTION_KEY (32 bytes en base64). Genérala con `npm run host:setup`.",
+      "Falta configurar el cifrado de tokens en el servidor",
       500,
       "ACCESS_NOT_CONFIGURED",
     );
