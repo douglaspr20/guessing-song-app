@@ -33,19 +33,19 @@ export function AttemptsList({
             <span className={styles.attemptAt}>{Math.floor(g.atMs / 1000)} s</span>
             <div className={styles.attemptBody}>
               <span className={styles.attemptWho}>{g.playerName}</span>
-              {g.title && (
+              {(g.title || g.titleCorrect) && (
                 <AttemptPart
                   correct={g.titleCorrect}
-                  label={`«${g.title}»`}
+                  label={g.title ? `«${g.title}»` : "la canción, de palabra"}
                   canAccept={!g.titleCorrect && !round.winnerPlayerId}
                   busy={busy}
                   onAccept={() => onAccept(g, "title")}
                 />
               )}
-              {g.artist && (
+              {(g.artist || g.artistCorrect) && (
                 <AttemptPart
                   correct={g.artistCorrect}
-                  label={`artista «${g.artist}»`}
+                  label={g.artist ? `artista «${g.artist}»` : "el artista, de palabra"}
                   canAccept={!g.artistCorrect && !round.artistWinnerPlayerId && g.atMs < artistDeadlineMs}
                   busy={busy}
                   onAccept={() => onAccept(g, "artist")}

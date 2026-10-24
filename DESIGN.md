@@ -261,7 +261,12 @@ Etiquetas de cinta que se pulsan: condensada mayúscula, trazo de 3px, sin relle
 
 ### Chips
 - **Filtro:** píldora de 44px con trazo de 2px en tinta, Barlow 600 a 17px; seleccionado (aria-pressed) se rellena de tinta.
-- **Fichas de jugador:** radios ocultos sobre píldoras de 56px con trazo de 3px y nombre en Kalam; marcada se rellena de tinta; atajo de teclado (1 a 9) en condensada al 60%. Foco con anillo tomate.
+- **Fichas de jugador:** radios ocultos sobre píldoras de 56px con trazo de 3px y nombre en Kalam; marcada se rellena de tinta; atajo de teclado (1 a 9) en condensada al 60%. Foco con anillo tomate. Van en orden alfabético fijo (no por puntos), para que cada número sea siempre el mismo jugador.
+
+### Atajos (jugar en la tele)
+- **Marca de atajo:** la tecla en condensada a 15px al 60% (`.key`), al final del botón. Si el mando de la tele tiene botón de color para esa acción, la precede un punto de 12px con borde de 2px en el color del mando (rojo Revelar, verde ¡Acertó la canción!, amarillo ¡Acertó el artista!, azul Siguiente). Son los colores del mando, no los de las franjas. En móvil (≤640px) las marcas se ocultan.
+- **«¡Acertó!»:** dos botones de cartulina bajo las fichas para dar la canción o el artista al jugador elegido sin escribir. Nunca tomate: el primario sigue siendo «Registrar respuesta». En los intentos aparecen como «la canción, de palabra».
+- **Ayuda de atajos:** `<dialog>` nativo con la carátula del diálogo de confirmación (hasta 720px): tabla con cabeceras en condensada, filas separadas por raya discontinua y teclas en cajitas con trazo de 2px. Se abre con ? o H o con el botón «Atajos» del lateral; se cierra con Esc, Atrás o «Entendido».
 - **Segmentado:** grupo con trazo de 3px y divisores internos; el botón activo se rellena de tinta.
 
 ### Cards / Containers

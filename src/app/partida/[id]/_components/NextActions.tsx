@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Settings2, SkipForward, Trophy } from "lucide-react";
 import ui from "@/components/ui.module.css";
+import { Hint } from "./Hint";
 import styles from "../game.module.css";
 
 /** Botones para avanzar con la ronda cerrada (o antes de la primera): empezar, siguiente pista o ver el podio. */
@@ -8,16 +9,15 @@ export function NextActions({
   gameId,
   hasRound,
   finished,
-  busy,
-  playerReady,
+  canNext,
   onNext,
   onFinale,
 }: {
   gameId: string;
   hasRound: boolean;
   finished: boolean;
-  busy: boolean;
-  playerReady: boolean;
+  /** Igual que el atajo N: ni ocupado ni sin reproductor listo. */
+  canNext: boolean;
   onNext: () => void;
   onFinale: () => void;
 }) {
@@ -27,6 +27,7 @@ export function NextActions({
         <button type="button" className={`${ui.btn} ${ui.primary} ${ui.big}`} onClick={onFinale}>
           <Trophy size={28} aria-hidden />
           Ver el podio
+          <Hint k="N" color="blue" />
         </button>
       </div>
     );
@@ -45,10 +46,11 @@ export function NextActions({
         type="button"
         className={`${ui.btn} ${ui.primary} ${ui.big}`}
         onClick={onNext}
-        disabled={busy || !playerReady}
+        disabled={!canNext}
       >
         <SkipForward size={28} aria-hidden />
         {hasRound ? "Siguiente pista" : "Empezar"}
+        <Hint k="N" color="blue" />
       </button>
     </div>
   );
