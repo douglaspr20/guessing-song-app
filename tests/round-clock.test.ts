@@ -63,6 +63,17 @@ describe("deriveRoundClock", () => {
     expect(c.needsFreeze).toBe(true);
     expect(c.canResume).toBe(true);
     expect(c.caption).toBe("en pausa · pulsa Seguir");
+    // Con un turno abierto, «Seguir» está apagado: el casete dice quién responde.
+    const turn = deriveRoundClock(
+      input({
+        round: round({
+          paused: true,
+          buzz: { participantId: "p1", name: "Ana", playerId: "pl1", remainingMs: 9_000, totalMs: 20_000 },
+        }),
+        player: { phase: "paused", remainingMs: 20_000, fragmentMs: 30_000 },
+      }),
+    );
+    expect(turn.caption).toBe("responde Ana");
   });
 
   it("ya pausada tras recargar no vuelve a pedir la pausa", () => {

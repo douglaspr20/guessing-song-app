@@ -22,6 +22,15 @@ interface PlayState {
   me: { id: string; name: string; playerId: string; memberId: string | null; lockedOut: boolean };
 }
 
+/** Cómo acabó la partida, dicho para quien la jugó. */
+function finaleLine(players: PlayGame["players"], myPlayerId: string, teams: boolean) {
+  const top = players[0];
+  if (!top || top.score === 0) return "Nadie sumó puntos.";
+  const tied = players.filter((p) => p.score === top.score);
+  if (tied.length > 1) return `Empate entre ${tied.map((p) => p.name).join(" y ")}.`;
+  return top.id === myPlayerId ? (teams ? "¡Ganó tu equipo!" : "¡Ganaste!") : `Ganó ${top.name}.`;
+}
+
 /** El mando de quien se unió con el código: dónde va la partida y quién es él. */
 export function PlayClient() {
   const { gameId } = useParams<{ gameId: string }>();
@@ -85,6 +94,7 @@ export function PlayClient() {
   const cat = catalogLabel(game.catalogNumber);
   const mine = game.players.find((p) => p.id === me.playerId);
   const round = game.round;
+  const winner = round?.winnerPlayerId ? (game.players.find((p) => p.id === round.winnerPlayerId) ?? null) : null;
   const finished = game.status === "FINISHED" && round?.status !== "PLAYING";
   const status = round ? `${cat} · Pista ${round.number} de ${game.totalRounds}` : `${cat} · ${game.totalRounds} pistas`;
 
@@ -101,15 +111,18 @@ export function PlayClient() {
         <section className={`${ui.card} ${styles.card}`} aria-live="polite">
           <div className={ui.cardStripes} />
           <div className={styles.body}>
-            <p className={styles.who}>
-              <TeamDot color={mine?.color} size={16} />
-              <strong>{me.name}</strong>
-              {game.format === "teams" && mine && <span className={styles.team}>· {mine.name}</span>}
-            </p>
+            <div className={styles.who}>
+              <p className={styles.whoName}>
+                <TeamDot color={mine?.color} size={16} />
+                {me.name}
+              </p>
+              {game.format === "teams" && mine && <p className={styles.whoTeam}>{mine.name}</p>}
+            </div>
 
             {finished ? (
               <>
                 <h1 className={styles.headline}>Fin de la cinta</h1>
+                <p className={styles.lede}>{finaleLine(game.players, me.playerId, game.format === "teams")}</p>
                 <Podium
                   entries={game.players.map((p) => ({
                     ...p,
@@ -118,6 +131,9 @@ export function PlayClient() {
                   size="grand"
                   tone="card"
                 />
+                <Link href="/" className={`${ui.btn} ${ui.onCard}`}>
+                  Volver al inicio
+                </Link>
               </>
             ) : !round ? (
               <>
@@ -132,7 +148,7 @@ export function PlayClient() {
             ) : (
               <>
                 <h1 className={styles.headline}>
-                  {round.winnerPlayerId ? "Pista acertada" : "Nadie la acertó"}
+                  {!winner ? "Nadie la acertó" : winner.id === me.playerId ? (game.format === "teams" ? "¡La acertó tu equipo!" : "¡La acertaste!") : "Pista acertada"}
                 </h1>
                 {round.answer && (
                   <div className={styles.answer}>
@@ -144,7 +160,9 @@ export function PlayClient() {
                     <p className={styles.artist}>{round.answer.artists.join(", ")}</p>
                   </div>
                 )}
-                <p className={styles.lede}>Esperando la siguiente pista.</p>
+                <p className={styles.lede}>
+                  {winner && winner.id !== me.playerId ? `La adivinó ${winner.name}. ` : ""}Esperando la siguiente pista.
+                </p>
               </>
             )}
           </div>

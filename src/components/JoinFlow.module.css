@@ -143,3 +143,19 @@
   outline: 3px solid var(--tomato-deep);
   outline-offset: 2px;
 }
+
+/* Con equipos el formulario es largo: en el móvil «Entrar» se queda pegado abajo, al alcance del pulgar. */
+@media (max-width: 640px) {
+  .stickyActions {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    margin: 0 calc(-1 * clamp(20px, 3vw, 32px));
+    padding: 12px clamp(20px, 3vw, 32px) 14px;
+    background: var(--card);
+    border-top: 2px dashed var(--card-rule);
+  }
+  .stickyActions > button {
+    width: 100%;
+  }
+}

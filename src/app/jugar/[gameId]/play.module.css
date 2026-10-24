@@ -20,16 +20,28 @@
 }
 
 .who {
+  display: grid;
+  gap: 2px;
+}
+
+.whoName {
   display: flex;
   align-items: center;
   gap: 10px;
   font-family: var(--font-script);
   font-weight: 700;
-  font-size: 26px;
+  font-size: 30px;
   line-height: 1.1;
+  overflow-wrap: anywhere;
 }
 
-.team {
+/* El equipo, en chiquito y en condensada, bajo el nombre. */
+.whoTeam {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--card-ink-soft);
 }
 
