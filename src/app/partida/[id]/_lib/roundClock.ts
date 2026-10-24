@@ -80,7 +80,7 @@ export function deriveRoundClock({ round, fragmentSeconds, rules, fetchedAt, now
     shownLeftMs: orphan ? orphanLeftMs : player.remainingMs,
     tapeProgress,
     canResume,
-    caption: captionFor(started, canResume, player.phase),
+    caption: round?.buzz ? `responde ${round.buzz.name || "alguien"}` : captionFor(started, canResume, player.phase),
   };
 }
 

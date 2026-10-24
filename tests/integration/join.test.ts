@@ -113,10 +113,22 @@ describe("unirse sin cuenta (todos contra todos)", () => {
     const first = await joinGame({ code: game.code, name: "ana" }, ctx());
     expect(first.name).toBe("Ana");
     expect((await db.player.count({ where: { gameId: game.id } })).valueOf()).toBe(2);
+    jar.clear(); // otro dispositivo: sin la cookie de quien ya la reclamó
     expect(await fails(joinGame({ code: game.code, name: "Ana" }, ctx("ip-otro")))).toEqual({
       code: "NAME_TAKEN",
       status: 409,
     });
+  });
+
+  it("quien vuelve a entrar con su nombre desde el mismo navegador recupera su sitio", async () => {
+    const game = await soloGame();
+    const first = await joinGame({ code: game.code, name: "Pablo" }, ctx());
+    const again = await joinGame({ code: game.code, name: "pablo" }, ctx());
+    expect(again.participantId).toBe(first.participantId);
+    expect(await db.participant.count({ where: { gameId: game.id } })).toBe(1);
+    // Otro nombre desde el mismo navegador sí es otra persona.
+    const other = await joinGame({ code: game.code, name: "Rosa" }, ctx());
+    expect(other.participantId).not.toBe(first.participantId);
   });
 
   it("sin nombre da 422 y con la entrada cerrada, 403", async () => {
@@ -194,6 +206,7 @@ describe("unirse por equipos", () => {
     const joined = await joinGame({ code: game.code, name: "luis" }, ctx());
     expect(joined).toMatchObject({ name: "Luis", playerId: tomates.id });
     expect(await db.teamMember.count({ where: { playerId: tomates.id } })).toBe(2);
+    jar.clear(); // otro dispositivo
     expect(await fails(joinGame({ code: game.code, name: "Luis" }, ctx("ip-2")))).toMatchObject({ code: "NAME_TAKEN" });
   });
 

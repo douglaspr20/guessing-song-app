@@ -110,7 +110,7 @@ export function JoinFlow() {
 
   return (
     <>
-      <BandStatus text="Unirse a una partida" />
+      <BandStatus text="Unirse" />
       <main className={styles.main}>
         <section className={`${ui.card} ${styles.card}`} aria-labelledby={`${ids}-title`}>
           <div className={ui.cardStripes} />
@@ -131,7 +131,7 @@ export function JoinFlow() {
                     setCode(clean(e.target.value));
                     setError(null);
                   }}
-                  placeholder="ABC123"
+                  placeholder="· · · · · ·"
                   inputMode="text"
                   autoComplete="off"
                   autoCapitalize="characters"
@@ -242,7 +242,7 @@ export function JoinFlow() {
               )}
 
               {error && <Problem>{error}</Problem>}
-              <div className={access.actions}>
+              <div className={`${access.actions} ${styles.stickyActions}`}>
                 <button
                   type="submit"
                   className={`${ui.btn} ${ui.primary} ${ui.big}`}

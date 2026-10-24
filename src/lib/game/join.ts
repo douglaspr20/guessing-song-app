@@ -124,6 +124,13 @@ export async function joinGame(input: JoinInput, ctx: JoinContext) {
   const name = cleanName(ctx.user ? (input.name || ctx.user.displayName) : input.name);
   if (!name || name.length > 30) throw new AppError("Escribe tu nombre (hasta 30 letras)", 422, "INVALID_NAME");
 
+  // Quien ya entró desde este navegador y vuelve a escribir su nombre (p. ej. al escanear otra vez el QR)
+  // sigue siendo él: se le devuelve su sitio en vez de decirle que su nombre está ocupado.
+  const mine = await currentParticipant(game.id);
+  if (mine && mine.name.toLowerCase() === name.toLowerCase()) {
+    return { gameId: game.id, participantId: mine.id, playerId: mine.playerId, name: mine.name };
+  }
+
   const token = randomToken();
   const tokenHash = sha256(token);
 
