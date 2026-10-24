@@ -876,3 +876,124 @@
 .join[open] .joinCodeSmall {
   display: none;
 }
+
+/* ---------- Turno de quien pulsó «¡Lo sé!» ---------- */
+
+.buzz {
+  margin-bottom: 20px;
+  animation: buzzIn 360ms var(--ease-out);
+}
+
+@keyframes buzzIn {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.buzzBody {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  padding: 18px clamp(18px, 3vw, 28px) 10px;
+}
+
+.buzzWho {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.buzzName {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: clamp(36px, 4.4vw, 64px);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.buzzSub {
+  font-size: 19px;
+  color: var(--card-ink-soft);
+  margin-top: 4px;
+}
+
+.buzzClock {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.buzzSeconds {
+  font-size: clamp(64px, 7vw, 112px);
+}
+
+.buzzSeconds small {
+  font-size: 0.4em;
+  letter-spacing: 0.1em;
+  color: var(--card-ink-soft);
+}
+
+.buzzClock[data-urgent="true"] .buzzSeconds {
+  color: var(--tomato-deep);
+}
+
+/* La barra se vacía con transform: no mueve nada a su alrededor. */
+.buzzBar {
+  height: 10px;
+  margin: 4px clamp(18px, 3vw, 28px) 0;
+  background: color-mix(in srgb, var(--ink) 14%, transparent);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.buzzBar span {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  transform-origin: left center;
+  transition: transform 300ms linear;
+}
+
+.buzzBar span[data-urgent="true"] {
+  background: var(--tomato-deep);
+}
+
+.buzzActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px clamp(18px, 3vw, 28px) 22px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .buzz {
+    animation: none;
+  }
+  .buzzBar span {
+    transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .buzzActions > * {
+    flex: 1 1 100%;
+  }
+}
+
+.viaPhone {
+  margin-left: 8px;
+  vertical-align: -3px;
+  color: var(--card-ink-soft);
+}

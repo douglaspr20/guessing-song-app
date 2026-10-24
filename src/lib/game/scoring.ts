@@ -39,6 +39,13 @@ export interface Hint {
   value: string | null;
 }
 
+/** Cuánto antes del final del fragmento se da por acabado (la tele congela el reloj al acabarse el audio). */
+export const FRAGMENT_END_TOLERANCE_MS = 2_000;
+
+/** El fragmento ya sonó entero: la tele frenó el reloj al acabarse el audio y no es una pausa del anfitrión. */
+export const fragmentEnded = (round: { fragmentMs: number; elapsedMs: number }) =>
+  round.elapsedMs >= round.fragmentMs - FRAGMENT_END_TOLERANCE_MS;
+
 /** Datos de la ronda que necesitan las reglas. */
 export interface RoundClock {
   playStartedAt: Date | null;

@@ -1,4 +1,4 @@
-import { Check, X } from "lucide-react";
+import { Check, Smartphone, X } from "lucide-react";
 import ui from "@/components/ui.module.css";
 import type { GuessRow, Round } from "@/lib/client/api";
 import styles from "../game.module.css";
@@ -32,7 +32,10 @@ export function AttemptsList({
           <li key={g.id} className={styles.attempt}>
             <span className={styles.attemptAt}>{Math.floor(g.atMs / 1000)} s</span>
             <div className={styles.attemptBody}>
-              <span className={styles.attemptWho}>{g.playerName}</span>
+              <span className={styles.attemptWho}>
+                {g.playerName}
+                {g.viaPhone && <Smartphone className={styles.viaPhone} size={18} aria-label="desde su móvil" />}
+              </span>
               {(g.title || g.titleCorrect) && (
                 <AttemptPart
                   correct={g.titleCorrect}

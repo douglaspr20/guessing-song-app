@@ -14,10 +14,24 @@ export type GameEvent =
   | { type: "artist_guessed"; gameId: string; roundId: string; playerId: string }
   | { type: "round_won"; gameId: string; roundId: string; playerId: string }
   | { type: "round_revealed"; gameId: string; roundId: string }
+  | { type: "round_playing"; gameId: string; roundId: string }
+  | { type: "round_paused"; gameId: string; roundId: string }
+  | { type: "round_resumed"; gameId: string; roundId: string }
   | { type: "game_finished"; gameId: string }
   | { type: "participant_joined"; gameId: string; participantId: string; name: string }
   | { type: "participant_left"; gameId: string; participantId: string }
-  | { type: "join_toggled"; gameId: string; open: boolean };
+  | { type: "join_toggled"; gameId: string; open: boolean }
+  | { type: "buzz"; gameId: string; roundId: string; participantId: string; name: string }
+  | {
+      type: "buzz_resolved";
+      gameId: string;
+      roundId: string;
+      participantId: string;
+      name: string;
+      correct: boolean;
+      /** Cómo acabó el turno: acertó, falló, se le acabó el tiempo o el anfitrión lo canceló. */
+      outcome: "correct" | "wrong" | "timeout" | "cancelled";
+    };
 
 type Listener = (event: GameEvent) => void;
 

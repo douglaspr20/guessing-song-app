@@ -1,7 +1,7 @@
 import "server-only";
 import { randomInt } from "node:crypto";
 import { after } from "next/server";
-import { Prisma, type Game, type Player, type Round, type TeamMember } from "@/generated/prisma/client";
+import { Prisma, type Game, type Participant, type Player, type Round, type TeamMember } from "@/generated/prisma/client";
 import { ownerData, ownerWhere, type Owner } from "@/lib/access/owner";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
@@ -57,9 +57,12 @@ function roundClock(round: Round): RoundClock {
 }
 
 /** La partida a la que pertenece la ronda: su modo fija las reglas y su fragmento, la duración. */
-type RoundGame = Pick<Game, "fragmentSeconds" | "mode">;
+type RoundGame = Pick<Game, "fragmentSeconds" | "mode" | "answerSeconds">;
 
-export function toPublicRound(round: Round, game: RoundGame, now = new Date()) {
+/** Nombres de quienes se unieron desde el móvil, por id (para decir quién tiene el turno). */
+type ParticipantNames = ReadonlyMap<string, { name: string; playerId: string }>;
+
+export function toPublicRound(round: Round, game: RoundGame, now = new Date(), people?: ParticipantNames) {
   const closed = round.status !== "PLAYING";
   const rules = rulesFor(game.mode);
   const clock = roundClock(round);
@@ -83,6 +86,18 @@ export function toPublicRound(round: Round, game: RoundGame, now = new Date()) {
     nextHintAt: closed ? null : nextHintAt,
     winnerPlayerId: round.winnerPlayerId,
     artistWinnerPlayerId: round.artistWinnerPlayerId,
+    /** Quien pulsó «¡Lo sé!» y está respondiendo (el reloj de la ronda está parado). */
+    buzz:
+      !closed && round.buzzParticipantId && round.buzzDeadline
+        ? {
+            participantId: round.buzzParticipantId,
+            name: people?.get(round.buzzParticipantId)?.name ?? "",
+            playerId: people?.get(round.buzzParticipantId)?.playerId ?? "",
+            /** Lo que le queda para responder, medido por el servidor (no depende del reloj del móvil). */
+            remainingMs: Math.max(0, round.buzzDeadline.getTime() - now.getTime()),
+            totalMs: game.answerSeconds * 1000,
+          }
+        : null,
     // La respuesta solo se desvela cuando la ronda está cerrada.
     answer: closed
       ? {
@@ -116,8 +131,12 @@ function toPublicPlayers(players: PlayerWithMembers[]) {
     }));
 }
 
-function toPublicGame(game: Game & { players: PlayerWithMembers[]; rounds: Round[] }, catalogNumber: number) {
+function toPublicGame(
+  game: Game & { players: PlayerWithMembers[]; rounds: Round[]; participants?: Participant[] },
+  catalogNumber: number,
+) {
   const now = new Date();
+  const people: ParticipantNames = new Map((game.participants ?? []).map((p) => [p.id, { name: p.name, playerId: p.playerId }]));
   const current = game.rounds.find((r) => r.number === game.currentRound) ?? null;
   return {
     id: game.id,
@@ -136,15 +155,19 @@ function toPublicGame(game: Game & { players: PlayerWithMembers[]; rounds: Round
     maxTeamSize: game.maxTeamSize,
     /** Si se puede entrar con el código desde el móvil. */
     joinOpen: game.joinOpen,
+    /** Segundos que tiene quien pulsa «¡Lo sé!» para responder. */
+    answerSeconds: game.answerSeconds,
+    /** Al fallar queda fuera "person" (solo quien falló) o "team" (todo su equipo). */
+    lockout: game.lockout as "person" | "team",
     filters: JSON.parse(game.filters) as GameFilters,
     /** Si la siguiente canción ya está elegida (la próxima ronda empezará sin espera). */
     nextTrackReady: !!game.nextTrack && game.nextTrackFilters === game.filters,
     players: toPublicPlayers(game.players),
-    round: current ? toPublicRound(current, game, now) : null,
+    round: current ? toPublicRound(current, game, now, people) : null,
     history: game.rounds
       .filter((r) => r.status !== "PLAYING")
       .sort((a, b) => a.number - b.number)
-      .map((r) => toPublicRound(r, game, now)),
+      .map((r) => toPublicRound(r, game, now, people)),
   };
 }
 
@@ -180,12 +203,13 @@ function spotifyUserOf(game: Pick<Game, "userId">) {
 }
 
 async function loadGame(gameId: string) {
-  const game = await db.game.findUnique({ where: { id: gameId }, include: { players: { include: { members: true } }, rounds: true } });
+  const game = await db.game.findUnique({ where: { id: gameId }, include: { players: { include: { members: true } }, rounds: true, participants: true },
+  });
   if (!game) throw new AppError("Partida no encontrada", 404, "GAME_NOT_FOUND");
   return game;
 }
 
-async function loadRound(gameId: string, roundId: string) {
+export async function loadRound(gameId: string, roundId: string) {
   const round = await db.round.findUnique({ where: { id: roundId }, include: { game: true } });
   if (!round || round.gameId !== gameId) throw new AppError("Ronda no encontrada", 404, "ROUND_NOT_FOUND");
   return round;
@@ -282,6 +306,8 @@ export async function createGame(input: CreateGameInput, owner: Owner): Promise<
           fragmentSeconds: data.fragmentSeconds,
           filters: JSON.stringify(data.filters),
           format: data.format,
+          answerSeconds: data.answerSeconds,
+          lockout: data.lockout,
           maxTeamSize: data.format === "teams" ? data.maxTeamSize : null,
           players: {
             create:
@@ -450,6 +476,8 @@ export async function startNextRound(gameId: string) {
 export async function playRound(gameId: string, roundId: string, deviceId: string | undefined, offsetMs = 0) {
   const round = await loadRound(gameId, roundId);
   if (round.status !== "PLAYING") throw new AppError("La ronda ya está cerrada", 409, "ROUND_CLOSED");
+  // Mientras alguien responde, la canción está parada a propósito: no se reanuda por detrás.
+  if (round.buzzParticipantId) throw new AppError("Alguien está respondiendo", 409, "BUZZ_ACTIVE");
   // `offsetMs` > 0 retoma el fragmento a medias (p. ej. tras recargar la página).
   const fragmentMs = round.game.fragmentSeconds * 1000;
   const offset = Math.min(Math.max(0, Math.round(offsetMs)), fragmentMs);
@@ -462,6 +490,8 @@ export async function playRound(gameId: string, roundId: string, deviceId: strin
   // Volver a reproducir también reanuda el reloj si estaba en pausa.
   if (round.pausedAt) await resumeClock(roundId);
   const updated = await db.round.findUniqueOrThrow({ where: { id: roundId } });
+  // Los móviles esperan este aviso para encender «¡Lo sé!».
+  emit({ type: "round_playing", gameId, roundId });
   return {
     startMs: round.startMs,
     fragmentMs,
@@ -473,7 +503,7 @@ export async function playRound(gameId: string, roundId: string, deviceId: strin
   };
 }
 
-async function resumeClock(roundId: string) {
+export async function resumeClock(roundId: string) {
   const round = await db.round.findUniqueOrThrow({ where: { id: roundId } });
   if (!round.pausedAt) return round;
   return db.round.update({
@@ -489,6 +519,7 @@ export async function pauseRound(gameId: string, roundId: string) {
   if (!round.playStartedAt) throw new AppError("La canción aún no ha empezado a sonar", 409, "ROUND_NOT_STARTED");
   await db.round.updateMany({ where: { id: roundId, pausedAt: null }, data: { pausedAt: new Date() } });
   const updated = await db.round.findUniqueOrThrow({ where: { id: roundId } });
+  emit({ type: "round_paused", gameId, roundId });
   return toPublicRound(updated, round.game);
 }
 
@@ -496,7 +527,26 @@ export async function pauseRound(gameId: string, roundId: string) {
 export async function resumeRound(gameId: string, roundId: string) {
   const round = await loadRound(gameId, roundId);
   if (round.status !== "PLAYING") throw new AppError("La ronda ya está cerrada", 409, "ROUND_CLOSED");
+  // Si alguien tenía el turno, seguir es cancelárselo (sin dejarle fuera de la ronda).
+  if (round.buzzParticipantId) {
+    const cleared = await db.round.updateMany({
+      where: { id: roundId, buzzParticipantId: round.buzzParticipantId },
+      data: { buzzParticipantId: null, buzzedAt: null, buzzDeadline: null },
+    });
+    if (cleared.count) {
+      emit({
+        type: "buzz_resolved",
+        gameId,
+        roundId,
+        participantId: round.buzzParticipantId,
+        name: "",
+        correct: false,
+        outcome: "cancelled",
+      });
+    }
+  }
   const updated = await resumeClock(roundId);
+  emit({ type: "round_resumed", gameId, roundId });
   return toPublicRound(updated, round.game);
 }
 
@@ -511,7 +561,7 @@ interface Award {
  * Reparte puntos dentro de una transacción. Los `updateMany` condicionales garantizan que
  * solo el primero se lleva el título y solo uno el artista, aunque lleguen a la vez.
  */
-async function award(
+export async function award(
   tx: Prisma.TransactionClient,
   round: Round & { game: Game },
   playerId: string,
@@ -551,13 +601,13 @@ async function award(
   return result;
 }
 
-function emitAward(gameId: string, roundId: string, playerId: string, a: Award) {
+export function emitAward(gameId: string, roundId: string, playerId: string, a: Award) {
   if (a.artistAwarded) emit({ type: "artist_guessed", gameId, roundId, playerId });
   if (a.titleAwarded) emit({ type: "round_won", gameId, roundId, playerId });
   if (a.gameFinished) emit({ type: "game_finished", gameId });
 }
 
-async function guessResult(gameId: string, roundId: string) {
+export async function guessResult(gameId: string, roundId: string) {
   const game = await loadGame(gameId);
   const round = game.rounds.find((r) => r.id === roundId)!;
   return {
@@ -723,7 +773,7 @@ export async function revealRound(gameId: string, roundId: string) {
     const finished = await db.$transaction(async (tx) => {
       const updated = await tx.round.updateMany({
         where: { id: roundId, status: "PLAYING" },
-        data: { status: "REVEALED" },
+        data: { status: "REVEALED", buzzParticipantId: null, buzzedAt: null, buzzDeadline: null },
       });
       return updated.count > 0 && (await finishIfLastRound(tx, round.game, round.number));
     });
@@ -755,6 +805,8 @@ export async function getRoundGuesses(gameId: string, roundId: string) {
     artistCorrect: g.artistCorrect,
     points: g.points,
     overridden: g.overridden,
+    /** Respondió desde su móvil (no lo registró el anfitrión). */
+    viaPhone: !!g.participantId,
     /** Segundos de ronda en que se hizo el intento. */
     atMs: elapsedMs(round, g.createdAt),
     createdAt: g.createdAt,

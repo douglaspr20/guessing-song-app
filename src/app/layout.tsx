@@ -11,6 +11,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#1D2747",
+  // Con el teclado del móvil abierto la página se encoge en vez de quedar tapada (Chrome en Android).
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
