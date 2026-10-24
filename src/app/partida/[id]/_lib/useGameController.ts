@@ -5,7 +5,7 @@ import { useGamePlayer } from "@/hooks/useGamePlayer";
 import { rulesFor } from "@/lib/game/scoring";
 import { api, type GuessResult, type GuessRow, type Round } from "@/lib/client/api";
 import { GAIN_FLASH_MS, INTERMISSION_MS } from "./constants";
-import { acceptedFeedback, describeGuess, type Feedback } from "./feedback";
+import { acceptedFeedback, describeGuess, spokenFeedback, type Feedback } from "./feedback";
 import { deriveRoundClock } from "./roundClock";
 import { useGame, useNow } from "./useGame";
 
@@ -50,6 +50,25 @@ export function useGameController(gameId: string) {
     now,
     player,
   });
+
+  // Las fichas van en orden fijo (el marcador se reordena por puntos): la tecla 1 siempre es el mismo jugador.
+  const seats = [...(game?.players ?? [])].sort((a, b) => a.name.localeCompare(b.name));
+  // Quién respondió: lo usan el formulario, «¡Acertó!» y los atajos. Por defecto, la primera ficha.
+  const [selectedId, setSelectedId] = useState("");
+  const selectedPlayer = seats.find((p) => p.id === selectedId) ?? seats[0] ?? null;
+
+  const finished = !!game && (game.status === "FINISHED" || game.currentRound >= game.totalRounds);
+  const ready = player.status === "ready";
+  const roundOpen = !!round && clock.open;
+  /** Qué se puede hacer ahora mismo: lo comparten los botones y los atajos. */
+  const can = {
+    next: !roundOpen && (finished || (!busy && ready)),
+    play: roundOpen && !busy && ready,
+    pause: roundOpen && !busy && (player.phase === "playing" || clock.canResume),
+    reveal: roundOpen && !busy,
+    awardTitle: roundOpen && clock.started && !busy && !!selectedPlayer && !round?.winnerPlayerId,
+    awardArtist: roundOpen && clock.started && !busy && !!selectedPlayer && clock.artistOpen,
+  };
 
   /** Ejecuta una acción del anfitrión bloqueando los botones y mostrando su error. */
   const run = async (fn: () => Promise<void>) => {
@@ -190,6 +209,19 @@ export function useGameController(gameId: string) {
     return sent;
   };
 
+  /** El jugador elegido dijo la canción o el artista en voz alta: se le da sin escribir nada. */
+  const awardSpoken = (part: "title" | "artist") =>
+    run(async () => {
+      if (!round || !game || !selectedPlayer) return;
+      const r = await api<GuessResult>(`/api/games/${gameId}/rounds/${round.id}/award`, {
+        json: { playerId: selectedPlayer.id, [part]: true },
+      });
+      setFeedback(spokenFeedback(selectedPlayer.name, part, r.points));
+      flashGain(selectedPlayer.id, r.points);
+      if (r.titleAwarded) await player.stop();
+      await refresh();
+    });
+
   /** El anfitrión da por bueno el título o el artista de un intento rechazado. */
   const acceptGuess = (guess: GuessRow, part: "title" | "artist") =>
     run(async () => {
@@ -221,7 +253,23 @@ export function useGameController(gameId: string) {
     gains,
     showFinale,
     openFinale: () => setShowFinale(true),
-    actions: { startNext, replay, togglePause, reveal, submitGuess, acceptGuess },
+    finished,
+    seats,
+    selectedPlayer,
+    selectPlayer: setSelectedId,
+    can,
+    actions: {
+      startNext,
+      /** Empezar, siguiente pista o, si ya no quedan, el podio. */
+      primary: () => (finished ? setShowFinale(true) : startNext()),
+      replay,
+      togglePause,
+      reveal,
+      submitGuess,
+      acceptGuess,
+      awardTitle: () => awardSpoken("title"),
+      awardArtist: () => awardSpoken("artist"),
+    },
   };
 }
 

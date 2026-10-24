@@ -21,6 +21,11 @@ export function describeGuess(name: string, result: GuessResult, said: { title: 
   return { tone: result.points ? "good" : "bad", text };
 }
 
+/** El anfitrión le dio la canción o el artista a quien lo dijo en voz alta. */
+export function spokenFeedback(name: string, part: "title" | "artist", points: number): Feedback {
+  return { tone: "good", text: `${name}: ¡acertó ${part === "title" ? "la canción" : "el artista"}! +${points}` };
+}
+
 export function acceptedFeedback(name: string, points: number): Feedback {
   return { tone: "good", text: `Dado por bueno: ${name} suma ${points}` };
 }

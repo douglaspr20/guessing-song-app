@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Keyboard } from "lucide-react";
 import { Scoreboard } from "@/components/Scoreboard";
 import { BandStatus } from "@/components/band/BandStatus";
 import ui from "@/components/ui.module.css";
@@ -14,8 +15,10 @@ import { NextActions } from "./_components/NextActions";
 import { ReadyCard } from "./_components/ReadyCard";
 import { RevealCard } from "./_components/RevealCard";
 import { RoundCassette } from "./_components/RoundCassette";
+import { ShortcutsHelp } from "./_components/ShortcutsHelp";
 import { IntermissionScreen, LoadErrorScreen, LoadingScreen } from "./_components/StageScreen";
 import { useGameController } from "./_lib/useGameController";
+import { useGameShortcuts } from "./_lib/useGameShortcuts";
 import styles from "./game.module.css";
 
 /** Pantalla de juego del anfitrión: elige qué estado mostrar y compone sus piezas. */
@@ -23,7 +26,10 @@ export function GameClient() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const ctl = useGameController(id);
-  const { game, round, clock, player, rules, actions } = ctl;
+  const { game, round, clock, player, rules, actions, can } = ctl;
+  const [helpOpen, setHelpOpen] = useState(false);
+  // Solo en la pantalla de juego: ni al cargar, ni en el entreacto, ni en el podio.
+  useGameShortcuts(ctl, { enabled: !!game && !ctl.loadError && !ctl.showFinale && !ctl.intermission, onHelp: () => setHelpOpen(true) });
 
   if (ctl.loadError) return <LoadErrorScreen error={ctl.loadError} onRetry={ctl.retryLoad} />;
   if (!game) return <LoadingScreen />;
@@ -44,9 +50,6 @@ export function GameClient() {
     );
   }
 
-  const playerReady = player.status === "ready";
-  const playing = player.phase === "playing";
-
   return (
     <>
       <BandStatus text={status} />
@@ -59,19 +62,22 @@ export function GameClient() {
 
             {round && clock.open && (
               <>
-                <RoundCassette round={round} clock={clock} rules={rules} running={playing} />
+                <RoundCassette round={round} clock={clock} rules={rules} running={player.phase === "playing"} />
                 <AnswerForm
                   key={round.id}
-                  players={game.players}
+                  players={ctl.seats}
+                  selected={ctl.selectedPlayer}
+                  onSelect={ctl.selectPlayer}
                   clock={clock}
                   feedback={ctl.feedback}
                   busy={ctl.busy}
-                  playerReady={playerReady}
-                  playing={playing}
+                  can={can}
                   onSubmit={actions.submitGuess}
                   onReplay={actions.replay}
                   onTogglePause={actions.togglePause}
                   onReveal={actions.reveal}
+                  onAwardTitle={actions.awardTitle}
+                  onAwardArtist={actions.awardArtist}
                 />
               </>
             )}
@@ -89,9 +95,8 @@ export function GameClient() {
               <NextActions
                 gameId={game.id}
                 hasRound={!!round}
-                finished={game.status === "FINISHED" || game.currentRound >= game.totalRounds}
-                busy={ctl.busy}
-                playerReady={playerReady}
+                finished={ctl.finished}
+                canNext={can.next}
                 onNext={actions.startNext}
                 onFinale={ctl.openFinale}
               />
@@ -114,9 +119,15 @@ export function GameClient() {
             <button type="button" className={`${ui.btn} ${ui.onShell}`} onClick={() => router.push("/")}>
               Salir a la estantería
             </button>
+            <button type="button" className={`${ui.btn} ${ui.onShell}`} onClick={() => setHelpOpen(true)}>
+              <Keyboard size={22} aria-hidden />
+              Atajos
+              <kbd className={styles.key}>?</kbd>
+            </button>
           </aside>
         </div>
       </main>
+      {helpOpen && <ShortcutsHelp onClose={() => setHelpOpen(false)} />}
     </>
   );
 }

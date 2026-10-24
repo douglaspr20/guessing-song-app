@@ -1,51 +1,64 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Eye, Pause, Play, RotateCcw } from "lucide-react";
+import { Eye, Pause, Play, RotateCcw, ThumbsUp } from "lucide-react";
 import ui from "@/components/ui.module.css";
 import type { Player } from "@/lib/client/api";
 import type { Feedback } from "../_lib/feedback";
 import type { RoundClockView } from "../_lib/roundClock";
-import type { GuessInput } from "../_lib/useGameController";
+import type { GameController, GuessInput } from "../_lib/useGameController";
 import { FeedbackLine } from "./FeedbackLine";
+import { Hint } from "./Hint";
 import styles from "../game.module.css";
 
 interface Props {
   players: Player[];
+  selected: Player | null;
+  onSelect: (id: string) => void;
   clock: RoundClockView;
   feedback: Feedback | null;
   busy: boolean;
-  playerReady: boolean;
-  playing: boolean;
+  can: GameController["can"];
   onSubmit: (guess: GuessInput) => Promise<boolean>;
   onReplay: () => void;
   onTogglePause: () => void;
   onReveal: () => void;
+  onAwardTitle: () => void;
+  onAwardArtist: () => void;
 }
 
 /**
  * La carátula donde el anfitrión anota quién respondió y qué dijo, con los controles de la cinta.
  * Se monta una vez por ronda, así que empieza vacía en cada pista.
  */
-export function AnswerForm({ players, clock, feedback, busy, playerReady, playing, onSubmit, onReplay, onTogglePause, onReveal }: Props) {
-  const [who, setWho] = useState("");
+export function AnswerForm({
+  players,
+  selected,
+  onSelect,
+  clock,
+  feedback,
+  busy,
+  can,
+  onSubmit,
+  onReplay,
+  onTogglePause,
+  onReveal,
+  onAwardTitle,
+  onAwardArtist,
+}: Props) {
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
   const titleRef = useRef<HTMLInputElement>(null);
 
-  // Por defecto, el primero del marcador.
-  const whoId = players.some((p) => p.id === who) ? who : (players[0]?.id ?? "");
-
-  usePlayerShortcuts(players, setWho);
-
-  // En cuanto empieza a sonar, el cursor va al título.
+  // En cuanto empieza a sonar, el cursor va al título (Esc lo suelta para usar los atajos).
   useEffect(() => {
     if (clock.started) titleRef.current?.focus();
   }, [clock.started]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const sent = await onSubmit({ playerId: whoId, title, artist });
+    if (!selected) return;
+    const sent = await onSubmit({ playerId: selected.id, title, artist });
     if (!sent) return;
     setTitle("");
     setArtist("");
@@ -60,14 +73,28 @@ export function AnswerForm({ players, clock, feedback, busy, playerReady, playin
         <legend className={styles.fieldLabel}>¿Quién lo dijo?</legend>
         {players.map((p, i) => (
           <label key={p.id} className={styles.whoOption}>
-            <input type="radio" name="who" value={p.id} checked={whoId === p.id} onChange={() => setWho(p.id)} />
+            <input type="radio" name="who" value={p.id} checked={selected?.id === p.id} onChange={() => onSelect(p.id)} />
             <span>
               {p.name}
-              {i < 9 && <kbd>{i + 1}</kbd>}
+              {i < 9 && <kbd className={styles.key}>{i + 1}</kbd>}
             </span>
           </label>
         ))}
       </fieldset>
+
+      {/* Con el mando no se escribe: el anfitrión da lo que el elegido dijo en voz alta. */}
+      <div className={styles.spokenRow}>
+        <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onAwardTitle} disabled={!can.awardTitle}>
+          <ThumbsUp size={22} aria-hidden />
+          ¡Acertó la canción!
+          <Hint k="C" color="green" />
+        </button>
+        <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onAwardArtist} disabled={!can.awardArtist}>
+          ¡Acertó el artista!
+          <Hint k="A" color="yellow" />
+        </button>
+        {selected && <span className={styles.spokenWho}>a {selected.name}</span>}
+      </div>
 
       <div className={styles.fields}>
         <label className={styles.field}>
@@ -101,22 +128,20 @@ export function AnswerForm({ players, clock, feedback, busy, playerReady, playin
       {!clock.started && <p className={styles.fieldLabel}>Se puede responder cuando empiece a sonar.</p>}
 
       <div className={styles.submitRow}>
-        <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onReplay} disabled={busy || !playerReady}>
+        <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onReplay} disabled={!can.play}>
           {clock.started ? <RotateCcw size={22} aria-hidden /> : <Play size={22} aria-hidden />}
           {clock.started ? "Repetir" : "Reproducir"}
+          <Hint k={clock.started ? "R" : "Espacio"} />
         </button>
-        <button
-          type="button"
-          className={`${ui.btn} ${ui.onCard}`}
-          onClick={onTogglePause}
-          disabled={busy || (!playing && !clock.canResume)}
-        >
+        <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onTogglePause} disabled={!can.pause}>
           {clock.canResume ? <Play size={22} aria-hidden /> : <Pause size={22} aria-hidden />}
           {clock.canResume ? "Seguir" : "Pausar"}
+          <Hint k="Espacio" />
         </button>
-        <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onReveal} disabled={busy}>
+        <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onReveal} disabled={!can.reveal}>
           <Eye size={22} aria-hidden />
           Revelar
+          <Hint k="V" color="red" />
         </button>
         <button type="submit" className={`${ui.btn} ${ui.primary} ${styles.register}`} disabled={busy || !canSubmit}>
           Registrar respuesta
@@ -124,18 +149,4 @@ export function AnswerForm({ players, clock, feedback, busy, playerReady, playin
       </div>
     </form>
   );
-}
-
-/** Atajo para el anfitrión: las teclas 1-9 eligen jugador (fuera de los campos de texto). */
-function usePlayerShortcuts(players: Player[], select: (id: string) => void) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === "INPUT" && (target as HTMLInputElement).type === "text") return;
-      const n = Number(e.key);
-      if (n >= 1 && n <= 9 && players[n - 1]) select(players[n - 1].id);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [players, select]);
 }

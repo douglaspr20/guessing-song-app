@@ -630,6 +630,57 @@ export async function overrideGuess(
   };
 }
 
+/**
+ * El anfitrión da el título o el artista a un jugador que lo dijo en voz alta, sin escribirlo
+ * (el mando de la tele no tiene teclado). Queda en los intentos como respuesta «de palabra».
+ */
+export async function awardSpoken(
+  gameId: string,
+  roundId: string,
+  playerId: string,
+  input: { title?: boolean; artist?: boolean },
+) {
+  if (!input.title && !input.artist) throw new AppError("Indica si acertó la canción o el artista", 422, "EMPTY_AWARD");
+  const round = await loadRound(gameId, roundId);
+  if (round.status !== "PLAYING") throw new AppError("La ronda ya está cerrada", 409, "ROUND_CLOSED");
+  if (!round.playStartedAt) throw new AppError("La canción aún no ha empezado a sonar", 409, "ROUND_NOT_STARTED");
+  await loadPlayer(gameId, playerId);
+
+  const at = new Date();
+  const result = await db.$transaction(async (tx) => {
+    const a = await award(tx, round, playerId, { title: !!input.title, artist: !!input.artist, at });
+    if (a.points) {
+      await tx.guess.create({
+        data: {
+          roundId,
+          playerId,
+          titleCorrect: a.titleAwarded,
+          artistCorrect: a.artistAwarded,
+          overridden: true,
+          points: a.points,
+          createdAt: at,
+        },
+      });
+    }
+    return a;
+  });
+  if (!result.points) {
+    throw new AppError(
+      input.title ? "Esta ronda ya tiene ganador" : "El artista ya no suma o se lo llevó alguien",
+      409,
+      "AWARD_NOT_APPLIED",
+    );
+  }
+
+  emitAward(gameId, roundId, playerId, result);
+  return {
+    titleAwarded: result.titleAwarded,
+    artistAwarded: result.artistAwarded,
+    points: result.points,
+    ...(await guessResult(gameId, roundId)),
+  };
+}
+
 /** Nadie la adivinó (o se acabó el fragmento): cierra la ronda y muestra la respuesta. */
 export async function revealRound(gameId: string, roundId: string) {
   const round = await loadRound(gameId, roundId);
