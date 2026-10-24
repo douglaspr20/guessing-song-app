@@ -16,17 +16,20 @@ Estado al 24-10-2026. Marcas: `[x]` hecho, `[ ]` pendiente. Tamaño: S (horas), 
 - [x] Probar el teclado en un iPhone real.
 - [x] Probar el pulsador con varios móviles a la vez.
 - [x] Poner `ABLY_API_KEY` en Vercel (marcada como Sensitive).
+- [x] Tests e2e con Playwright (invitado juega, miembro se registra con invitación, anfitrión entra, un móvil se une por código y pulsa), dentro del CI con el check `ci-ok`, y workflow que refleja el despliegue de Vercel.
 
-## En curso / por verificar
+## Pendiente en GitHub y Vercel (manual)
 
-- [ ] Tras desplegar la rama con `src/lib/db-url.ts`, comprobar en los logs de Vercel que ya no sale el aviso de `pg` sobre `sslmode`.
-- [ ] Opcional: pedir a GitHub Support que purgue el commit antiguo `b38baca`.
+- [ ] En GitHub (*Settings → Branches*), proteger `master`: exigir pull request y el check `ci-ok`.
+- [ ] Tras fusionar a master, comprobar que aparece el check «Despliegue en Vercel» en el commit (los workflows de `deployment_status` solo corren desde la rama por defecto).
+- [ ] En Vercel, confirmar qué base usan los despliegues de preview: si comparten la de producción, una migración se aplicaría antes de fusionar.
 
 ## Calidad y base técnica
 
-- [ ] **Tests e2e con Playwright (M).** Flujos: invitado juega una partida, miembro se registra con invitación, anfitrión entra, un móvil se une por código y pulsa.
 - [ ] **No repetir canciones entre partidas del mismo dueño (M).** Hoy solo evita repetidas dentro de una partida. Necesita historial de pistas por dueño y un límite (por ejemplo, las últimas N partidas) para no agotar el catálogo.
 - [ ] **Soporte de varios idiomas (L).** Extraer los textos a un diccionario. Decidir antes qué idiomas y si el reconocimiento de respuestas (`matcher.ts`) necesita ajustes por idioma.
+- [ ] **Añadir analitica** Aadir paquete de vercel para ver analitica del sitio.
+- [ ] **Refactor de componentes de codigo** Refctor de componentes muy grandes y estilos dentro de la app.
 
 ## Contenido y búsqueda
 
