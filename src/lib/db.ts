@@ -1,10 +1,11 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
+import { withVerifyFull } from "@/lib/db-url";
 
 /** Cliente de Prisma sobre el driver `pg` (sin motor nativo: funciona igual en local y en Vercel). */
 export function createDb(connectionString = process.env.DATABASE_URL) {
   if (!connectionString) throw new Error("Falta DATABASE_URL");
-  return new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
+  return new PrismaClient({ adapter: new PrismaPg({ connectionString: withVerifyFull(connectionString) }) });
 }
 
 // Reutiliza la misma instancia entre recargas en desarrollo.
