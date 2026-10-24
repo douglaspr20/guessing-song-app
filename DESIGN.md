@@ -263,6 +263,14 @@ Etiquetas de cinta que se pulsan: condensada mayúscula, trazo de 3px, sin relle
 - **Filtro:** píldora de 44px con trazo de 2px en tinta, Barlow 600 a 17px; seleccionado (aria-pressed) se rellena de tinta.
 - **Fichas de jugador:** radios ocultos sobre píldoras de 56px con trazo de 3px y nombre en Kalam; marcada se rellena de tinta; atajo de teclado (1 a 9) en condensada al 60%. Foco con anillo tomate. Van en orden alfabético fijo (no por puntos), para que cada número sea siempre el mismo jugador.
 
+### Equipos
+- **Paleta:** ocho colores con nombre (Azafrán, Cielo, Menta, Ciruela, Teja, Pino, Lavanda y Arena), repartidos en ese orden. Ninguno es el tomate, que sigue reservado a la acción principal. El color nunca va solo: siempre acompaña al nombre del equipo.
+- **Muestrario:** círculo relleno con el color y trazo de 2px en tinta (`TeamDot`, 12 a 20px). Va antes del nombre en el marcador, las fichas de «¿Quién lo dijo?», el podio, el final y la tarjeta previa a la primera pista.
+- **Línea de miembros:** bajo el nombre del equipo, en Kalam a 19px en tinta suave: «Ana, Luis, Marta +2». La fila del marcador es un botón (`aria-expanded`) que despliega la lista completa; nada depende de pasar el ratón, porque en la tele no existe.
+- **Editor de equipos (/nueva):** «Quién juega» conserva su columna, igual que con jugadores sueltos. Una carátula pequeña por equipo, con el color en una franja superior de 10px, el nombre editable en Kalam, el contador n/máx y, por miembro, un selector para cambiarle de equipo y un botón de quitar de 44px. Los avisos (equipo lleno, repetidos) van en línea sobre la cartulina.
+
+- **Adaptación:** en móvil (≤640px) el selector de formato ocupa todo el ancho y cada persona va en una sola línea (nombre, selector de equipo de 112px, quitar de 44px; 48px con dedo); por debajo de 360px el selector baja bajo el nombre. En tableta hay dos equipos por fila y en escritorio tantos como quepan (mín. 260px). El podio final por equipos reparte 5/2 con la columna lateral y se apila por debajo de 900px; en el podio compacto de la estantería el nombre del equipo se corta a dos líneas.
+
 ### Atajos (jugar en la tele)
 - **Marca de atajo:** la tecla en condensada a 15px al 60% (`.key`), al final del botón. Si el mando de la tele tiene botón de color para esa acción, la precede un punto de 12px con borde de 2px en el color del mando (rojo Revelar, verde ¡Acertó la canción!, amarillo ¡Acertó el artista!, azul Siguiente). Son los colores del mando, no los de las franjas. En móvil (≤640px) las marcas se ocultan.
 - **«¡Acertó!»:** dos botones de cartulina bajo las fichas para dar la canción o el artista al jugador elegido sin escribir. Nunca tomate: el primario sigue siendo «Registrar respuesta». En los intentos aparecen como «la canción, de palabra».

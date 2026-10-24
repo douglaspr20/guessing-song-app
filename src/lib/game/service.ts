@@ -1,7 +1,7 @@
 import "server-only";
 import { randomInt } from "node:crypto";
 import { after } from "next/server";
-import { Prisma, type Game, type Player, type Round } from "@/generated/prisma/client";
+import { Prisma, type Game, type Player, type Round, type TeamMember } from "@/generated/prisma/client";
 import { ownerData, ownerWhere, type Owner } from "@/lib/access/owner";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
@@ -18,6 +18,7 @@ import { emit } from "./events";
 import { createGameSchema, gameFiltersSchema, type CreateGameInput, type GameFilters, type GameMode } from "./filters";
 import { isCorrectArtist, isCorrectGuess } from "./matcher";
 import { pickOpenTrack, type OpenTrackSource } from "./open-picker";
+import type { GameFormat } from "./teams";
 import {
   ARTIST_POINTS,
   artistAvailable,
@@ -98,13 +99,24 @@ export function toPublicRound(round: Round, game: RoundGame, now = new Date()) {
 
 export type PublicRound = ReturnType<typeof toPublicRound>;
 
-function toPublicPlayers(players: Player[]) {
+type PlayerWithMembers = Player & { members: TeamMember[] };
+
+/** Jugadores (o equipos) de más a menos puntos. En equipos llevan su color y sus miembros. */
+function toPublicPlayers(players: PlayerWithMembers[]) {
   return [...players]
     .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
-    .map((p) => ({ id: p.id, name: p.name, score: p.score }));
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      score: p.score,
+      /** Color del equipo (clave de la paleta); null en todos contra todos. */
+      color: p.color,
+      /** Quiénes forman el equipo, en orden de llegada; vacío en todos contra todos. */
+      members: [...p.members].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id)).map((m) => m.name),
+    }));
 }
 
-function toPublicGame(game: Game & { players: Player[]; rounds: Round[] }, catalogNumber: number) {
+function toPublicGame(game: Game & { players: PlayerWithMembers[]; rounds: Round[] }, catalogNumber: number) {
   const now = new Date();
   const current = game.rounds.find((r) => r.number === game.currentRound) ?? null;
   return {
@@ -119,6 +131,9 @@ function toPublicGame(game: Game & { players: Player[]; rounds: Round[] }, catal
     totalRounds: game.totalRounds,
     currentRound: game.currentRound,
     fragmentSeconds: game.fragmentSeconds,
+    /** "solo" (todos contra todos) o "teams" (cada entrada de `players` es un equipo). */
+    format: game.format as GameFormat,
+    maxTeamSize: game.maxTeamSize,
     filters: JSON.parse(game.filters) as GameFilters,
     /** Si la siguiente canción ya está elegida (la próxima ronda empezará sin espera). */
     nextTrackReady: !!game.nextTrack && game.nextTrackFilters === game.filters,
@@ -163,7 +178,7 @@ function spotifyUserOf(game: Pick<Game, "userId">) {
 }
 
 async function loadGame(gameId: string) {
-  const game = await db.game.findUnique({ where: { id: gameId }, include: { players: true, rounds: true } });
+  const game = await db.game.findUnique({ where: { id: gameId }, include: { players: { include: { members: true } }, rounds: true } });
   if (!game) throw new AppError("Partida no encontrada", 404, "GAME_NOT_FOUND");
   return game;
 }
@@ -264,9 +279,20 @@ export async function createGame(input: CreateGameInput, owner: Owner): Promise<
           totalRounds: data.rounds,
           fragmentSeconds: data.fragmentSeconds,
           filters: JSON.stringify(data.filters),
-          players: { create: data.players.map((name) => ({ name })) },
+          format: data.format,
+          maxTeamSize: data.format === "teams" ? data.maxTeamSize : null,
+          players: {
+            create:
+              data.format === "teams"
+                ? data.teams.map((t) => ({
+                    name: t.name,
+                    color: t.color,
+                    members: { create: t.members.map((name) => ({ name })) },
+                  }))
+                : data.players.map((name) => ({ name })),
+          },
         },
-        include: { players: true, rounds: true },
+        include: { players: { include: { members: true } }, rounds: true },
       });
       emit({ type: "game_created", gameId: game.id });
       schedulePreload(game.id);
@@ -293,7 +319,7 @@ export async function listGames(owner: Owner, limit = 12) {
       where,
       orderBy: { createdAt: "desc" },
       take: limit,
-      include: { players: true, _count: { select: { rounds: { where: { status: { not: "PLAYING" } } } } } },
+      include: { players: { include: { members: true } }, _count: { select: { rounds: { where: { status: { not: "PLAYING" } } } } } },
     }),
     db.game.count({ where }),
   ]);
@@ -309,7 +335,11 @@ export async function listGames(owner: Owner, limit = 12) {
         status: g.status as GameStatus,
         totalRounds: g.totalRounds,
         playedRounds: g._count.rounds,
+        format: g.format as GameFormat,
+        /** Jugadores sueltos o equipos. */
         playerCount: g.players.length,
+        /** Personas en total (en equipos, la suma de sus miembros). */
+        peopleCount: g.format === "teams" ? g.players.reduce((n, p) => n + p.members.length, 0) : g.players.length,
         // Empates: comparten puesto los que tienen los mismos puntos.
         podium: players.slice(0, 3).map((p) => ({ ...p, place: players.findIndex((q) => q.score === p.score) + 1 })),
       };
@@ -335,13 +365,16 @@ export async function addPlayer(gameId: string, rawName: string) {
   if (!name || name.length > 30) throw new AppError("Nombre inválido", 422, "INVALID_NAME");
   const game = await loadGame(gameId);
   if (game.status === "FINISHED") throw new AppError("La partida ya terminó", 409, "GAME_FINISHED");
+  if (game.format === "teams") {
+    throw new AppError("En una partida por equipos aún no se pueden añadir jugadores sueltos", 409, "TEAMS_GAME");
+  }
   if (game.players.length >= MAX_PLAYERS) throw new AppError("La partida ya está completa", 409, "GAME_FULL");
   if (game.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
     throw new AppError("Ya hay un jugador con ese nombre", 409, "DUPLICATE_PLAYER");
   }
   const player = await db.player.create({ data: { gameId, name } });
   emit({ type: "player_joined", gameId, playerId: player.id, name });
-  return { id: player.id, name: player.name, score: player.score };
+  return { id: player.id, name: player.name, score: player.score, color: null, members: [] as string[] };
 }
 
 /** Actualiza los filtros entre rondas (p. ej. cambiar de género a mitad de partida). */

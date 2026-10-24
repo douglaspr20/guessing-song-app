@@ -9,6 +9,17 @@ import { BandStatus } from "@/components/band/BandStatus";
 import ui from "@/components/ui.module.css";
 import { api, type AccessStatus, type Catalog, type Game, type Playlist } from "@/lib/client/api";
 import type { GameMode } from "@/lib/game/filters";
+import {
+  DEFAULT_TEAM_SIZE,
+  DEFAULT_TEAMS,
+  emptyTeams,
+  everyone,
+  TEAM_COLORS,
+  teamsProblem,
+  type GameFormat,
+  type TeamDraft,
+} from "@/lib/game/teams";
+import { TeamsEditor } from "./_components/TeamsEditor";
 import styles from "./setup.module.css";
 
 const MAX_PLAYERS = 20;
@@ -35,6 +46,10 @@ function NewGame() {
   const [playlists, setPlaylists] = useState<Playlist[] | null>(null);
 
   const [players, setPlayers] = useState<string[]>(["", ""]);
+  /** "solo": todos contra todos. "teams": cada equipo puntúa junto. */
+  const [format, setFormat] = useState<GameFormat>("solo");
+  const [teams, setTeams] = useState<TeamDraft[]>(() => emptyTeams(DEFAULT_TEAMS));
+  const [maxTeamSize, setMaxTeamSize] = useState(DEFAULT_TEAM_SIZE);
   const [rounds, setRounds] = useState(10);
   const [fragmentSeconds, setFragmentSeconds] = useState(60);
   /** "spotify": canción completa (necesita cuenta). "open": vistas previas de 30 s, sin cuenta. */
@@ -80,7 +95,19 @@ function NewGame() {
     api<Game>(`/api/games/${editId}`).then(
       (g) => {
         if (g.currentRound > 0) return router.replace(`/partida/${g.id}`); // ya empezó: no se edita
-        setPlayers(g.players.map((p) => p.name));
+        if (g.format === "teams") {
+          // Equipos en el orden de la paleta (el de creación).
+          const order = (c: string | null) => TEAM_COLORS.findIndex((t) => t.key === c);
+          setFormat("teams");
+          setMaxTeamSize(g.maxTeamSize ?? DEFAULT_TEAM_SIZE);
+          setTeams(
+            [...g.players]
+              .sort((a, b) => order(a.color) - order(b.color))
+              .map((p) => ({ name: p.name, color: p.color as TeamDraft["color"], members: p.members })),
+          );
+        } else {
+          setPlayers(g.players.map((p) => p.name));
+        }
         setRounds(g.totalRounds);
         setFragmentSeconds(g.fragmentSeconds);
         setMode(g.mode);
@@ -126,16 +153,22 @@ function NewGame() {
   });
 
   const yearsInvalid = !!yearFrom && !!yearTo && Number(yearFrom) > Number(yearTo);
-  const blocker =
-    names.length === 0
+  const byTeams = format === "teams";
+  const people = byTeams ? everyone(teams).length : names.length;
+  const whoProblem = byTeams
+    ? teamsProblem(teams, maxTeamSize)
+    : names.length === 0
       ? "Escribe el nombre de al menos un jugador."
       : duplicates.length
         ? "Hay nombres repetidos."
-        : effectiveSource === "playlists" && usableIds.length === 0
-          ? "Elige al menos una playlist."
-          : yearsInvalid
-            ? "El año «desde» es mayor que el año «hasta»."
-            : null;
+        : null;
+  const blocker =
+    whoProblem ??
+    (effectiveSource === "playlists" && usableIds.length === 0
+      ? "Elige al menos una playlist."
+      : yearsInvalid
+        ? "El año «desde» es mayor que el año «hasta»."
+        : null);
 
   const setPlayer = (i: number, v: string) => setPlayers((ps) => ps.map((p, j) => (j === i ? v : p)));
   const addPlayer = () => setPlayers((ps) => (ps.length < MAX_PLAYERS ? [...ps, ""] : ps));
@@ -149,7 +182,16 @@ function NewGame() {
     setError(null);
     try {
       const game = await api<Game>("/api/games", {
-        json: { mode, players: names, rounds, fragmentSeconds, filters: filters() },
+        json: {
+          mode,
+          format,
+          ...(byTeams
+            ? { teams: teams.map((t) => ({ ...t, name: t.name.trim() })), maxTeamSize }
+            : { players: names }),
+          rounds,
+          fragmentSeconds,
+          filters: filters(),
+        },
       });
       // Al editar se graba un casete nuevo y se tira el anterior (aún no tenía pistas).
       if (editId) await api(`/api/games/${editId}`, { method: "DELETE" }).catch(() => {});
@@ -202,9 +244,22 @@ function NewGame() {
                     Quién juega
                   </h2>
                   <span className={styles.hint}>
-                    {names.length} {names.length === 1 ? "jugador" : "jugadores"}
+                    {byTeams
+                      ? `${teams.length} equipos · ${people} ${people === 1 ? "persona" : "personas"}`
+                      : `${names.length} ${names.length === 1 ? "jugador" : "jugadores"}`}
                   </span>
                 </div>
+                <div className={`${styles.segment} ${styles.formatSwitch}`} role="group" aria-label="Formato de la partida">
+                  <button type="button" aria-pressed={!byTeams} onClick={() => setFormat("solo")}>
+                    Todos contra todos
+                  </button>
+                  <button type="button" aria-pressed={byTeams} onClick={() => setFormat("teams")}>
+                    Por equipos
+                  </button>
+                </div>
+                {byTeams && <TeamsEditor teams={teams} maxSize={maxTeamSize} onTeams={setTeams} onMaxSize={setMaxTeamSize} />}
+                {!byTeams && (
+                <>
                 <ol className={styles.players}>
                   {players.map((p, i) => (
                     <li key={i} className={styles.playerRow}>
@@ -247,6 +302,8 @@ function NewGame() {
                     <AlertTriangle size={20} aria-hidden />
                     Repetido: {duplicates.join(", ")}. Cada jugador necesita un nombre distinto.
                   </p>
+                )}
+                </>
                 )}
               </div>
             </div>
@@ -454,7 +511,10 @@ function NewGame() {
         <div className={styles.dockInner}>
           <div>
             <div className={styles.summary}>
-              {names.length || "Sin"} {names.length === 1 ? "jugador" : "jugadores"} · {rounds}{" "}
+              {byTeams
+                ? `${teams.length} equipos · ${people || "sin"} ${people === 1 ? "persona" : "personas"}`
+                : `${names.length || "Sin"} ${names.length === 1 ? "jugador" : "jugadores"}`}{" "}
+              · {rounds}{" "}
               {rounds === 1 ? "ronda" : "rondas"} · {open ? 30 : fragmentSeconds} s por canción
             </div>
             {(blocker || error) && (

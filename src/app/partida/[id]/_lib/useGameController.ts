@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useGamePlayer } from "@/hooks/useGamePlayer";
 import { rulesFor } from "@/lib/game/scoring";
+import { TEAM_COLORS } from "@/lib/game/teams";
 import { api, type GuessResult, type GuessRow, type Round } from "@/lib/client/api";
 import { GAIN_FLASH_MS, INTERMISSION_MS } from "./constants";
 import { acceptedFeedback, describeGuess, spokenFeedback, type Feedback } from "./feedback";
@@ -52,7 +53,12 @@ export function useGameController(gameId: string) {
   });
 
   // Las fichas van en orden fijo (el marcador se reordena por puntos): la tecla 1 siempre es el mismo jugador.
-  const seats = [...(game?.players ?? [])].sort((a, b) => a.name.localeCompare(b.name));
+  const paletteOrder = (c: string | null) => TEAM_COLORS.findIndex((t) => t.key === c);
+  const seats = [...(game?.players ?? [])].sort(
+    game?.format === "teams"
+      ? (a, b) => paletteOrder(a.color) - paletteOrder(b.color)
+      : (a, b) => a.name.localeCompare(b.name),
+  );
   // Quién respondió: lo usan el formulario, «¡Acertó!» y los atajos. Por defecto, la primera ficha.
   const [selectedId, setSelectedId] = useState("");
   const selectedPlayer = seats.find((p) => p.id === selectedId) ?? seats[0] ?? null;

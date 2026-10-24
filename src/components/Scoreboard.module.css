@@ -86,3 +86,49 @@
   color: var(--ok);
   margin-right: 8px;
 }
+
+/* Equipos: nombre con su color y, debajo, quiénes lo forman; al pulsar se despliega la lista. */
+.team {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.teamToggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.teamToggle:focus-visible {
+  outline: 3px solid var(--tomato-deep);
+  outline-offset: 2px;
+}
+
+.memberLine {
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: 19px;
+  line-height: 1.15;
+  color: var(--card-ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.memberList {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: 21px;
+  line-height: 1.2;
+  color: var(--card-ink-soft);
+}

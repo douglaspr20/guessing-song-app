@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Podium } from "@/components/Podium";
 import { TapeConfetti } from "@/components/TapeConfetti";
+import { TeamDot } from "@/components/TeamDot";
 import { BandStatus } from "@/components/band/BandStatus";
 import ui from "@/components/ui.module.css";
 import { catalogLabel, formatDate, type Game, type Player } from "@/lib/client/api";
@@ -30,7 +31,7 @@ export function Finale({ game }: { game: Game }) {
             <h1 className={styles.finaleTitle}>
               <WinnerTitle players={players} />
             </h1>
-            <div className={styles.finaleGrid}>
+            <div className={`${styles.finaleGrid} ${game.format === "teams" ? styles.finaleTeams : ""}`}>
               <div className={styles.finalePodium}>
                 <Podium entries={entries} size="grand" animate tone="card" />
               </div>
@@ -40,7 +41,9 @@ export function Finale({ game }: { game: Game }) {
                     {entries.slice(3).map((p) => (
                       <li key={p.id}>
                         <span className={styles.restPos}>{p.place}</span>
-                        <span className={styles.restName}>{p.name}</span>
+                        <span className={styles.restName}>
+                          <TeamDot color={p.color} size={16} /> {p.name}
+                        </span>
                         <span className={styles.restPts}>{p.score}</span>
                       </li>
                     ))}

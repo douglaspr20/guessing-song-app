@@ -149,6 +149,10 @@ model Game {
   totalRounds      Int
   currentRound     Int      @default(0)
   fragmentSeconds  Int
+  // "solo" (todos contra todos) | "teams" (cada Player es un equipo con sus miembros)
+  format           String   @default("solo")
+  // Máximo de miembros por equipo (solo en partidas por equipos).
+  maxTeamSize      Int?
   // GameFilters serializado como JSON.
   filters          String
   // Siguiente canción ya elegida en segundo plano (JSON de PickedTrack) y filtros con que se eligió.
@@ -166,17 +170,32 @@ model Game {
 }
 
 model Player {
-  id     String @id @default(cuid())
+  id     String  @id @default(cuid())
   gameId String
   name   String
-  score  Int    @default(0)
+  score  Int     @default(0)
+  // Color del equipo (clave de la paleta de teams.ts); null en partidas de todos contra todos.
+  color  String?
 
-  game       Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  game       Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
   guesses    Guess[]
-  wins       Round[] @relation("RoundWinner")
-  artistWins Round[] @relation("RoundArtistWinner")
+  wins       Round[]      @relation("RoundWinner")
+  artistWins Round[]      @relation("RoundArtistWinner")
+  members    TeamMember[]
 
   @@unique([gameId, name])
+}
+
+// Una persona dentro de un equipo. Más adelante el móvil le añadirá quién es (invitado o cuenta).
+model TeamMember {
+  id        String   @id @default(cuid())
+  playerId  String
+  name      String
+  createdAt DateTime @default(now())
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
 }
 
 model Round {

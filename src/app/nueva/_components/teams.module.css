@@ -1,0 +1,183 @@
+/* Editor de equipos: una carátula pequeña por equipo, con su color en la franja y el muestrario. */
+
+.editor {
+  display: grid;
+  gap: 14px;
+}
+
+.addRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+}
+
+.addRow input {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.addHint {
+  font-size: 17px;
+  color: var(--card-ink-soft);
+  margin-top: -6px;
+}
+
+.notice {
+  margin: 0;
+}
+
+/* Igual que la lista de jugadores: una columna, un equipo bajo otro. En tableta, de dos en dos. */
+.teams {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.team {
+  border: var(--stroke) solid var(--ink);
+  border-top: 10px solid var(--team);
+  border-radius: var(--radius-control);
+  padding: 12px 14px 14px;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.teamHead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Muestrario del color: círculo relleno con trazo de tinta. */
+.swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--team);
+  border: 3px solid var(--ink);
+}
+
+.teamName {
+  min-height: 48px;
+  font-size: 26px;
+}
+
+.count {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.06em;
+  color: var(--card-ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.nobody {
+  font-size: 17px;
+  color: var(--card-ink-soft);
+  padding: 6px 2px;
+}
+
+.members {
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.member {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) 44px;
+  align-items: center;
+  gap: 8px;
+  border-top: 2px dashed var(--card-rule);
+  padding-top: 6px;
+}
+
+.memberName {
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.move {
+  min-height: 44px;
+  min-width: 0;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0 6px;
+}
+
+.move:focus-visible,
+.removeBtn:focus-visible {
+  outline: 3px solid var(--tomato-deep);
+  outline-offset: 2px;
+}
+
+.removeBtn {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink);
+}
+
+.removeBtn:hover {
+  background: var(--ink);
+  color: var(--card);
+}
+
+/* Móvil: un equipo por fila y cada persona en una sola línea (nombre, equipo, quitar). */
+@media (max-width: 640px) {
+  .teams {
+    grid-template-columns: 1fr;
+  }
+  .member {
+    grid-template-columns: minmax(0, 1fr) 112px 44px;
+    gap: 6px;
+  }
+  .memberName {
+    font-size: 22px;
+  }
+  .addRow > button {
+    flex: 1 1 100%;
+  }
+}
+
+/* Teléfono estrecho (≤ 360px): el selector pasa debajo del nombre. */
+@media (max-width: 360px) {
+  .member {
+    grid-template-columns: minmax(0, 1fr) 44px;
+  }
+  .move {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+/* Con dedo, los controles pequeños suben a un blanco más cómodo. */
+@media (pointer: coarse) {
+  .move,
+  .removeBtn {
+    min-height: 48px;
+  }
+  .removeBtn {
+    width: 48px;
+    height: 48px;
+  }
+}

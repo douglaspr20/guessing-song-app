@@ -1,7 +1,9 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { Player } from "@/lib/client/api";
+import { memberLine } from "@/lib/game/teams";
+import { TeamDot } from "./TeamDot";
 import ui from "./ui.module.css";
 import styles from "./Scoreboard.module.css";
 
@@ -23,6 +25,14 @@ export function Scoreboard({
   gains?: Record<string, number>;
 }) {
   const listRef = useRef<HTMLOListElement>(null);
+  /** Equipos con la lista de miembros desplegada. */
+  const [open, setOpen] = useState<Set<string>>(new Set());
+  const toggle = (id: string) =>
+    setOpen((cur) => {
+      const next = new Set(cur);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
   const prevTops = useRef(new Map<string, number>());
 
   useLayoutEffect(() => {
@@ -61,7 +71,33 @@ export function Scoreboard({
               <span className={styles.pos} aria-label={`Puesto ${place}`}>
                 {place}
               </span>
-              <span className={styles.name}>{p.name}</span>
+              {p.members.length ? (
+                <div className={styles.team}>
+                  <button
+                    type="button"
+                    className={styles.teamToggle}
+                    aria-expanded={open.has(p.id)}
+                    aria-controls={`team-${p.id}`}
+                    onClick={() => toggle(p.id)}
+                  >
+                    <TeamDot color={p.color} size={16} />
+                    <span className={styles.name}>{p.name}</span>
+                  </button>
+                  {open.has(p.id) ? (
+                    <ul className={styles.memberList} id={`team-${p.id}`}>
+                      {p.members.map((m, i) => (
+                        <li key={`${m}-${i}`}>{m}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className={styles.memberLine} id={`team-${p.id}`}>
+                      {memberLine(p.members)}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span className={styles.name}>{p.name}</span>
+              )}
               <span className={styles.pts}>
                 {gain ? <span className={styles.gain}>+{gain}</span> : null}
                 {p.score}
