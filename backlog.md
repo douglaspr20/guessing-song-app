@@ -17,12 +17,12 @@ Estado al 24-10-2026. Marcas: `[x]` hecho, `[ ]` pendiente. Tamaño: S (horas), 
 - [x] Probar el pulsador con varios móviles a la vez.
 - [x] Poner `ABLY_API_KEY` en Vercel (marcada como Sensitive).
 - [x] Tests e2e con Playwright (invitado juega, miembro se registra con invitación, anfitrión entra, un móvil se une por código y pulsa), dentro del CI con el check `ci-ok`, y workflow que refleja el despliegue de Vercel.
+- [x] Bases de las previews: la integración de Neon ya crea una rama de base por cada despliegue de preview (`preview/<rama>`), así que las migraciones y los datos de un PR no tocan producción.
+- [x] En GitHub (_Settings → Branches_), proteger `master`: exigir pull request y el check `ci-ok`
 
 ## Pendiente en GitHub y Vercel (manual)
 
-- [ ] En GitHub (*Settings → Branches*), proteger `master`: exigir pull request y el check `ci-ok`.
 - [ ] Tras fusionar `fix/vercel-status-check`, comprobar que en el siguiente despliegue aparece el check «Despliegue en Vercel» en el commit (Vercel informa con un estado de commit, no con «deployments»; el workflow anterior no se activaba nunca).
-- [ ] En Vercel, confirmar qué base usan los despliegues de preview: si comparten la de producción, una migración se aplicaría antes de fusionar.
 
 ## Calidad y base técnica
 
