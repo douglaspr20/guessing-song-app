@@ -1,0 +1,40 @@
+name: Vercel
+
+# La integración de Vercel con GitHub publica el estado de cada despliegue (producción y preview).
+# Este workflow lo recoge para mostrarlo como un check más: verde si Vercel lo desplegó, rojo si falló.
+# (Los workflows de `deployment_status` se leen desde la rama por defecto.)
+on:
+  deployment_status:
+
+permissions:
+  contents: read
+  deployments: read
+
+jobs:
+  deploy:
+    name: Despliegue en Vercel
+    # Solo estados finales: «pending» e «in_progress» no dicen nada todavía.
+    if: contains(fromJSON('["success", "failure", "error"]'), github.event.deployment_status.state)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Estado del despliegue
+        env:
+          STATE: ${{ github.event.deployment_status.state }}
+          ENVIRONMENT: ${{ github.event.deployment_status.environment }}
+          APP_URL: ${{ github.event.deployment_status.environment_url }}
+          LOG_URL: ${{ github.event.deployment_status.log_url }}
+          DESCRIPTION: ${{ github.event.deployment_status.description }}
+        run: |
+          {
+            echo "## Despliegue en Vercel: $STATE"
+            echo
+            echo "- Entorno: $ENVIRONMENT"
+            [ -n "$APP_URL" ] && echo "- URL: $APP_URL"
+            [ -n "$LOG_URL" ] && echo "- Registro: $LOG_URL"
+            [ -n "$DESCRIPTION" ] && echo "- $DESCRIPTION"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$STATE" != "success" ]; then
+            echo "::error::Vercel terminó el despliegue con estado $STATE ($LOG_URL)"
+            exit 1
+          fi
+          echo "Vercel desplegó $ENVIRONMENT correctamente: $APP_URL"

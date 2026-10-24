@@ -5,8 +5,17 @@ on:
     branches: [master, main]
   pull_request:
 
+permissions:
+  contents: read
+
+# Un push nuevo a la misma rama cancela la ejecución anterior (en master no se cancela nada).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 jobs:
   check:
+    name: check
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -53,3 +62,74 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # Pruebas de navegador (Playwright) de los flujos principales, en paralelo con `check`.
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: adivina
+          POSTGRES_PASSWORD: adivina
+          POSTGRES_DB: adivina
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U adivina -d adivina"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      # Solo para compilar: las pruebas usan su propia base (`adivina_e2e`, ver playwright.config.ts).
+      DATABASE_URL: postgresql://adivina:adivina@localhost:5432/adivina
+      DATABASE_URL_UNPOOLED: postgresql://adivina:adivina@localhost:5432/adivina
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Navegador de Playwright (caché)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      # Con la caché puesta solo instala las librerías del sistema que faltan.
+      - run: npx playwright install --with-deps chromium
+
+      # Compila la app y lanza los tests (`npm run test:e2e` hace las dos cosas).
+      - name: E2E
+        run: npm run test:e2e
+
+      - name: Informe de Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  # Un único check que resume a los demás: es el que se exige en la protección de la rama master.
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs: [check, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Todo en verde
+        env:
+          CHECK: ${{ needs.check.result }}
+          E2E: ${{ needs.e2e.result }}
+        run: |
+          echo "check: $CHECK"
+          echo "e2e: $E2E"
+          [ "$CHECK" = "success" ] && [ "$E2E" = "success" ]

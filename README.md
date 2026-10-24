@@ -125,6 +125,7 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
 | `npm run dev`              | Development server                                                                              |
 | `npm test`                 | Unit tests (Vitest)                                                                             |
 | `npm run test:integration` | Integration tests against Postgres (creates the `adivina_test` database; needs `npm run db:up`) |
+| `npm run test:e2e`         | Builds the app and runs the Playwright browser tests (guest game, member sign-up, host login, join from a phone). Needs `npm run db:up`; first time: `npx playwright install chromium` |
 | `npm run typecheck`        | Route types + `tsc --noEmit`                                                                    |
 | `npm run lint`             | ESLint                                                                                          |
 | `npm run build`            | Production build                                                                                |
@@ -157,6 +158,20 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
 | GET / POST                  | `/api/games/:id/rounds/:rid/guesses`                                   | List / submit `{ playerId, title?, artist? }`                                          |
 | POST                        | `/api/games/:id/rounds/:rid/guesses/:gid/accept`                       | Host override `{ title?, artist? }`                                                    |
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every pull request and on pushes to `master`:
+
+| Job     | What it runs                                                                  |
+| ------- | ----------------------------------------------------------------------------- |
+| `check` | Migrations, lint, typecheck, unit tests, integration tests and the build      |
+| `e2e`   | Playwright (Chromium) against the built app, with its own `adivina_e2e` database |
+| `ci-ok` | Green only when `check` and `e2e` are: the single check to require on `master`  |
+
+`.github/workflows/vercel-deploy.yml` listens for the deployment status that Vercel reports to GitHub and shows it as the **Despliegue en Vercel** check (green when Vercel deployed, red when it failed).
+
+The e2e tests run without Ably, Spotify, Google or iTunes: the server picks invented songs when `E2E_FAKE_ITUNES=1` (`src/lib/itunes/fake.ts`; never set it in production) and the browser gets silence instead of Apple's previews. In a failed CI run the Playwright report is attached as an artifact.
+
 ## Project structure
 
 ```
@@ -165,6 +180,7 @@ src/lib/access/    sessions, passwords, TOTP, encryption, guests, limits, host p
 src/lib/game/      service (use cases), scoring, matcher, track picker, filters (zod), event bus
 src/lib/client/    browser API client and the shared Spotify player
 src/app/           pages (shelf, new game, game) and API route handlers
+e2e/               Playwright tests and their helpers (database reset, host TOTP, invites)
 src/components/    cassette timer, scoreboard, podium, stepper, confetti
 prisma/            schema and migrations
 ```

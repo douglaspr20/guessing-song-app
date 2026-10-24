@@ -5,6 +5,7 @@ import { Prisma, type Game, type Participant, type Player, type Round, type Team
 import { ownerData, ownerWhere, type Owner } from "@/lib/access/owner";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
+import { fakeItunesSource } from "@/lib/itunes/fake";
 import { searchSongs } from "@/lib/itunes/search";
 import { startPlayback } from "@/lib/spotify/playback";
 import {
@@ -41,7 +42,9 @@ export function spotifySourceFor(userId: string): TrackSource {
   };
 }
 
-export const itunesSource: OpenTrackSource = { search: (p) => searchSongs(p) };
+// Las pruebas e2e usan canciones inventadas (E2E_FAKE_ITUNES=1, nunca definida en Vercel).
+export const itunesSource: OpenTrackSource =
+  process.env.E2E_FAKE_ITUNES === "1" ? fakeItunesSource : { search: (p) => searchSongs(p) };
 
 // ---------- Vistas públicas (lo que devuelve la API) ----------
 

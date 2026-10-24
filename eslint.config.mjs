@@ -6,6 +6,8 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   // Override default ignores of eslint-config-next.
+  // Playwright llama «use» en los fixtures y el linter lo confunde con un hook de React.
+  { files: ["e2e/**"], rules: { "react-hooks/rules-of-hooks": "off" } },
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
@@ -17,6 +19,8 @@ const eslintConfig = defineConfig([
     ".claude/**",
     ".qoder/**",
     ".impeccable/**",
+    "playwright-report/**",
+    "test-results/**",
   ]),
 ]);
 
