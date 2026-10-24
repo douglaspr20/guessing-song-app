@@ -728,3 +728,151 @@
   font-size: 22px;
   line-height: 1.2;
 }
+
+/* ---------- Unirse desde el móvil ---------- */
+
+.join {
+  padding: 0;
+}
+
+.joinSummary {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 18px 24px;
+  cursor: pointer;
+  min-height: 56px;
+}
+
+.joinSummary:focus-visible {
+  outline: 3px solid var(--tomato-deep);
+  outline-offset: -3px;
+}
+
+.joinCodeSmall {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: 0.2em;
+}
+
+.joinBody {
+  display: grid;
+  gap: 16px;
+  padding: 0 24px 22px;
+}
+
+.joinTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.joinHint {
+  font-size: 17px;
+  color: var(--card-ink-soft);
+}
+
+.joinCode {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(48px, 5vw, 72px);
+  line-height: 1;
+  letter-spacing: 0.16em;
+  margin-top: 4px;
+}
+
+.joinQr {
+  width: clamp(120px, 11vw, 168px);
+  aspect-ratio: 1;
+  flex: none;
+}
+
+.joinQr svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.joinActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.joinListTitle {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--card-ink-soft);
+  margin-bottom: 4px;
+}
+
+.joinList {
+  list-style: none;
+}
+
+.joinPerson {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 2px dashed var(--card-rule);
+  padding: 4px 0;
+  min-height: 48px;
+}
+
+.joinName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.joinTeam {
+  font-size: 16px;
+  color: var(--card-ink-soft);
+  margin-left: auto;
+  text-align: right;
+}
+
+.joinKick {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink);
+  margin-left: auto;
+}
+
+.joinTeam + .joinKick {
+  margin-left: 0;
+}
+
+.joinKick:hover {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.joinKick:focus-visible {
+  outline: 3px solid var(--tomato-deep);
+  outline-offset: 2px;
+}
+
+/* Desplegado ya se ve el código grande: el pequeño del título solo hace falta plegado. */
+.join[open] .joinCodeSmall {
+  display: none;
+}

@@ -111,6 +111,7 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
    - `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`
    - `SPOTIFY_REDIRECT_URI` = `https://<your-domain>/api/auth/callback`
    - Optional, for Google sign-in: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and `GOOGLE_REDIRECT_URI` = `https://<your-domain>/api/auth/google/callback` (register that URI in the OAuth client and publish the consent screen with the basic `openid email profile` scopes)
+   - Optional, for instant updates on phones: `ABLY_API_KEY` (free Ably account; without it the app polls every 3 s)
    - The server secrets `HOST_PASSWORD_HASH`, `HOST_TOTP_SECRET`, `TOKEN_ENCRYPTION_KEY` and `CRON_SECRET` (kept outside the repo).
 4. **Spotify dashboard:** add the production redirect URI next to the local one. Under _User Management_ keep your account plus up to 4 members.
 5. **Deploy**, sign in as host and link your Spotify. Vercel calls the cleanup every day with `Authorization: Bearer $CRON_SECRET`.
@@ -142,6 +143,9 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
 | GET                         | `/api/auth/login` · `/api/auth/callback`                               | Link the signed-in user's Spotify (OAuth); `POST /api/auth/logout` unlinks it          |
 | POST · DELETE               | `/api/host/login` · `/api/host/sessions`                               | Host sign-in (password + TOTP) / sign out everywhere                                   |
 | GET · POST · PATCH · DELETE | `/api/host/{invites,members,guests}`                                   | Host panel: invitations, members, guest moderation                                     |
+| POST                        | `/api/join/lookup`, `/api/join`                                        | Check a game code / join it from a phone (name, team)                                  |
+| GET                         | `/api/play/[gameId]`                                                   | State seen by a joined player                                                          |
+| GET                         | `/api/realtime/token?game=`                                            | Read-only Ably token for that game's channel                                           |
 | GET                         | `/api/cron/limpieza`                                                   | Daily cleanup (needs `Authorization: Bearer $CRON_SECRET`)                             |
 | GET                         | `/api/spotify/playlists` · `/api/spotify/genres`                       | Filter options                                                                         |
 | POST                        | `/api/spotify/sample`                                                  | Preview which song a set of filters would pick                                         |

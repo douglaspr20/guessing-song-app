@@ -1,0 +1,89 @@
+/* El mando del jugador: una columna estrecha, primero para el móvil. */
+
+.main {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: clamp(16px, 3vw, 40px) var(--gutter) 56px;
+  display: grid;
+  gap: 20px;
+}
+
+.card {
+  width: 100%;
+}
+
+.body {
+  display: grid;
+  gap: 16px;
+  padding: 22px clamp(18px, 4vw, 28px) 28px;
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.team {
+  color: var(--card-ink-soft);
+}
+
+.headline {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(34px, 9vw, 52px);
+  line-height: 1;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.lede {
+  font-size: 19px;
+  line-height: 1.4;
+  color: var(--card-ink-soft);
+  max-width: 40ch;
+}
+
+.answer {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+
+.cover {
+  width: min(220px, 60%);
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+
+.song {
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: clamp(28px, 7vw, 38px);
+  line-height: 1.1;
+}
+
+.artist {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--card-ink-soft);
+}
+
+.loading {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--on-shell-soft);
+}

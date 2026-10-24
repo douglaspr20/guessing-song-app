@@ -40,6 +40,7 @@ model User {
   sessions Session[]
   games    Game[]
   invites  Invite[]
+  joined   Participant[]
 }
 
 // Cuenta de Spotify vinculada a un usuario. Los tokens van cifrados (AES-256-GCM).
@@ -153,6 +154,12 @@ model Game {
   format           String   @default("solo")
   // Máximo de miembros por equipo (solo en partidas por equipos).
   maxTeamSize      Int?
+  // Segundos que tiene quien pulsa «¡Lo sé!» para escribir su respuesta.
+  answerSeconds    Int      @default(20)
+  // Al fallar queda fuera: "person" (solo quien falló) | "team" (todo su equipo).
+  lockout          String   @default("person")
+  // El anfitrión puede cerrar la entrada de más gente.
+  joinOpen         Boolean  @default(true)
   // GameFilters serializado como JSON.
   filters          String
   // Siguiente canción ya elegida en segundo plano (JSON de PickedTrack) y filtros con que se eligió.
@@ -160,10 +167,11 @@ model Game {
   nextTrackFilters String?
   createdAt        DateTime @default(now())
 
-  user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  guest   Guest?   @relation(fields: [guestId], references: [id], onDelete: Cascade)
-  players Player[]
-  rounds  Round[]
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guest        Guest?        @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  players      Player[]
+  rounds       Round[]
+  participants Participant[]
 
   @@index([userId, createdAt])
   @@index([guestId, createdAt])
@@ -177,11 +185,12 @@ model Player {
   // Color del equipo (clave de la paleta de teams.ts); null en partidas de todos contra todos.
   color  String?
 
-  game       Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  game       Game          @relation(fields: [gameId], references: [id], onDelete: Cascade)
   guesses    Guess[]
-  wins       Round[]      @relation("RoundWinner")
-  artistWins Round[]      @relation("RoundArtistWinner")
+  wins       Round[]       @relation("RoundWinner")
+  artistWins Round[]       @relation("RoundArtistWinner")
   members    TeamMember[]
+  seated     Participant[]
 
   @@unique([gameId, name])
 }
@@ -225,12 +234,17 @@ model Round {
   // Pausa del anfitrión: congela el reloj de puntos y pistas.
   pausedAt             DateTime?
   pausedMs             Int       @default(0)
+  // Quién tiene el turno tras pulsar «¡Lo sé!», desde cuándo y hasta cuándo puede responder.
+  buzzParticipantId    String?
+  buzzedAt             DateTime?
+  buzzDeadline         DateTime?
   createdAt            DateTime  @default(now())
 
-  game         Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  winner       Player? @relation("RoundWinner", fields: [winnerPlayerId], references: [id])
-  artistWinner Player? @relation("RoundArtistWinner", fields: [artistWinnerPlayerId], references: [id])
+  game         Game           @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  winner       Player?        @relation("RoundWinner", fields: [winnerPlayerId], references: [id])
+  artistWinner Player?        @relation("RoundArtistWinner", fields: [artistWinnerPlayerId], references: [id])
   guesses      Guess[]
+  lockouts     RoundLockout[]
 
   @@unique([gameId, number])
 }
@@ -247,8 +261,46 @@ model Guess {
   points        Int      @default(0)
   // El anfitrión lo dio por bueno manualmente.
   overridden    Boolean  @default(false)
+  // Quién respondió desde su móvil (null si lo registró el anfitrión).
+  participantId String?
   createdAt     DateTime @default(now())
 
   round  Round  @relation(fields: [roundId], references: [id], onDelete: Cascade)
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+}
+
+// Una persona que se unió a la partida desde su móvil o PC con el código. Su cookie guarda el token.
+model Participant {
+  id        String    @id @default(cuid())
+  gameId    String
+  // Su jugador (todos contra todos) o su equipo.
+  playerId  String
+  // Su sitio dentro del equipo (solo en partidas por equipos).
+  memberId  String?
+  // Cuenta de la app, si entró con sesión iniciada.
+  userId    String?
+  name      String
+  tokenHash String    @unique
+  kickedAt  DateTime?
+  createdAt DateTime  @default(now())
+
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([gameId])
+  @@index([gameId, userId])
+}
+
+// Quién ya no puede pulsar en una ronda: una persona o, con lockout "team", todo su equipo.
+model RoundLockout {
+  id            String  @id @default(cuid())
+  roundId       String
+  participantId String?
+  playerId      String?
+
+  round Round @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@unique([roundId, participantId])
+  @@unique([roundId, playerId])
 }

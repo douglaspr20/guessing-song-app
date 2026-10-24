@@ -248,6 +248,7 @@ export function useGameController(gameId: string) {
     guesses,
     loadError,
     retryLoad,
+    refresh,
     player,
     rules,
     clock,

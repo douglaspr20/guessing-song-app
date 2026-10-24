@@ -271,6 +271,11 @@ Etiquetas de cinta que se pulsan: condensada mayúscula, trazo de 3px, sin relle
 
 - **Adaptación:** en móvil (≤640px) el selector de formato ocupa todo el ancho y cada persona va en una sola línea (nombre, selector de equipo de 112px, quitar de 44px; 48px con dedo); por debajo de 360px el selector baja bajo el nombre. En tableta hay dos equipos por fila y en escritorio tantos como quepan (mín. 260px). El podio final por equipos reparte 5/2 con la columna lateral y se apila por debajo de 900px; en el podio compacto de la estantería el nombre del equipo se corta a dos líneas.
 
+### Unirse desde el móvil
+- **Panel «Únete con tu móvil» (tele):** carátula plegable (`<details>`), abierta antes de la primera pista y plegada después, con el código a 72px en condensada con aire entre letras, un QR de 168px en tinta sobre cartulina, «Copiar enlace», «Cerrar entrada» y la lista de quien está dentro (nombre en Kalam, equipo con su muestrario, botón de sacar de 44px).
+- **Unirse (`/unirse`):** una carátula centrada de 640px. El código va en un campo grande (48px, condensada, centrado). Después, el nombre (o «Entras como…» con sesión), fichas «¿Eres uno de estos?» para los nombres que el anfitrión ya apuntó y, por equipos, tarjetas de equipo con trazo de 3px, muestrario, miembros y huecos; el equipo elegido se rellena de tinta.
+- **Mando del jugador (`/jugar`):** columna de 560px: carátula con su nombre y equipo, titular de estado en condensada y el marcador debajo. Es una pantalla de mando: sin atajos de teclado.
+
 ### Atajos (jugar en la tele)
 - **Marca de atajo:** la tecla en condensada a 15px al 60% (`.key`), al final del botón. Si el mando de la tele tiene botón de color para esa acción, la precede un punto de 12px con borde de 2px en el color del mando (rojo Revelar, verde ¡Acertó la canción!, amarillo ¡Acertó el artista!, azul Siguiente). Son los colores del mando, no los de las franjas. En móvil (≤640px) las marcas se ocultan.
 - **«¡Acertó!»:** dos botones de cartulina bajo las fichas para dar la canción o el artista al jugador elegido sin escribir. Nunca tomate: el primario sigue siendo «Registrar respuesta». En los intentos aparecen como «la canción, de palabra».

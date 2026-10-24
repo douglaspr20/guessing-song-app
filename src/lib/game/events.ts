@@ -1,8 +1,11 @@
 /**
- * Bus de eventos de dominio en memoria.
- * Hoy nadie escucha; cuando los jugadores se unan desde el móvil, un endpoint SSE/WebSocket
- * (o InsForge Realtime) se suscribirá aquí y reenviará los eventos de su partida.
+ * Bus de eventos de dominio. Cada evento se reparte a los oyentes en memoria de esta instancia y,
+ * además, se publica en Ably para que lleguen a los móviles y a la tele aunque la petición haya
+ * caído en otra instancia de Vercel (ver `src/lib/realtime/ably.ts`).
  */
+import { after } from "next/server";
+import { publish } from "@/lib/realtime/ably";
+
 export type GameEvent =
   | { type: "game_created"; gameId: string }
   | { type: "player_joined"; gameId: string; playerId: string; name: string }
@@ -11,7 +14,10 @@ export type GameEvent =
   | { type: "artist_guessed"; gameId: string; roundId: string; playerId: string }
   | { type: "round_won"; gameId: string; roundId: string; playerId: string }
   | { type: "round_revealed"; gameId: string; roundId: string }
-  | { type: "game_finished"; gameId: string };
+  | { type: "game_finished"; gameId: string }
+  | { type: "participant_joined"; gameId: string; participantId: string; name: string }
+  | { type: "participant_left"; gameId: string; participantId: string }
+  | { type: "join_toggled"; gameId: string; open: boolean };
 
 type Listener = (event: GameEvent) => void;
 
@@ -29,11 +35,24 @@ export function subscribe(gameId: string, listener: Listener): () => void {
 }
 
 export function emit(event: GameEvent) {
+  publishLive(event);
   for (const listener of listeners.get(event.gameId) ?? []) {
     try {
       listener(event);
     } catch (err) {
       console.error("Error en listener de eventos", err);
     }
+  }
+}
+
+/** Aviso a los dispositivos conectados, sin frenar la respuesta de la petición. */
+function publishLive(event: GameEvent) {
+  const { type, gameId, ...rest } = event;
+  const send = () => publish(gameId, type, rest);
+  try {
+    after(send);
+  } catch {
+    // Fuera de una petición (cron, scripts) `after` no existe: se envía sin esperar.
+    void send();
   }
 }

@@ -9,6 +9,7 @@ import ui from "@/components/ui.module.css";
 import { catalogLabel } from "@/lib/client/api";
 import { AnswerForm } from "./_components/AnswerForm";
 import { AttemptsList } from "./_components/AttemptsList";
+import { JoinPanel } from "./_components/JoinPanel";
 import { FeedbackLine } from "./_components/FeedbackLine";
 import { Finale } from "./_components/Finale";
 import { NextActions } from "./_components/NextActions";
@@ -115,6 +116,7 @@ export function GameClient() {
           </div>
 
           <aside className={styles.side}>
+            <JoinPanel game={game} onChanged={ctl.refresh} />
             <Scoreboard players={game.players} title={`Marcador · ${cat}`} gains={ctl.gains} />
             <button type="button" className={`${ui.btn} ${ui.onShell}`} onClick={() => router.push("/")}>
               Salir a la estantería
