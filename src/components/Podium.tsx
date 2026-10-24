@@ -1,4 +1,6 @@
 import { Crown } from "lucide-react";
+import { memberLine } from "@/lib/game/teams";
+import { TeamDot } from "./TeamDot";
 import styles from "./Podium.module.css";
 
 export interface PodiumEntry {
@@ -7,6 +9,9 @@ export interface PodiumEntry {
   score: number;
   /** Puesto (los empates comparten puesto). */
   place: number;
+  /** Color y miembros, si es un equipo. */
+  color?: string | null;
+  members?: string[];
 }
 
 const ORDER = [1, 0, 2]; // 2º, 1º, 3º de izquierda a derecha
@@ -39,9 +44,12 @@ export function Podium({
         const pos = i + 1;
         if (!e) return <li key={`empty-${pos}`} className={`${styles.slot} ${styles.empty}`} aria-hidden />;
         return (
-          <li key={e.id} className={`${styles.slot} ${styles[`p${Math.min(e.place, 3)}`]}`}>
+          <li key={e.id} className={`${styles.slot} ${styles[`p${Math.min(e.place, 3)}`]} ${e.members?.length ? styles.team : ""}`}>
             {e.place === 1 && <Crown className={styles.crown} size={size === "grand" ? 44 : 22} strokeWidth={2.5} aria-hidden />}
-            <span className={styles.name}>{e.name}</span>
+            <span className={styles.name}>
+              <TeamDot color={e.color} size={size === "grand" ? 20 : 12} /> {e.name}
+            </span>
+            {size === "grand" && !!e.members?.length && <span className={styles.members}>{memberLine(e.members, 4)}</span>}
             <span className={styles.score}>
               {e.score} <span className="sr-only">puntos</span>
             </span>

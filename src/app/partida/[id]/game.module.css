@@ -64,7 +64,7 @@
   cursor: pointer;
 }
 
-.whoOption span {
+.whoOption > span {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -644,6 +644,18 @@
   }
 }
 
+/* Por equipos el podio necesita más sitio (nombres largos y miembros): se apila antes. */
+.finaleTeams {
+  grid-template-columns: minmax(0, 5fr) minmax(240px, 2fr);
+}
+
+@media (max-width: 900px) {
+  .finaleGrid,
+  .finaleTeams {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 640px) {
   .fields {
     grid-template-columns: 1fr;
@@ -662,7 +674,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
-  .whoOption span {
+  .whoOption > span {
     min-height: 48px;
     font-size: 19px;
     padding: 6px 8px;
@@ -703,4 +715,16 @@
   .helpTable td:not(:first-child) {
     white-space: normal;
   }
+}
+
+/* Antes de la primera pista, por equipos: quién está en cuál. */
+.readyTeams {
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.2;
 }

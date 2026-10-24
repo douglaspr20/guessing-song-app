@@ -510,7 +510,10 @@ function Shelf({
                 <div className={styles.spineBody}>
                   <div className={styles.spineInfo}>
                     <span className={styles.meta}>
-                      {g.playedRounds}/{g.totalRounds} pistas · {g.playerCount} {g.playerCount === 1 ? "jugador" : "jugadores"}
+                      {g.playedRounds}/{g.totalRounds} pistas ·{" "}
+                      {g.format === "teams"
+                        ? `${g.playerCount} equipos · ${g.peopleCount} ${g.peopleCount === 1 ? "persona" : "personas"}`
+                        : `${g.playerCount} ${g.playerCount === 1 ? "jugador" : "jugadores"}`}
                     </span>
                     {finished ? (
                       <span className={styles.winner}>

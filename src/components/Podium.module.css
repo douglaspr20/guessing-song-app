@@ -19,6 +19,7 @@
   text-align: center;
   max-width: 100%;
   overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .score {
@@ -53,6 +54,11 @@
 /* Versión de estantería (historial). */
 .compact .name {
   font-size: 20px;
+  /* Un equipo de nombre largo no empuja el podio: como mucho dos líneas. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 .compact .score {
   font-size: 22px;
@@ -158,4 +164,25 @@
   to {
     transform: none;
   }
+}
+
+/* Equipos: quiénes lo forman, bajo el nombre (solo en el podio grande). */
+.members {
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: clamp(16px, 1.6vw, 22px);
+  line-height: 1.15;
+  text-align: center;
+  color: var(--card-ink-soft);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  margin-top: 2px;
+}
+
+/* Equipos: nombres más largos y una línea de miembros, así que el nombre baja un punto. */
+.grand .team .name {
+  font-size: clamp(20px, 2.1vw, 32px);
+}
+.grand .p1.team .name {
+  font-size: clamp(22px, 2.5vw, 38px);
 }

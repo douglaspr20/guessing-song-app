@@ -378,3 +378,29 @@
     flex: 1;
   }
 }
+
+@media (max-width: 900px) {
+  .segment button {
+    padding: 0 14px;
+    font-size: 19px;
+  }
+}
+
+/* Selector de formato: dos mitades iguales; en el móvil ocupa todo el ancho y el texto puede partirse. */
+.formatSwitch {
+  grid-auto-columns: 1fr;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 640px) {
+  .formatSwitch {
+    display: grid;
+    width: 100%;
+  }
+  .formatSwitch button {
+    padding: 8px 10px;
+    font-size: 18px;
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+}

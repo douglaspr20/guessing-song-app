@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { registerGuest } from "@/lib/access/guest";
 import type { Owner } from "@/lib/access/owner";
 import { db } from "@/lib/db";
-import { awardSpoken, createGame, getRoundGuesses } from "@/lib/game/service";
+import { addPlayer, awardSpoken, createGame, deleteGame, getGame, getRoundGuesses, listGames } from "@/lib/game/service";
 
 const code = (err: unknown) => (err as { code?: string }).code;
 const fails = async (p: Promise<unknown>) => {
@@ -105,5 +105,78 @@ describe("«¡Acertó!» de palabra", () => {
     expect(await fails(awardSpoken(other.gameId, other.roundId, silent.ana.id, { title: true }))).toMatchObject({
       status: 404,
     });
+  });
+});
+
+describe("partidas por equipos", () => {
+  const teams = [
+    { name: "Los Tomates", color: "teja" as const, members: ["Ana", "Luis", "Marta"] },
+    { name: "Cielo Abierto", color: "cielo" as const, members: ["Pablo", "Rosa"] },
+  ];
+
+  async function teamGame() {
+    const { guest } = await registerGuest("ip-equipos");
+    const owner: Owner = { kind: "guest", guestId: guest.id };
+    const game = await createGame({ mode: "open", rounds: 2, format: "teams", teams, maxTeamSize: 3 }, owner);
+    return { owner, game };
+  }
+
+  it("guarda equipos, colores y miembros, y los devuelve en la partida", async () => {
+    const { game } = await teamGame();
+    expect(game).toMatchObject({ format: "teams", maxTeamSize: 3 });
+    const loaded = await getGame(game.id);
+    const tomates = loaded.players.find((p) => p.name === "Los Tomates");
+    expect(tomates).toMatchObject({ color: "teja", members: ["Ana", "Luis", "Marta"], score: 0 });
+    expect(loaded.players.find((p) => p.name === "Cielo Abierto")?.members).toEqual(["Pablo", "Rosa"]);
+  });
+
+  it("la estantería cuenta equipos y personas", async () => {
+    const { owner } = await teamGame();
+    const [g] = (await listGames(owner)).games;
+    expect(g).toMatchObject({ format: "teams", playerCount: 2, peopleCount: 5 });
+  });
+
+  it("«¡Acertó!» suma al equipo", async () => {
+    const { game } = await teamGame();
+    const team = game.players.find((p) => p.name === "Cielo Abierto")!;
+    await db.game.update({ where: { id: game.id }, data: { status: "PLAYING", currentRound: 1 } });
+    const round = await db.round.create({
+      data: {
+        gameId: game.id,
+        number: 1,
+        trackId: "t1",
+        trackUri: "itunes:t1",
+        trackName: "Bailando",
+        artists: JSON.stringify(["Enrique Iglesias"]),
+        durationMs: 30_000,
+        startMs: 0,
+        playStartedAt: new Date(Date.now() - 1_000),
+      },
+    });
+    await awardSpoken(game.id, round.id, team.id, { title: true });
+    const after = await getGame(game.id);
+    expect(after.players[0]).toMatchObject({ name: "Cielo Abierto", score: 3, color: "cielo" });
+  });
+
+  it("borrar la partida borra sus miembros", async () => {
+    const { game } = await teamGame();
+    expect(await db.teamMember.count()).toBe(5);
+    await deleteGame(game.id);
+    expect(await db.teamMember.count()).toBe(0);
+  });
+
+  it("no se añaden jugadores sueltos a una partida por equipos", async () => {
+    const { game } = await teamGame();
+    expect(await fails(addPlayer(game.id, "Intruso"))).toMatchObject({ code: "TEAMS_GAME", status: 409 });
+  });
+
+  it("todos contra todos sale como siempre: sin color ni miembros", async () => {
+    const { guest } = await registerGuest("ip-solo");
+    const game = await createGame(
+      { mode: "open", rounds: 2, players: ["Ana", "Luis"] },
+      { kind: "guest", guestId: guest.id },
+    );
+    expect(game).toMatchObject({ format: "solo", maxTeamSize: null });
+    expect(game.players.every((p) => p.color === null && p.members.length === 0)).toBe(true);
   });
 });

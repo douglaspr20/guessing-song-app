@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Eye, Pause, Play, RotateCcw, ThumbsUp } from "lucide-react";
+import { TeamDot } from "@/components/TeamDot";
 import ui from "@/components/ui.module.css";
 import type { Player } from "@/lib/client/api";
 import type { Feedback } from "../_lib/feedback";
@@ -75,6 +76,7 @@ export function AnswerForm({
           <label key={p.id} className={styles.whoOption}>
             <input type="radio" name="who" value={p.id} checked={selected?.id === p.id} onChange={() => onSelect(p.id)} />
             <span>
+              <TeamDot color={p.color} />
               {p.name}
               {i < 9 && <kbd className={styles.key}>{i + 1}</kbd>}
             </span>
