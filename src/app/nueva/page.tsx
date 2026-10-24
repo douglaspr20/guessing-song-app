@@ -8,7 +8,7 @@ import { Stepper } from "@/components/Stepper";
 import { BandStatus } from "@/components/band/BandStatus";
 import ui from "@/components/ui.module.css";
 import { api, type AccessStatus, type Catalog, type Game, type Playlist } from "@/lib/client/api";
-import type { GameMode } from "@/lib/game/filters";
+import { DEFAULT_ANSWER_SECONDS, MAX_ANSWER_SECONDS, MIN_ANSWER_SECONDS, type GameMode } from "@/lib/game/filters";
 import {
   DEFAULT_TEAM_SIZE,
   DEFAULT_TEAMS,
@@ -51,6 +51,9 @@ function NewGame() {
   const [teams, setTeams] = useState<TeamDraft[]>(() => emptyTeams(DEFAULT_TEAMS));
   const [maxTeamSize, setMaxTeamSize] = useState(DEFAULT_TEAM_SIZE);
   const [rounds, setRounds] = useState(10);
+  /** Quien juega desde el móvil: segundos para responder tras pulsar y quién queda fuera al fallar. */
+  const [answerSeconds, setAnswerSeconds] = useState(DEFAULT_ANSWER_SECONDS);
+  const [lockout, setLockout] = useState<"person" | "team">("person");
   const [fragmentSeconds, setFragmentSeconds] = useState(60);
   /** "spotify": canción completa (necesita cuenta). "open": vistas previas de 30 s, sin cuenta. */
   const [mode, setMode] = useState<GameMode>(searchParams.get("modo") === "abierto" ? "open" : "spotify");
@@ -109,6 +112,8 @@ function NewGame() {
           setPlayers(g.players.map((p) => p.name));
         }
         setRounds(g.totalRounds);
+        setAnswerSeconds(g.answerSeconds);
+        setLockout(g.lockout);
         setFragmentSeconds(g.fragmentSeconds);
         setMode(g.mode);
         setSource(g.filters.source);
@@ -190,6 +195,8 @@ function NewGame() {
             : { players: names }),
           rounds,
           fragmentSeconds,
+          answerSeconds,
+          lockout,
           filters: filters(),
         },
       });
@@ -363,6 +370,43 @@ function NewGame() {
                         unit="s"
                         onChange={setFragmentSeconds}
                       />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className={styles.section}>
+                <div className={styles.sectionHead}>
+                  <h2 className={styles.h}>Desde el móvil</h2>
+                </div>
+                <p className={styles.hint} style={{ marginBottom: 18 }}>
+                  Quien se une con el código pulsa «¡Lo sé!»: la canción se pausa y tiene este tiempo para escribir el título
+                  y el artista. Si falla, queda fuera de esa pista.
+                </p>
+                <div className={styles.settingsRow}>
+                  <div className={styles.field}>
+                    <span className={styles.fieldLabel}>Tiempo para responder</span>
+                    <Stepper
+                      label="Segundos para responder"
+                      value={answerSeconds}
+                      min={MIN_ANSWER_SECONDS}
+                      max={MAX_ANSWER_SECONDS}
+                      step={5}
+                      unit="s"
+                      onChange={setAnswerSeconds}
+                    />
+                  </div>
+                  {byTeams && (
+                    <div className={styles.field}>
+                      <span className={styles.fieldLabel}>Al fallar queda fuera</span>
+                      <div className={`${styles.segment} ${styles.formatSwitch}`} role="group" aria-label="Quién queda fuera al fallar">
+                        <button type="button" aria-pressed={lockout === "person"} onClick={() => setLockout("person")}>
+                          Solo esa persona
+                        </button>
+                        <button type="button" aria-pressed={lockout === "team"} onClick={() => setLockout("team")}>
+                          Todo su equipo
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

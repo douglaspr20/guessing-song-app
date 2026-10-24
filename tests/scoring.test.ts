@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   artistAvailable,
   elapsedMs,
+  fragmentEnded,
   OPEN_RULES,
   pointsForElapsed,
   rulesFor,
@@ -128,5 +129,14 @@ describe("reglas del modo abierto (vistas previas de 30 s)", () => {
     expect(rulesFor("open")).toBe(OPEN_RULES);
     expect(rulesFor("spotify")).toBe(SPOTIFY_RULES);
     expect(rulesFor(undefined)).toBe(SPOTIFY_RULES);
+  });
+});
+
+describe("fragmentEnded", () => {
+  it("da por acabado el fragmento con un margen de 2 s", () => {
+    expect(fragmentEnded({ fragmentMs: 30_000, elapsedMs: 30_000 })).toBe(true);
+    expect(fragmentEnded({ fragmentMs: 30_000, elapsedMs: 28_000 })).toBe(true);
+    expect(fragmentEnded({ fragmentMs: 30_000, elapsedMs: 27_900 })).toBe(false);
+    expect(fragmentEnded({ fragmentMs: 30_000, elapsedMs: 0 })).toBe(false);
   });
 });

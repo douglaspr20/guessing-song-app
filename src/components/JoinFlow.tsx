@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { AlertTriangle, ArrowRight, LogIn } from "lucide-react";
 import { BandStatus } from "@/components/band/BandStatus";
@@ -28,8 +28,10 @@ const clean = (raw: string) => raw.toUpperCase().replace(/[^A-Z0-9]/g, "").slice
  * Unirse a una partida con su código de 6 caracteres: primero el código, después el nombre (o el de
  * la cuenta, si hay sesión) y, por equipos, el equipo. Se abre desde /unirse o con el enlace /unirse/CÓDIGO.
  */
-export function JoinFlow({ initialCode = "" }: { initialCode?: string }) {
+export function JoinFlow() {
   const router = useRouter();
+  // En /unirse/ABC123 el código viene en la dirección; en /unirse se escribe a mano.
+  const initialCode = useParams<{ code?: string }>().code ?? "";
   const ids = useId();
   const [code, setCode] = useState(clean(initialCode));
   const [found, setFound] = useState<Lookup | null>(null);

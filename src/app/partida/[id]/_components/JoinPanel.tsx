@@ -7,7 +7,7 @@ import { useConfirm, useToast } from "@/components/feedback/FeedbackProvider";
 import { TeamDot } from "@/components/TeamDot";
 import ui from "@/components/ui.module.css";
 import { api, type Game } from "@/lib/client/api";
-import { useLiveGame } from "@/lib/client/live";
+import type { LiveEvent } from "@/lib/client/live";
 import styles from "../game.module.css";
 
 interface Joined {
@@ -21,7 +21,16 @@ interface Joined {
  * El código, el enlace y el QR para que la gente se una desde su móvil, y quién ya está dentro.
  * Antes de la primera pista va desplegado; durante la partida se pliega para dejar sitio al marcador.
  */
-export function JoinPanel({ game, onChanged }: { game: Game; onChanged: () => Promise<unknown> | void }) {
+export function JoinPanel({
+  game,
+  onChanged,
+  event,
+}: {
+  game: Game;
+  onChanged: () => Promise<unknown> | void;
+  /** Último aviso de la partida (la conexión en tiempo real la lleva la pantalla de la tele). */
+  event: LiveEvent | null;
+}) {
   const toast = useToast();
   const confirm = useConfirm();
   const [people, setPeople] = useState<Joined[]>([]);
@@ -52,11 +61,10 @@ export function JoinPanel({ game, onChanged }: { game: Game; onChanged: () => Pr
   }, [load]);
 
   // Alguien entra o se va: se vuelve a leer la lista.
-  useLiveGame(game.id, (e) => {
-    if (e.type === "participant_joined" || e.type === "participant_left" || e.type === "poll" || e.type === "reconnected") {
-      void load();
-    }
-  });
+  useEffect(() => {
+    if (!event) return;
+    if (["participant_joined", "participant_left", "poll", "reconnected"].includes(event.type)) void load();
+  }, [event, load]);
 
   const copy = async () => {
     try {

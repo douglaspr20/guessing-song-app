@@ -1,12 +1,21 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /** Un aviso del servidor: qué pasó en la partida (nunca lleva respuestas). */
 export interface LiveEvent {
   type: string;
   [key: string]: unknown;
 }
+
+/**
+ * Cómo le llegan los avisos a esta pantalla:
+ * - "connecting": todavía averiguándolo;
+ * - "live": por WebSocket, al instante;
+ * - "polling": sin tiempo real configurado: consulta cada pocos segundos (así está pensado);
+ * - "offline": hay tiempo real pero se cortó: consulta cada pocos segundos hasta que vuelva.
+ */
+export type LiveStatus = "connecting" | "live" | "polling" | "offline";
 
 const POLL_MS = 3_000;
 /** Aunque haya WebSocket, se relee de vez en cuando por si se perdió algún aviso. */
@@ -16,7 +25,8 @@ const SAFETY_POLL_MS = 15_000;
  * Se suscribe a los avisos de una partida. Con Ably llegan por WebSocket al instante; sin él (o si
  * falla) se consulta cada pocos segundos. En ambos casos `onEvent` decide qué volver a leer.
  */
-export function useLiveGame(gameId: string, onEvent: (event: LiveEvent) => void, enabled = true) {
+export function useLiveGame(gameId: string, onEvent: (event: LiveEvent) => void, enabled = true): LiveStatus {
+  const [status, setStatus] = useState<LiveStatus>("connecting");
   const handler = useRef(onEvent);
   useEffect(() => {
     handler.current = onEvent;
@@ -38,7 +48,10 @@ export function useLiveGame(gameId: string, onEvent: (event: LiveEvent) => void,
         const res = await fetch(`/api/realtime/token?game=${encodeURIComponent(gameId)}`, { cache: "no-store" });
         const first = res.ok ? ((await res.json()) as { enabled: boolean; tokenRequest?: unknown }) : null;
         if (closed) return;
-        if (!first?.enabled) return startPolling(POLL_MS);
+        if (!first?.enabled) {
+          setStatus("polling");
+          return startPolling(POLL_MS);
+        }
 
         const { Realtime } = await import("ably");
         if (closed) return;
@@ -62,12 +75,22 @@ export function useLiveGame(gameId: string, onEvent: (event: LiveEvent) => void,
         const channel = client.channels.get(`game:${gameId}`);
         void channel.subscribe((message) => handler.current({ type: message.name ?? "event", ...(message.data ?? {}) }));
         // Al volver a conectar (tras perder la red) se relee todo por si se perdió algo.
-        client.connection.on("connected", () => handler.current({ type: "reconnected" }));
-        client.connection.on("failed", () => startPolling(POLL_MS));
+        client.connection.on("connected", () => {
+          setStatus("live");
+          startPolling(SAFETY_POLL_MS);
+          handler.current({ type: "reconnected" });
+        });
+        // Mientras no hay conexión se consulta más a menudo, y se avisa de que va con retraso.
+        client.connection.on(["disconnected", "suspended", "failed"], () => {
+          setStatus("offline");
+          startPolling(POLL_MS);
+        });
         startPolling(SAFETY_POLL_MS);
         close = () => client.close();
       } catch {
-        if (!closed) startPolling(POLL_MS);
+        if (closed) return;
+        setStatus("offline");
+        startPolling(POLL_MS);
       }
     };
 
@@ -78,4 +101,6 @@ export function useLiveGame(gameId: string, onEvent: (event: LiveEvent) => void,
       close?.();
     };
   }, [gameId, enabled]);
+
+  return status;
 }

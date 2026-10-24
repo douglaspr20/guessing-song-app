@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useGamePlayer } from "@/hooks/useGamePlayer";
 import { rulesFor } from "@/lib/game/scoring";
 import { TEAM_COLORS } from "@/lib/game/teams";
 import { api, type GuessResult, type GuessRow, type Round } from "@/lib/client/api";
-import { GAIN_FLASH_MS, INTERMISSION_MS } from "./constants";
-import { acceptedFeedback, describeGuess, spokenFeedback, type Feedback } from "./feedback";
+import { useLiveGame, type LiveEvent } from "@/lib/client/live";
+import { BUZZ_EXPIRE_DELAY_MS, GAIN_FLASH_MS, INTERMISSION_MS } from "./constants";
+import { acceptedFeedback, buzzFeedback, describeGuess, spokenFeedback, type Feedback } from "./feedback";
 import { deriveRoundClock } from "./roundClock";
 import { useGame, useNow } from "./useGame";
 
@@ -43,6 +44,10 @@ export function useGameController(gameId: string) {
   const [gains, setGains] = useState<Record<string, number>>({});
 
   const round = game?.round ?? null;
+  const roundId = round?.id;
+  /** Quien pulsó «¡Lo sé!» desde el móvil y está respondiendo (la canción está en pausa). */
+  const buzz = round?.status === "PLAYING" ? (round.buzz ?? null) : null;
+  const buzzLeftMs = buzz ? Math.max(0, buzz.remainingMs - (now && fetchedAt ? now - fetchedAt : 0)) : 0;
   const clock = deriveRoundClock({
     round,
     fragmentSeconds: game?.fragmentSeconds ?? 0,
@@ -69,8 +74,8 @@ export function useGameController(gameId: string) {
   /** Qué se puede hacer ahora mismo: lo comparten los botones y los atajos. */
   const can = {
     next: !roundOpen && (finished || (!busy && ready)),
-    play: roundOpen && !busy && ready,
-    pause: roundOpen && !busy && (player.phase === "playing" || clock.canResume),
+    play: roundOpen && !busy && ready && !buzz,
+    pause: roundOpen && !busy && !buzz && (player.phase === "playing" || clock.canResume),
     reveal: roundOpen && !busy,
     awardTitle: roundOpen && clock.started && !busy && !!selectedPlayer && !round?.winnerPlayerId,
     awardArtist: roundOpen && clock.started && !busy && !!selectedPlayer && clock.artistOpen,
@@ -94,8 +99,83 @@ export function useGameController(gameId: string) {
     setTimeout(() => setGains({}), GAIN_FLASH_MS);
   };
 
+  // ---------- Tiempo real: lo que pasa en los móviles ----------
+
+  // Se relee el estado ante cualquier aviso, de uno en uno: si llega otro mientras se lee, se vuelve a leer al acabar.
+  const reading = useRef(false);
+  const readAgain = useRef(false);
+  const readState = useCallback(async () => {
+    if (reading.current) {
+      readAgain.current = true;
+      return;
+    }
+    reading.current = true;
+    try {
+      do {
+        readAgain.current = false;
+        await refresh().catch(() => {});
+      } while (readAgain.current);
+    } finally {
+      reading.current = false;
+    }
+  }, [refresh]);
+
+  // El último aviso, para quien necesite reaccionar (la lista de conectados).
+  const [liveEvent, setLiveEvent] = useState<LiveEvent | null>(null);
+  const liveStatus = useLiveGame(
+    gameId,
+    (e) => {
+      if (e.type === "buzz") setFeedback(null);
+      if (e.type === "buzz_resolved") setFeedback(buzzFeedback(e));
+      setLiveEvent(e);
+      readState();
+    },
+    !!game && !loadError,
+  );
+
+  // Alguien pulsa: la música se para; acaba su turno sin ganar: sigue sola. Si la ronda se cierra, se corta.
+  const pausedByBuzz = useRef<string | null>(null);
+  const buzzId = buzz?.participantId ?? null;
+  const roundStatus = round?.status;
+  const roundPaused = round?.paused;
+  useEffect(() => {
+    if (!roundId) return;
+    if (roundStatus === "PLAYING" && buzzId) {
+      if (player.phase === "playing") {
+        pausedByBuzz.current = roundId;
+        void player.pause();
+      }
+      return;
+    }
+    if (pausedByBuzz.current === roundId) {
+      pausedByBuzz.current = null;
+      if (roundStatus === "PLAYING" && !roundPaused && player.phase === "paused") {
+        player.resume().catch((e: Error) => setActionError(e.message));
+      }
+    }
+    if (roundStatus && roundStatus !== "PLAYING" && (player.phase === "playing" || player.phase === "paused")) {
+      void player.stop();
+    }
+    // `player` cambia en cada render: solo importan su fase y lo que dice el servidor.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buzzId, roundId, roundStatus, roundPaused, player.phase]);
+
+  // Si el móvil de quien pulsó no responde, la tele cierra su turno poco después de acabarse el tiempo.
+  const buzzMsAtFetch = buzz?.remainingMs ?? 0;
+  useEffect(() => {
+    if (!buzzId || !roundId) return;
+    const wait = Math.max(0, buzzMsAtFetch - (Date.now() - fetchedAt)) + BUZZ_EXPIRE_DELAY_MS;
+    const t = setTimeout(() => {
+      api(`/api/games/${gameId}/rounds/${roundId}/buzz`, { json: { mode: "expire" } })
+        .catch(() => {})
+        .finally(readState);
+    }, wait);
+    return () => clearTimeout(t);
+    // Un turno nuevo (otra persona o ronda) reprograma el cierre; leer otra vez el mismo no.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buzzId, roundId]);
+
   // Al recargar a mitad de una ronda el audio se corta: se pausa el reloj para no perder puntos.
-  const roundId = round?.id;
   useEffect(() => {
     if (!clock.needsFreeze || !roundId) return;
     api(`/api/games/${gameId}/rounds/${roundId}/pause`, { method: "POST" })
@@ -228,6 +308,28 @@ export function useGameController(gameId: string) {
       await refresh();
     });
 
+  /** La tele cierra el turno de quien pulsó: lo da por fallado o lo cancela sin dejarle fuera. */
+  const resolveBuzz = (mode: "fail" | "cancel") =>
+    run(async () => {
+      if (!round) return;
+      await api(`/api/games/${gameId}/rounds/${round.id}/buzz`, { json: { mode } });
+      await refresh();
+    });
+
+  /** Quien tiene el turno lo dijo en voz alta y era correcto: se le da la canción. */
+  const awardBuzzer = () =>
+    run(async () => {
+      if (!round || !buzz?.playerId) return;
+      const r = await api<GuessResult>(`/api/games/${gameId}/rounds/${round.id}/award`, {
+        json: { playerId: buzz.playerId, title: true },
+      });
+      const owner = game?.players.find((p) => p.id === buzz.playerId)?.name ?? buzz.name;
+      setFeedback(spokenFeedback(owner, "title", r.points));
+      flashGain(buzz.playerId, r.points);
+      await player.stop();
+      await refresh();
+    });
+
   /** El anfitrión da por bueno el título o el artista de un intento rechazado. */
   const acceptGuess = (guess: GuessRow, part: "title" | "artist") =>
     run(async () => {
@@ -265,6 +367,10 @@ export function useGameController(gameId: string) {
     selectedPlayer,
     selectPlayer: setSelectedId,
     can,
+    buzz,
+    buzzLeftMs,
+    liveEvent,
+    liveStatus,
     actions: {
       startNext,
       /** Empezar, siguiente pista o, si ya no quedan, el podio. */
@@ -274,6 +380,8 @@ export function useGameController(gameId: string) {
       reveal,
       submitGuess,
       acceptGuess,
+      resolveBuzz,
+      awardBuzzer,
       awardTitle: () => awardSpoken("title"),
       awardArtist: () => awardSpoken("artist"),
     },

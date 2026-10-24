@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { WifiOff } from "lucide-react";
 import { Podium } from "@/components/Podium";
 import { RetryNotice } from "@/components/RetryNotice";
 import { Scoreboard } from "@/components/Scoreboard";
@@ -11,24 +12,28 @@ import { BandStatus } from "@/components/band/BandStatus";
 import ui from "@/components/ui.module.css";
 import { api, ApiError, catalogLabel, type Game } from "@/lib/client/api";
 import { useLiveGame } from "@/lib/client/live";
+import { BuzzerPad } from "./BuzzerPad";
 import styles from "./play.module.css";
 
 /** Lo que el servidor deja ver a quien juega desde el móvil: la partida sin sus ajustes internos. */
 type PlayGame = Omit<Game, "filters" | "nextTrackReady">;
 interface PlayState {
   game: PlayGame;
-  me: { id: string; name: string; playerId: string; memberId: string | null };
+  me: { id: string; name: string; playerId: string; memberId: string | null; lockedOut: boolean };
 }
 
 /** El mando de quien se unió con el código: dónde va la partida y quién es él. */
 export function PlayClient() {
   const { gameId } = useParams<{ gameId: string }>();
   const [state, setState] = useState<PlayState | null>(null);
+  /** Cuándo se leyó el estado: el tiempo que le queda a quien responde se mide desde ahí. */
+  const [fetchedAt, setFetchedAt] = useState(0);
   const [error, setError] = useState<{ missing: boolean; message: string } | null>(null);
 
   const refresh = useCallback(async () => {
     try {
       setState(await api<PlayState>(`/api/play/${gameId}`));
+      setFetchedAt(Date.now());
       setError(null);
     } catch (e) {
       const missing = e instanceof ApiError && e.status === 404;
@@ -43,7 +48,7 @@ export function PlayClient() {
   }, [refresh]);
 
   // Cualquier aviso de la partida (alguien pulsa, suena otra pista, termina) vuelve a leer el estado.
-  useLiveGame(gameId, () => void refresh(), !error?.missing);
+  const live = useLiveGame(gameId, () => void refresh(), !error?.missing);
 
   if (error?.missing) {
     return (
@@ -87,6 +92,12 @@ export function PlayClient() {
     <>
       <BandStatus text={finished ? `${cat} · Fin de la cinta` : status} />
       <main className={styles.main}>
+        {live === "offline" && (
+          <p className={`${ui.notice} ${ui.noticeError}`} role="status">
+            <WifiOff size={20} aria-hidden />
+            Conexión inestable: lo que pase en la partida puede tardar unos segundos en llegarte.
+          </p>
+        )}
         <section className={`${ui.card} ${styles.card}`} aria-live="polite">
           <div className={ui.cardStripes} />
           <div className={styles.body}>
@@ -115,8 +126,8 @@ export function PlayClient() {
               </>
             ) : round.status === "PLAYING" ? (
               <>
-                <h1 className={styles.headline}>Suena la pista {round.number}</h1>
-                <p className={styles.lede}>Escucha la tele. Muy pronto podrás pulsar «¡Lo sé!» desde aquí.</p>
+                <h1 className={styles.headline}>{round.buzz?.participantId === me.id ? "Tu turno" : `Pista ${round.number}`}</h1>
+                <BuzzerPad gameId={gameId} round={round} me={me} fetchedAt={fetchedAt} onChanged={refresh} />
               </>
             ) : (
               <>

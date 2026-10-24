@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { AlertTriangle, Keyboard } from "lucide-react";
+import { AlertTriangle, Keyboard, WifiOff } from "lucide-react";
 import { Scoreboard } from "@/components/Scoreboard";
 import { BandStatus } from "@/components/band/BandStatus";
 import ui from "@/components/ui.module.css";
 import { catalogLabel } from "@/lib/client/api";
 import { AnswerForm } from "./_components/AnswerForm";
 import { AttemptsList } from "./_components/AttemptsList";
+import { BuzzBanner } from "./_components/BuzzBanner";
 import { JoinPanel } from "./_components/JoinPanel";
 import { FeedbackLine } from "./_components/FeedbackLine";
 import { Finale } from "./_components/Finale";
@@ -56,9 +57,28 @@ export function GameClient() {
       <BandStatus text={status} />
       <main className={styles.main}>
         {player.status === "error" && player.error && <ErrorNotice className={styles.playerError} message={player.error} />}
+        {ctl.liveStatus === "offline" && (
+          <p className={`${ui.notice} ${ui.noticeError} ${styles.playerError}`} role="status">
+            <WifiOff size={20} aria-hidden />
+            Se cortó la conexión en tiempo real: los móviles se enteran con unos segundos de retraso. Se reconecta sola.
+          </p>
+        )}
 
         <div className={styles.layout}>
           <div className={styles.deck}>
+            {ctl.buzz && (
+              <BuzzBanner
+                buzz={ctl.buzz}
+                leftMs={ctl.buzzLeftMs}
+                color={game.players.find((p) => p.id === ctl.buzz?.playerId)?.color ?? null}
+                teamName={game.format === "teams" ? (game.players.find((p) => p.id === ctl.buzz?.playerId)?.name ?? null) : null}
+                busy={ctl.busy}
+                onAward={actions.awardBuzzer}
+                onFail={() => actions.resolveBuzz("fail")}
+                onCancel={() => actions.resolveBuzz("cancel")}
+              />
+            )}
+
             {!round && <ReadyCard game={game} />}
 
             {round && clock.open && (
@@ -116,7 +136,7 @@ export function GameClient() {
           </div>
 
           <aside className={styles.side}>
-            <JoinPanel game={game} onChanged={ctl.refresh} />
+            <JoinPanel game={game} onChanged={ctl.refresh} event={ctl.liveEvent} />
             <Scoreboard players={game.players} title={`Marcador · ${cat}`} gains={ctl.gains} />
             <button type="button" className={`${ui.btn} ${ui.onShell}`} onClick={() => router.push("/")}>
               Salir a la estantería

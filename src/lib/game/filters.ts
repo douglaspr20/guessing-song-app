@@ -55,6 +55,10 @@ function applyOpenModeDefaults(input: unknown) {
   };
 }
 
+export const MIN_ANSWER_SECONDS = 10;
+export const MAX_ANSWER_SECONDS = 60;
+export const DEFAULT_ANSWER_SECONDS = 20;
+
 const personName = z.string().trim().min(1).max(30);
 
 const teamSchema = z.object({
@@ -75,6 +79,10 @@ const gameSettingsSchema = z.object({
   players: z.array(personName).max(MAX_PEOPLE).default([]),
   /** Equipos con sus miembros (formato "teams"). */
   teams: z.array(teamSchema).max(MAX_TEAMS).default([]),
+  /** Segundos que tiene quien pulsa «¡Lo sé!» para escribir su respuesta. */
+  answerSeconds: z.number().int().min(MIN_ANSWER_SECONDS).max(MAX_ANSWER_SECONDS).default(DEFAULT_ANSWER_SECONDS),
+  /** Al fallar queda fuera: solo esa persona o todo su equipo. */
+  lockout: z.enum(["person", "team"]).default("person"),
   /** Máximo de miembros por equipo (formato "teams"). */
   maxTeamSize: z.number().int().min(1).max(MAX_TEAM_SIZE).optional(),
   rounds: z.number().int().min(1).max(50),
