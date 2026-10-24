@@ -130,11 +130,19 @@ export async function unblockIp(ipHash: string) {
 // ---------- Limpieza diaria ----------
 
 export async function runCleanup(now = new Date()) {
-  const [guests, attempts, sessions, invites] = await Promise.all([
+  const [guests, attempts, sessions, invites, participants] = await Promise.all([
     deleteInactiveGuests(GUEST_LIMITS.inactiveDays, now),
     db.loginAttempt.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - DAY_MS) } } }),
     db.session.deleteMany({ where: { expiresAt: { lt: now } } }),
     db.invite.deleteMany({ where: { usedAt: null, expiresAt: { lt: now } } }),
+    // Quien se unió desde el móvil: pasados 7 días su cookie ya caducó hace mucho y el token no sirve.
+    db.participant.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - 7 * DAY_MS) } } }),
   ]);
-  return { guests, loginAttempts: attempts.count, sessions: sessions.count, invites: invites.count };
+  return {
+    guests,
+    loginAttempts: attempts.count,
+    sessions: sessions.count,
+    invites: invites.count,
+    participants: participants.count,
+  };
 }

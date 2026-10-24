@@ -1,0 +1,145 @@
+/* Unirse desde el móvil: una carátula centrada, pensada primero para el pulgar. */
+
+.main {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: clamp(20px, 4vw, 56px) var(--gutter) 64px;
+}
+
+.card {
+  width: 100%;
+}
+
+/* El código se lee y se teclea de un vistazo: grande, en condensada y con aire entre letras. */
+.code {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(34px, 9vw, 48px);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  text-align: center;
+  min-height: 72px;
+}
+
+.codeTag {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: var(--ink);
+}
+
+.again {
+  background: none;
+  border: 0;
+  padding: 0;
+  min-height: 44px;
+  color: var(--card-ink-soft);
+  text-decoration: underline;
+  font-size: inherit;
+}
+
+.asUser {
+  font-size: 19px;
+  color: var(--card-ink-soft);
+}
+
+.asUser strong {
+  color: var(--ink);
+  font-family: var(--font-script);
+  font-size: 1.25em;
+}
+
+.pending {
+  display: grid;
+  gap: 8px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  min-height: 48px;
+  padding: 0 18px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: 22px;
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.teams {
+  display: grid;
+  gap: 10px;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.teams legend {
+  margin-bottom: 8px;
+}
+
+.team {
+  position: relative;
+  display: block;
+}
+
+.team input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
+}
+
+.team[data-full="true"] {
+  opacity: 0.5;
+}
+
+.teamBody {
+  display: grid;
+  gap: 2px;
+  padding: 12px 16px;
+  min-height: 64px;
+  border: var(--stroke) solid var(--ink);
+  border-radius: var(--radius-control);
+}
+
+.teamName {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.teamMembers {
+  font-size: 16px;
+  color: var(--card-ink-soft);
+}
+
+.team input:checked + .teamBody {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.team input:checked + .teamBody .teamMembers {
+  color: color-mix(in srgb, var(--card) 80%, transparent);
+}
+
+.team input:focus-visible + .teamBody {
+  outline: 3px solid var(--tomato-deep);
+  outline-offset: 2px;
+}

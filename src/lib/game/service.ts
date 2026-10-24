@@ -134,6 +134,8 @@ function toPublicGame(game: Game & { players: PlayerWithMembers[]; rounds: Round
     /** "solo" (todos contra todos) o "teams" (cada entrada de `players` es un equipo). */
     format: game.format as GameFormat,
     maxTeamSize: game.maxTeamSize,
+    /** Si se puede entrar con el código desde el móvil. */
+    joinOpen: game.joinOpen,
     filters: JSON.parse(game.filters) as GameFilters,
     /** Si la siguiente canción ya está elegida (la próxima ronda empezará sin espera). */
     nextTrackReady: !!game.nextTrack && game.nextTrackFilters === game.filters,

@@ -252,6 +252,9 @@ export default function Home() {
             aside={passwordForm ?? (redeeming && <RedeemInvite onDone={redeemed} onCancel={() => setRedeeming(false)} />)}
             footer={
               <>
+                <Link href="/unirse" className={styles.linkBtn}>
+                  Unirme a una partida
+                </Link>
                 {user?.role === "host" && (
                   <Link href="/anfitrion" className={styles.linkBtn}>
                     Panel del anfitrión
@@ -305,9 +308,14 @@ export default function Home() {
             newGameHref="/nueva?modo=abierto"
             notice={access?.openModePaused ? PAUSED_NOTICE : null}
             footer={
-              <button type="button" className={styles.linkBtn} onClick={leaveGuest}>
-                Volver al inicio
-              </button>
+              <>
+                <Link href="/unirse" className={styles.linkBtn}>
+                  Unirme a una partida
+                </Link>
+                <button type="button" className={styles.linkBtn} onClick={leaveGuest}>
+                  Volver al inicio
+                </button>
+              </>
             }
           />
         )}
@@ -349,6 +357,9 @@ function Connect({
           <button type="button" className={`${ui.btn} ${ui.onShell} ${ui.big}`} onClick={() => setAccount("login")}>
             Entrar
           </button>
+          <Link href="/unirse" className={`${ui.btn} ${ui.onShell} ${ui.big}`}>
+            Unirme con un código
+          </Link>
         </div>
         <p className={styles.req}>
           <Info size={20} aria-hidden />
