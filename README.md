@@ -168,7 +168,7 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
 | `e2e`   | Playwright (Chromium) against the built app, with its own `adivina_e2e` database |
 | `ci-ok` | Green only when `check` and `e2e` are: the single check to require on `master`  |
 
-`.github/workflows/vercel-deploy.yml` listens for the deployment status that Vercel reports to GitHub and shows it as the **Despliegue en Vercel** check (green when Vercel deployed, red when it failed).
+`.github/workflows/vercel-deploy.yml` listens for the commit status that Vercel reports to GitHub (context `Vercel`) and publishes it on the same commit as the **Despliegue en Vercel** check (green when Vercel deployed, red when it failed).
 
 The e2e tests run without Ably, Spotify, Google or iTunes: the server picks invented songs when `E2E_FAKE_ITUNES=1` (`src/lib/itunes/fake.ts`; never set it in production) and the browser gets silence instead of Apple's previews. In a failed CI run the Playwright report is attached as an artifact.
 

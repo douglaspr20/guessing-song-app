@@ -1,35 +1,42 @@
 name: Vercel
 
-# La integración de Vercel con GitHub publica el estado de cada despliegue (producción y preview).
-# Este workflow lo recoge para mostrarlo como un check más: verde si Vercel lo desplegó, rojo si falló.
-# (Los workflows de `deployment_status` se leen desde la rama por defecto.)
+# Vercel avisa a GitHub de cada despliegue con un estado del commit llamado «Vercel»
+# (no crea «deployments» de GitHub, así que el evento `deployment_status` nunca llega).
+# Este workflow escucha ese estado y publica en el mismo commit el check «Despliegue en Vercel»:
+# verde si Vercel desplegó, rojo si falló.
+# (Los workflows de `status` se leen desde la rama por defecto.)
 on:
-  deployment_status:
+  status:
 
 permissions:
   contents: read
-  deployments: read
+  statuses: write
 
 jobs:
   deploy:
     name: Despliegue en Vercel
-    # Solo estados finales: «pending» e «in_progress» no dicen nada todavía.
-    if: contains(fromJSON('["success", "failure", "error"]'), github.event.deployment_status.state)
+    # Solo estados finales del contexto «Vercel»: «pending» aún no dice nada.
+    if: github.event.context == 'Vercel' && contains(fromJSON('["success", "failure", "error"]'), github.event.state)
     runs-on: ubuntu-latest
     steps:
-      - name: Estado del despliegue
+      - name: Publicar el estado en el commit desplegado
         env:
-          STATE: ${{ github.event.deployment_status.state }}
-          ENVIRONMENT: ${{ github.event.deployment_status.environment }}
-          APP_URL: ${{ github.event.deployment_status.environment_url }}
-          LOG_URL: ${{ github.event.deployment_status.log_url }}
-          DESCRIPTION: ${{ github.event.deployment_status.description }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.sha }}
+          STATE: ${{ github.event.state }}
+          LOG_URL: ${{ github.event.target_url }}
+          DESCRIPTION: ${{ github.event.description }}
         run: |
+          gh api -X POST "repos/$REPO/statuses/$SHA" \
+            -f state="$STATE" \
+            -f context="Despliegue en Vercel" \
+            -f description="${DESCRIPTION:0:140}" \
+            -f target_url="$LOG_URL"
           {
             echo "## Despliegue en Vercel: $STATE"
             echo
-            echo "- Entorno: $ENVIRONMENT"
-            [ -n "$APP_URL" ] && echo "- URL: $APP_URL"
+            echo "- Commit: $SHA"
             [ -n "$LOG_URL" ] && echo "- Registro: $LOG_URL"
             [ -n "$DESCRIPTION" ] && echo "- $DESCRIPTION"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -37,4 +44,3 @@ jobs:
             echo "::error::Vercel terminó el despliegue con estado $STATE ($LOG_URL)"
             exit 1
           fi
-          echo "Vercel desplegó $ENVIRONMENT correctamente: $APP_URL"

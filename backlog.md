@@ -21,7 +21,7 @@ Estado al 24-10-2026. Marcas: `[x]` hecho, `[ ]` pendiente. Tamaño: S (horas), 
 ## Pendiente en GitHub y Vercel (manual)
 
 - [ ] En GitHub (*Settings → Branches*), proteger `master`: exigir pull request y el check `ci-ok`.
-- [ ] Tras fusionar a master, comprobar que aparece el check «Despliegue en Vercel» en el commit (los workflows de `deployment_status` solo corren desde la rama por defecto).
+- [ ] Tras fusionar `fix/vercel-status-check`, comprobar que en el siguiente despliegue aparece el check «Despliegue en Vercel» en el commit (Vercel informa con un estado de commit, no con «deployments»; el workflow anterior no se activaba nunca).
 - [ ] En Vercel, confirmar qué base usan los despliegues de preview: si comparten la de producción, una migración se aplicaría antes de fusionar.
 
 ## Calidad y base técnica
