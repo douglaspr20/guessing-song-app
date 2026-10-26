@@ -16,34 +16,20 @@ import {
   api,
   ApiError,
   catalogLabel,
-  formatDate,
   type AccessStatus,
   type GameList,
   type GameSummary,
+  errorText,
 } from "@/lib/client/api";
+import { formatDate, formatList, plural } from "@/i18n/format";
+import { useI18n } from "@/i18n/client";
 import styles from "./home.module.css";
 
-const LOGIN_ERRORS: Record<string, string> = {
-  denied: "Cancelaste el permiso en Spotify. Vuelve a intentarlo y pulsa «Aceptar».",
-  state: "Spotify no pudo confirmar el inicio de sesión. Vuelve a conectar desde la dirección principal del juego.",
-  failed: "Spotify no respondió bien al conectar. Prueba otra vez en un momento.",
-  session: "Tu sesión caducó mientras conectabas Spotify. Entra de nuevo y vuelve a probar.",
-  not_allowed:
-    "Esta cuenta de Spotify no está autorizada en la app. Pide al anfitrión que te añada en el panel de Spotify.",
-  in_use: "Esa cuenta de Spotify ya está vinculada a otro usuario de la app.",
-  spotify_invite: "El modo Spotify es solo con invitación. Si el anfitrión te dio un código, canjéalo en tu estantería.",
-  google_denied: "Cancelaste el acceso con Google. Vuelve a intentarlo cuando quieras.",
-  google_state: "Google no pudo confirmar el inicio de sesión. Vuelve a probar desde la dirección principal del juego.",
-  google_failed: "Google no respondió bien al entrar. Prueba otra vez en un momento.",
-  google_in_use: "Esa cuenta de Google ya está vinculada a otro usuario de la app.",
-  google_disabled: "Esta cuenta está desactivada. Habla con el anfitrión.",
-  google_host: "La cuenta de anfitrión entra solo con su contraseña y su código.",
-};
-
 const SHELF_TITLE_ID = "estanteria";
-const PAUSED_NOTICE = "El modo sin cuenta está en mantenimiento. Vuelve a probar en un rato.";
 
 export default function Home() {
+  const { m, locale } = useI18n();
+  const t = m.home;
   const confirm = useConfirm();
   const toast = useToast();
   const [access, setAccess] = useState<AccessStatus | null>(null);
@@ -74,11 +60,11 @@ export default function Home() {
     const code = params.get("error");
     // Lee el resultado del login de Spotify o Google una vez al montar (viene en la URL).
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (code) setLoginError(LOGIN_ERRORS[code] ?? LOGIN_ERRORS.failed);
-    if (params.get("google") === "linked") toast({ text: "Google vinculado: ya puedes entrar con él." });
+    if (code) setLoginError(t.loginErrors[code] ?? t.loginErrors.failed);
+    if (params.get("google") === "linked") toast({ text: t.googleLinked });
     if (code || params.has("google")) window.history.replaceState(null, "", "/");
     refresh();
-  }, [refresh, toast]);
+  }, [refresh, toast, t]);
 
   // La estantería solo aparece con sesión o tras elegir jugar sin cuenta.
   const view = accessError ? "error" : !access ? "loading" : access.user ? "account" : access.guest ? "guest" : "connect";
@@ -105,18 +91,18 @@ export default function Home() {
   const deleteGame = async (game: GameSummary) => {
     const label = catalogLabel(game.catalogNumber);
     const ok = await confirm({
-      title: `¿Borrar el casete ${label}?`,
+      title: t.deleteTitle(label),
       body:
         game.status === "FINISHED"
-          ? "Se borra con su podio y sus rondas. No se puede deshacer."
-          : "Está a medio grabar: se borra sin terminar. No se puede deshacer.",
-      confirmLabel: "Borrar casete",
+          ? t.deleteFinished
+          : t.deleteUnfinished,
+      confirmLabel: t.deleteConfirm,
       tone: "danger",
     });
     if (!ok) return;
     try {
       await api(`/api/games/${game.id}`, { method: "DELETE" });
-      toast({ text: `Casete ${label} borrado.` });
+      toast({ text: t.deleted(label) });
     } catch (err) {
       toast({ text: errorText(err), tone: "error" });
     }
@@ -128,21 +114,20 @@ export default function Home() {
   const deleteHistory = async () => {
     const total = list?.total ?? 0;
     const ok = await confirm({
-      title: "¿Borrar todo tu historial?",
+      title: t.deleteAllTitle,
       body: (
         <>
-          Se borran <strong>{total === 1 ? "el único casete" : `los ${total} casetes`}</strong> de tu estantería, con sus
-          podios. Las partidas de otras personas no se tocan. No se puede deshacer.
+          {t.deleteAllBefore} <strong>{plural(locale, total, t.deleteAllCount)}</strong> {t.deleteAllAfter}
         </>
       ),
-      confirmLabel: "Borrar historial",
+      confirmLabel: t.deleteAllConfirm,
       tone: "danger",
-      typeToConfirm: "BORRAR",
+      typeToConfirm: t.deleteAllWord,
     });
     if (!ok) return;
     try {
       const { deleted } = await api<{ deleted: number }>("/api/games", { method: "DELETE", json: { confirm: "BORRAR" } });
-      toast({ text: deleted === 1 ? "1 casete borrado. La estantería está vacía." : `${deleted} casetes borrados. La estantería está vacía.` });
+      toast({ text: plural(locale, deleted, t.deletedAll) });
     } catch (err) {
       toast({ text: errorText(err), tone: "error" });
     }
@@ -156,7 +141,7 @@ export default function Home() {
       await api("/api/guest", { method: "POST" });
       await refresh();
     } catch (err) {
-      setNotice(err instanceof ApiError ? err.message : "No se pudo empezar. Prueba otra vez.");
+      setNotice(err instanceof ApiError ? err.message : t.cantStart);
     }
   };
   const leaveGuest = async () => {
@@ -173,15 +158,15 @@ export default function Home() {
   };
   const unlinkGoogle = async () => {
     const ok = await confirm({
-      title: "¿Desvincular tu Google?",
-      body: "Seguirás entrando con tu usuario y contraseña.",
-      confirmLabel: "Desvincular",
+      title: t.unlinkGoogleTitle,
+      body: t.unlinkGoogleBody,
+      confirmLabel: t.unlink,
       tone: "danger",
     });
     if (!ok) return;
     try {
       await api("/api/auth/google/unlink", { method: "POST" });
-      toast({ text: "Google desvinculado." });
+      toast({ text: t.googleUnlinked });
     } catch (err) {
       toast({ text: errorText(err), tone: "error" });
     }
@@ -189,13 +174,13 @@ export default function Home() {
   };
   const redeemed = async () => {
     setRedeeming(false);
-    toast({ text: "Invitación canjeada: ya puedes usar el modo Spotify." });
+    toast({ text: t.inviteRedeemed });
     await refresh();
   };
 
   const passwordChanged = async () => {
     setChangingPassword(false);
-    toast({ text: "Contraseña guardada. Tus otras sesiones se cerraron." });
+    toast({ text: t.passwordSaved });
     await refresh();
   };
 
@@ -217,17 +202,17 @@ export default function Home() {
         ? `${access.user.displayName} · Spotify`
         : access.user.displayName
       : view === "guest"
-        ? "Sin cuenta · 30 s"
+        ? t.guestStatus
         : undefined;
 
   return (
     <div className={styles.page}>
       <BandStatus text={status} />
       <main className={styles.main}>
-        {view === "loading" && <p className={styles.loading}>Rebobinando…</p>}
+        {view === "loading" && <p className={styles.loading}>{m.common.loading}</p>}
         {view === "error" && (
           <div className={styles.errorWrap}>
-            <RetryNotice message={`No pudimos conectar con el juego. ${accessError}`} onRetry={refresh} />
+            <RetryNotice message={t.cantConnectGame(accessError ?? "")} onRetry={refresh} />
           </div>
         )}
         {view === "connect" && (
@@ -253,45 +238,45 @@ export default function Home() {
             footer={
               <>
                 <Link href="/unirse" className={styles.linkBtn}>
-                  Unirme a una partida
+                  {t.joinGame}
                 </Link>
                 {user?.role === "host" && (
                   <Link href="/anfitrion" className={styles.linkBtn}>
-                    Panel del anfitrión
+                    {t.hostPanel}
                   </Link>
                 )}
                 {access?.spotify ? (
                   <button type="button" className={styles.linkBtn} onClick={unlinkSpotify}>
-                    Desvincular Spotify
+                    {t.unlinkSpotify}
                   </button>
                 ) : user?.spotifyAllowed ? (
                   <a href="/api/auth/login" className={styles.linkBtn}>
-                    Conectar mi Spotify
+                    {t.connectSpotify}
                   </a>
                 ) : (
                   !redeeming && (
                     <button type="button" className={styles.linkBtn} onClick={() => setRedeeming(true)}>
-                      ¿Tienes una invitación?
+                      {t.haveInvite}
                     </button>
                   )
                 )}
                 {access?.googleEnabled && user?.role === "member" && !user.google && (
                   <a href="/api/auth/google/login" className={styles.linkBtn}>
-                    Vincular Google
+                    {t.linkGoogle}
                   </a>
                 )}
                 {user?.role === "member" && !passwordForm && (
                   <button type="button" className={styles.linkBtn} onClick={() => setChangingPassword(true)}>
-                    {user.hasPassword ? "Cambiar contraseña" : "Poner contraseña"}
+                    {user.hasPassword ? t.changePassword : t.setPassword}
                   </button>
                 )}
                 {user?.google && user.hasPassword && (
                   <button type="button" className={styles.linkBtn} onClick={unlinkGoogle}>
-                    Desvincular Google
+                    {t.unlinkGoogle}
                   </button>
                 )}
                 <button type="button" className={styles.linkBtn} onClick={signOut}>
-                  Salir
+                  {t.signOut}
                 </button>
               </>
             }
@@ -306,14 +291,14 @@ export default function Home() {
             onDeleteAll={deleteHistory}
             premium={null}
             newGameHref="/nueva?modo=abierto"
-            notice={access?.openModePaused ? PAUSED_NOTICE : null}
+            notice={access?.openModePaused ? t.paused : null}
             footer={
               <>
                 <Link href="/unirse" className={styles.linkBtn}>
-                  Unirme a una partida
+                  {t.joinGame}
                 </Link>
                 <button type="button" className={styles.linkBtn} onClick={leaveGuest}>
-                  Volver al inicio
+                  {t.backToStart}
                 </button>
               </>
             }
@@ -338,35 +323,37 @@ function Connect({
   onSignedIn: () => void;
 }) {
   // Al pulsar «Entrar» o «Tengo una invitación», la carátula del formulario ocupa el sitio del casete.
+  const { m } = useI18n();
+  const t = m.home;
   const [account, setAccount] = useState<AccountTab | null>(null);
   return (
     <section className={styles.connect}>
       <div>
         <h1 className={styles.headline}>
-          Suena la cinta.
+          {t.headline}
           <br />
-          <em>¿Quién la canta?</em>
+          <em>{t.headlineEm}</em>
         </h1>
         <p className={styles.lede}>
-          Graba una partida, pon la música y que la familia adivine <strong>título y artista</strong> antes que nadie.
+          {t.ledeBefore} <strong>{t.ledeStrong}</strong> {t.ledeAfter}
         </p>
         <div className={styles.actions}>
           <button type="button" className={`${ui.btn} ${ui.primary} ${ui.big}`} onClick={onGuest} disabled={paused}>
-            Jugar sin cuenta
+            {t.playAsGuest}
           </button>
           <button type="button" className={`${ui.btn} ${ui.onShell} ${ui.big}`} onClick={() => setAccount("login")}>
-            Entrar
+            {t.signIn}
           </button>
           <Link href="/unirse" className={`${ui.btn} ${ui.onShell} ${ui.big}`}>
-            Unirme con un código
+            {t.joinWithCode}
           </Link>
         </div>
         <p className={styles.req}>
           <Info size={20} aria-hidden />
           <span>
-            {paused ? PAUSED_NOTICE : "Sin cuenta suenan vistas previas de 30 s, en cualquier navegador."}{" "}
+            {paused ? t.paused : t.guestInfo}{" "}
             <button type="button" className={styles.inlineLink} onClick={() => setAccount("invite")}>
-              ¿Tienes una invitación?
+              {t.haveInvite}
             </button>
           </span>
         </p>
@@ -387,20 +374,20 @@ function Connect({
         />
       ) : (
         <Cassette
-          title="Lado A · Pista 1"
+          title={t.demoTitle}
           value={
             <>
-              Vale <b>3 pts</b>
+              {t.demoWorth} <b>{t.demoPoints}</b>
             </>
           }
           remainingMs={30_000}
           progress={0}
           running={false}
-          caption="listo para grabar"
+          caption={t.demoCaption}
           hints={[
-            { key: "words", label: "Palabras", at: "10 s", value: null, unlocked: false },
-            { key: "artist", label: "Artista", at: "20 s", value: null, unlocked: false },
-            { key: "letters", label: "Letras", at: "25 s", value: null, unlocked: false },
+            { key: "words", label: m.game.hintLabels.words, at: "10 s", value: null, unlocked: false },
+            { key: "artist", label: m.game.hintLabels.artist, at: "20 s", value: null, unlocked: false },
+            { key: "letters", label: m.game.hintLabels.letters, at: "25 s", value: null, unlocked: false },
           ]}
         />
       )}
@@ -435,27 +422,29 @@ function Shelf({
   notice?: string | null;
   footer: ReactNode;
 }) {
+  const { m, locale } = useI18n();
+  const t = m.home;
   const count = list?.total ?? 0;
   return (
     <>
       <div className={styles.shelfHead}>
         <div>
           <h1 className={styles.shelfTitle} id={SHELF_TITLE_ID} tabIndex={-1}>
-            Tu estantería
+            {t.shelfTitle}
           </h1>
           <p className={styles.shelfSub}>
             {listError
-              ? "No se pudo leer la estantería"
+              ? t.shelfUnreadable
               : list
-              ? count
-                ? `${count} ${count === 1 ? "casete grabado" : "casetes grabados"}`
-                : "Todavía no hay casetes"
-              : "Buscando casetes…"}
+                ? count
+                  ? plural(locale, count, t.recorded)
+                  : t.noCassettes
+                : t.searchingCassettes}
           </p>
         </div>
         <Link href={newGameHref} className={`${ui.btn} ${ui.primary} ${ui.big}`}>
           <Plus size={28} strokeWidth={3} aria-hidden />
-          Grabar partida nueva
+          {t.newGame}
         </Link>
       </div>
 
@@ -463,7 +452,7 @@ function Shelf({
 
       {listError && (
         <div className={styles.shelfNotice}>
-          <RetryNotice message={`No se pudieron cargar tus casetes. ${listError}`} onRetry={onRetryList} />
+          <RetryNotice message={t.cantLoadCassettes(listError)} onRetry={onRetryList} />
         </div>
       )}
 
@@ -477,7 +466,7 @@ function Shelf({
       {premium === false && (
         <p className={`${ui.notice} ${ui.noticeError}`} role="alert" style={{ marginBottom: 24 }}>
           <AlertTriangle size={20} aria-hidden />
-          Esta cuenta de Spotify no es Premium: las canciones no podrán sonar.
+          {t.notPremium}
         </p>
       )}
 
@@ -485,8 +474,8 @@ function Shelf({
         <div className={styles.emptyShelf}>
           <div className={styles.spineBand} />
           <p className={styles.emptyText}>
-            <strong>La estantería está vacía.</strong>
-            Graba la primera partida y aquí quedará con su podio.
+            <strong>{t.emptyStrong}</strong>
+            {t.emptyText}
           </p>
         </div>
       )}
@@ -504,15 +493,15 @@ function Shelf({
                   <span className={styles.catalog}>{catalogLabel(g.catalogNumber)}</span>
                   <span className={styles.spineTags}>
                     <span className={styles.spineMeta}>
-                      {g.mode === "open" ? "Sin cuenta · 30 s · " : ""}
-                      {formatDate(g.createdAt)}
+                      {g.mode === "open" ? t.guestMode : ""}
+                      {formatDate(locale, g.createdAt)}
                     </span>
                     <button
                       type="button"
                       className={styles.spineDelete}
                       onClick={() => onDelete(g)}
-                      aria-label={`Borrar el casete ${catalogLabel(g.catalogNumber)}`}
-                      title="Borrar casete"
+                      aria-label={t.deleteCassette(catalogLabel(g.catalogNumber))}
+                      title={t.deleteCassetteTitle}
                     >
                       <Trash2 size={20} aria-hidden />
                     </button>
@@ -521,25 +510,25 @@ function Shelf({
                 <div className={styles.spineBody}>
                   <div className={styles.spineInfo}>
                     <span className={styles.meta}>
-                      {g.playedRounds}/{g.totalRounds} pistas ·{" "}
+                      {t.tracksPlayed(g.playedRounds, g.totalRounds)} ·{" "}
                       {g.format === "teams"
-                        ? `${g.playerCount} equipos · ${g.peopleCount} ${g.peopleCount === 1 ? "persona" : "personas"}`
-                        : `${g.playerCount} ${g.playerCount === 1 ? "jugador" : "jugadores"}`}
+                        ? `${t.teamsCount(g.playerCount)} · ${plural(locale, g.peopleCount, t.people)}`
+                        : plural(locale, g.playerCount, t.players)}
                     </span>
                     {finished ? (
                       <span className={styles.winner}>
                         {winner && winner.score > 0
                           ? tied.length > 1
-                            ? `Empate: ${tied.map((p) => p.name).join(" y ")}`
-                            : `Ganó ${winner.name}`
-                          : "Nadie sumó puntos"}
+                            ? t.tie(formatList(locale, tied.map((p) => p.name)))
+                            : t.winner(winner.name)
+                          : t.nobodyScored}
                       </span>
                     ) : (
                       <>
-                        <span className={styles.badge}>A medio grabar</span>
+                        <span className={styles.badge}>{t.unfinished}</span>
                         <Link href={`/partida/${g.id}`} className={`${ui.btn} ${ui.onCard} ${styles.resume}`}>
                           <Play size={20} aria-hidden />
-                          Seguir jugando
+                          {t.keepPlaying}
                         </Link>
                       </>
                     )}
@@ -557,7 +546,7 @@ function Shelf({
       <div className={styles.foot}>
         {count > 0 && (
           <button type="button" className={styles.linkBtn} onClick={onDeleteAll}>
-            Borrar mi historial
+            {t.deleteHistory}
           </button>
         )}
         {footer}
@@ -566,6 +555,3 @@ function Shelf({
   );
 }
 
-function errorText(err: unknown) {
-  return err instanceof ApiError ? err.message : "No se pudo conectar. Prueba otra vez.";
-}

@@ -51,9 +51,9 @@ export async function searchSongs({ term, country }: { term: string; country: st
 
   const res = await fetch(url, { cache: "no-store" });
   if (res.status === 403 || res.status === 429) {
-    throw new AppError("iTunes está limitando las búsquedas, espera un momento", 429, "ITUNES_RATE_LIMITED");
+    throw new AppError("ITUNES_RATE_LIMITED", 429);
   }
-  if (!res.ok) throw new AppError(`iTunes respondió ${res.status}`, 502, "ITUNES_ERROR");
+  if (!res.ok) throw new AppError("ITUNES_ERROR", 502, { detail: `iTunes ${res.status}` });
   const data = (await res.json()) as { results?: ItunesSong[] };
   return (data.results ?? []).map(normalizeItunesSong).filter((t): t is Track => t !== null);
 }

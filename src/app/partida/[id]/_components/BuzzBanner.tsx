@@ -1,7 +1,10 @@
+"use client";
+
 import { Ban, Hand, ThumbsUp, X } from "lucide-react";
 import { TeamDot } from "@/components/TeamDot";
 import ui from "@/components/ui.module.css";
 import type { Round } from "@/lib/client/api";
+import { useI18n } from "@/i18n/client";
 import styles from "../game.module.css";
 
 type Buzz = NonNullable<Round["buzz"]>;
@@ -31,12 +34,14 @@ export function BuzzBanner({
   onFail: () => void;
   onCancel: () => void;
 }) {
+  const { m } = useI18n();
+  const g = m.game;
   const seconds = Math.ceil(leftMs / 1000);
   const fraction = buzz.totalMs ? Math.min(1, Math.max(0, leftMs / buzz.totalMs)) : 0;
   const urgent = seconds <= 5;
 
   return (
-    <section className={`${ui.card} ${styles.buzz}`} aria-live="assertive" aria-label="Turno de respuesta">
+    <section className={`${ui.card} ${styles.buzz}`} aria-live="assertive" aria-label={g.buzzTurn}>
       <div className={ui.cardStripes} />
       <div className={styles.buzzBody}>
         <div className={styles.buzzWho}>
@@ -44,10 +49,11 @@ export function BuzzBanner({
           <div>
             <p className={styles.buzzName}>
               <TeamDot color={color} size={20} />
-              {buzz.name || "Alguien"}
+              {buzz.name || g.buzzSomeone}
             </p>
             <p className={styles.buzzSub}>
-              {teamName ? `${teamName} · ` : ""}pulsó «¡Lo sé!» y está escribiendo
+              {teamName ? `${teamName} · ` : ""}
+              {g.buzzSub}
             </p>
           </div>
         </div>
@@ -56,7 +62,7 @@ export function BuzzBanner({
             {seconds}
             <small> s</small>
           </span>
-          <span className="sr-only">Quedan {seconds} segundos</span>
+          <span className="sr-only">{g.secondsLeft(seconds)}</span>
         </div>
       </div>
       <div className={styles.buzzBar} aria-hidden>
@@ -65,15 +71,15 @@ export function BuzzBanner({
       <div className={styles.buzzActions}>
         <button type="button" className={`${ui.btn} ${ui.primary}`} onClick={onAward} disabled={busy}>
           <ThumbsUp size={22} aria-hidden />
-          Lo dijo bien
+          {g.saidRight}
         </button>
         <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onFail} disabled={busy}>
           <X size={22} aria-hidden />
-          Falló
+          {g.failed}
         </button>
         <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onCancel} disabled={busy}>
           <Ban size={22} aria-hidden />
-          Cancelar turno
+          {g.cancelTurn}
         </button>
       </div>
     </section>

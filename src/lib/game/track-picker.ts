@@ -119,11 +119,7 @@ export async function pickTrack(opts: PickOptions): Promise<PickedTrack> {
         if (!(err instanceof AppError) || err.status !== 403) throw err;
         playlists.splice(playlists.indexOf(playlistId), 1);
         if (!playlists.length) {
-          throw new AppError(
-            "Spotify no deja leer las playlists elegidas: solo permite tus propias playlists y «Canciones que te gustan». Copia las canciones a una playlist tuya.",
-            403,
-            "PLAYLISTS_FORBIDDEN",
-          );
+          throw new AppError("PLAYLISTS_FORBIDDEN", 403);
         }
         attempt--; // una playlist bloqueada no gasta intento
         continue;
@@ -163,9 +159,5 @@ export async function pickTrack(opts: PickOptions): Promise<PickedTrack> {
     if (page.total === 0 && filters.source === "search" && filters.genres.length <= 1) break;
   }
 
-  throw new AppError(
-    "No encontré canciones nuevas con esos filtros. Prueba con otros géneros, años o playlists.",
-    404,
-    "NO_TRACKS_FOUND",
-  );
+  throw new AppError("NO_TRACKS_FOUND", 404, { key: "NO_NEW_TRACKS" });
 }

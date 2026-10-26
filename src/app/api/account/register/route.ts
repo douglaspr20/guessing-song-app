@@ -1,4 +1,3 @@
-import { ZodError } from "zod";
 import { registerMember } from "@/lib/access/accounts";
 import { clientInfo } from "@/lib/access/request";
 import { startSession } from "@/lib/access/session";
@@ -16,8 +15,6 @@ export const POST = handle(async (req: Request) => {
     return Response.json({ username: user.username, displayName: user.displayName }, { status: 201 });
   } catch (err) {
     if (err instanceof AppError && err.code === "INVALID_INVITE") await recordLoginAttempt(ipHash, false);
-    // Los mensajes del esquema (usuario, contraseña) ya están pensados para mostrarse tal cual.
-    if (err instanceof ZodError) throw new AppError(err.issues[0]?.message ?? "Datos inválidos", 422, "VALIDATION_ERROR");
     throw err;
   }
 });

@@ -100,17 +100,17 @@ export function titleLetters(trackName: string): string {
     .join(" ");
 }
 
-/** "3 palabras" (sobre el título sin "- Remastered", "(feat...)"). */
-export function titleWordCount(trackName: string): string {
+/** Cuántas palabras tiene el título (sin "- Remastered", "(feat...)"). La pantalla lo redacta en su idioma. */
+export function titleWordCount(trackName: string): number {
   const title = stripTitleExtras(trackName) || trackName;
   const n = title.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
-  return n === 1 ? "1 palabra" : `${n} palabras`;
+  return n;
 }
 
 function hintValue(type: HintType, round: RoundClock): string | null {
   switch (type) {
     case "words":
-      return titleWordCount(round.trackName);
+      return String(titleWordCount(round.trackName));
     case "artist":
       return round.artists.join(", ");
     case "letters":

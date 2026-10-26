@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { formatClock } from "@/lib/client/api";
+import { useI18n } from "@/i18n/client";
 import styles from "./Cassette.module.css";
 
 export interface HintMark {
@@ -33,6 +34,7 @@ export function Cassette({
   caption: string;
   hints: HintMark[];
 }) {
+  const { m } = useI18n();
   const p = Math.min(1, Math.max(0, progress));
   // Radio relativo del rollo de cinta en cada bobina (entre el eje y el borde).
   const left = 62 + (1 - p) * 38;
@@ -40,7 +42,7 @@ export function Cassette({
   const low = running && remainingMs <= 10_000;
 
   return (
-    <section className={styles.shell} aria-label="Casete de la pista">
+    <section className={styles.shell} aria-label={m.common.trackCassette}>
       <div className={styles.label}>
         <span className={styles.labelTitle}>{title}</span>
         <span className={styles.labelValue}>{value}</span>
@@ -63,11 +65,11 @@ export function Cassette({
         </div>
       </div>
 
-      <ol className={styles.marks} aria-label="Pistas">
+      <ol className={styles.marks} aria-label={m.common.hints}>
         {hints.map((h) => (
           <li key={h.key} className={`${styles.mark} ${h.unlocked ? styles.markOn : ""}`}>
             {h.at} · {h.label}
-            <strong>{h.unlocked ? (h.value ?? "no disponible") : "—"}</strong>
+            <strong>{h.unlocked ? (h.value ?? m.common.unavailable) : "—"}</strong>
           </li>
         ))}
       </ol>

@@ -11,20 +11,20 @@ const GUEST_COOKIE = () => cookieName("invitado");
 const GUEST_TTL_SECONDS = 365 * 24 * 60 * 60;
 const TOUCH_EVERY_MS = 60 * 60_000;
 
-export const guestBlocked = () => new AppError("Acceso de invitado no disponible", 403, "GUEST_BLOCKED");
+export const guestBlocked = () => new AppError("GUEST_BLOCKED", 403);
 
 /** Da de alta un invitado nuevo respetando los límites. Devuelve el token para la cookie. */
 export async function registerGuest(ipHash: string, now = new Date()) {
   const state = await getAppState();
   if (state.guestSignupsPaused) {
-    throw new AppError("Ahora mismo no se admiten invitados nuevos. Prueba más tarde.", 503, "GUEST_SIGNUPS_PAUSED");
+    throw new AppError("GUEST_SIGNUPS_PAUSED", 503);
   }
   if (await db.blockedIp.findUnique({ where: { ipHash } })) throw guestBlocked();
   const today = await db.guest.count({
     where: { ipHash, createdAt: { gt: new Date(now.getTime() - 24 * 60 * 60_000) } },
   });
   if (today >= GUEST_LIMITS.guestsPerIpPerDay) {
-    throw new AppError("Demasiados invitados nuevos desde esta conexión. Prueba mañana.", 429, "GUEST_LIMIT");
+    throw new AppError("GUEST_LIMIT", 429);
   }
   const token = randomToken();
   const guest = await db.guest.create({ data: { id: sha256(token), ipHash } });

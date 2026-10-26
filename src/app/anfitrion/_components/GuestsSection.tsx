@@ -3,7 +3,9 @@
 import { useConfirm, useToast, type ConfirmOptions } from "@/components/feedback/FeedbackProvider";
 import { RetryNotice } from "@/components/RetryNotice";
 import ui from "@/components/ui.module.css";
-import { api, formatDate } from "@/lib/client/api";
+import { api } from "@/lib/client/api";
+import { formatDate, plural } from "@/i18n/format";
+import { useI18n } from "@/i18n/client";
 import type { GuestOverview } from "../_lib/types";
 import { errorMessage, useHostData } from "../_lib/useHostData";
 import styles from "../host.module.css";
@@ -12,6 +14,8 @@ import { Section, Stat } from "./PanelBits";
 type Flags = Partial<Pick<GuestOverview, "openModePaused" | "guestSignupsPaused">>;
 
 export function GuestsSection() {
+  const { m, locale } = useI18n();
+  const h = m.host;
   const confirm = useConfirm();
   const toast = useToast();
   const { data, error, reload, setData } = useHostData<GuestOverview>("/api/host/guests");
@@ -37,24 +41,24 @@ export function GuestsSection() {
 
   if (!data) {
     return (
-      <Section title="Modo sin cuenta">
-        {error && <RetryNotice on="card" message={`No se pudo cargar el modo sin cuenta. ${error}`} onRetry={reload} />}
+      <Section title={h.guestsTitle}>
+        {error && <RetryNotice on="card" message={h.cantLoadGuests(error)} onRetry={reload} />}
       </Section>
     );
   }
 
   return (
-    <Section title="Modo sin cuenta">
+    <Section title={h.guestsTitle}>
       <div className={styles.stats}>
-        <Stat value={data.guests} label="Invitados" />
-        <Stat value={data.newGuests} label="Nuevos en 24 h" />
-        <Stat value={`${data.games}/${data.gameCapacity}`} label="Partidas" />
-        <Stat value={data.blocked} label="Bloqueados" />
+        <Stat value={data.guests} label={h.statGuests} />
+        <Stat value={data.newGuests} label={h.statNew} />
+        <Stat value={`${data.games}/${data.gameCapacity}`} label={h.statGames} />
+        <Stat value={data.blocked} label={h.statBlocked} />
       </div>
 
       <label className={styles.toggle}>
         <input type="checkbox" checked={data.openModePaused} onChange={(e) => setFlag({ openModePaused: e.target.checked })} />
-        Pausar el modo sin cuenta (los visitantes ven un aviso de mantenimiento)
+        {h.pauseOpenMode}
       </label>
       <label className={styles.toggle}>
         <input
@@ -62,7 +66,7 @@ export function GuestsSection() {
           checked={data.guestSignupsPaused}
           onChange={(e) => setFlag({ guestSignupsPaused: e.target.checked })}
         />
-        No admitir invitados nuevos (los que ya juegan siguen)
+        {h.pauseSignups}
       </label>
 
       <div className={styles.row}>
@@ -73,16 +77,16 @@ export function GuestsSection() {
             action(
               { action: "delete-inactive" },
               {
-                title: "¿Borrar los invitados inactivos?",
-                body: `Se borran los que no juegan desde hace ${data.inactiveDays} días, con sus partidas.`,
-                confirmLabel: "Borrar inactivos",
+                title: h.deleteInactiveTitle,
+                body: h.deleteInactiveBody(data.inactiveDays),
+                confirmLabel: h.deleteInactive,
                 tone: "danger",
               },
-              (n) => (n === 1 ? "1 invitado inactivo borrado." : `${n} invitados inactivos borrados.`),
+              (n) => plural(locale, n, h.inactiveDeleted),
             )
           }
         >
-          Borrar inactivos
+          {h.deleteInactive}
         </button>
         <button
           type="button"
@@ -91,23 +95,23 @@ export function GuestsSection() {
             action(
               { action: "delete-all", confirm: "BORRAR" },
               {
-                title: "¿Borrar a todos los invitados?",
-                body: "Se borran todos los visitantes sin cuenta y sus partidas. No se puede deshacer.",
-                confirmLabel: "Borrar todos",
+                title: h.deleteAllTitle,
+                body: h.deleteAllBody,
+                confirmLabel: h.deleteAll,
                 tone: "danger",
-                typeToConfirm: "BORRAR",
+                typeToConfirm: m.home.deleteAllWord,
               },
-              (n) => (n === 1 ? "1 invitado borrado." : `${n} invitados borrados.`),
+              (n) => plural(locale, n, h.allDeleted),
             )
           }
         >
-          Borrar todos
+          {h.deleteAll}
         </button>
       </div>
 
       {data.topIps.length > 0 && (
         <>
-          <p className={styles.text}>Conexiones con más invitados nuevos en 24 h (la IP se guarda como hash):</p>
+          <p className={styles.text}>{h.topIps}</p>
           <ul className={styles.list}>
             {data.topIps.map((ip) => {
               const isBlocked = data.blockedIps.some((b) => b.ipHash === ip.ipHash);
@@ -116,8 +120,8 @@ export function GuestsSection() {
                   <span className={styles.itemMain}>
                     <span className={styles.itemTitle}>{ip.label}…</span>
                     <span className={styles.itemMeta}>
-                      {ip.guests} {ip.guests === 1 ? "invitado" : "invitados"}
-                      {isBlocked ? " · bloqueada" : ""}
+                      {plural(locale, ip.guests, h.guests)}
+                      {isBlocked ? h.blockedSuffix : ""}
                     </span>
                   </span>
                   {!isBlocked && (
@@ -128,16 +132,16 @@ export function GuestsSection() {
                         action(
                           { action: "block-ip", ipHash: ip.ipHash },
                           {
-                            title: "¿Bloquear esta conexión?",
-                            body: "Sus invitados dejarán de poder jugar y no podrá crear otros. Puedes desbloquearla después.",
-                            confirmLabel: "Bloquear",
+                            title: h.blockTitle,
+                            body: h.blockBody,
+                            confirmLabel: h.block,
                             tone: "danger",
                           },
-                          (n) => `Conexión bloqueada (${n === 1 ? "1 invitado" : `${n} invitados`}).`,
+                          (n) => h.blocked(plural(locale, n, h.guests)),
                         )
                       }
                     >
-                      Bloquear
+                      {h.block}
                     </button>
                   )}
                 </li>
@@ -149,13 +153,13 @@ export function GuestsSection() {
 
       {data.blockedIps.length > 0 && (
         <>
-          <p className={styles.text}>Conexiones bloqueadas:</p>
+          <p className={styles.text}>{h.blockedIps}</p>
           <ul className={styles.list}>
             {data.blockedIps.map((b) => (
               <li key={b.ipHash} className={styles.item}>
                 <span className={styles.itemMain}>
                   <span className={styles.itemTitle}>{b.label}…</span>
-                  <span className={styles.itemMeta}>Desde el {formatDate(b.createdAt)}</span>
+                  <span className={styles.itemMeta}>{h.since(formatDate(locale, b.createdAt))}</span>
                 </span>
                 <button
                   type="button"
@@ -163,12 +167,12 @@ export function GuestsSection() {
                   onClick={() =>
                     action(
                       { action: "unblock-ip", ipHash: b.ipHash },
-                      { title: "¿Desbloquear esta conexión?", body: "Podrá volver a jugar sin cuenta.", confirmLabel: "Desbloquear" },
-                      () => "Conexión desbloqueada.",
+                      { title: h.unblockTitle, body: h.unblockBody, confirmLabel: h.unblock },
+                      () => h.unblocked,
                     )
                   }
                 >
-                  Desbloquear
+                  {h.unblock}
                 </button>
               </li>
             ))}

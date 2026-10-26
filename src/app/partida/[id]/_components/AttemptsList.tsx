@@ -1,6 +1,9 @@
+"use client";
+
 import { Check, Smartphone, X } from "lucide-react";
 import ui from "@/components/ui.module.css";
 import type { GuessRow, Round } from "@/lib/client/api";
+import { useI18n } from "@/i18n/client";
 import styles from "../game.module.css";
 
 /**
@@ -23,38 +26,40 @@ export function AttemptsList({
   busy: boolean;
   onAccept: (guess: GuessRow, part: "title" | "artist") => void;
 }) {
+  const { m } = useI18n();
+  const g = m.game;
   if (!guesses.length) return null;
   return (
     <details className={`${ui.card} ${styles.attempts}`} open={!open}>
-      <summary>Intentos de esta pista · {guesses.length}</summary>
+      <summary>{g.attempts(guesses.length)}</summary>
       <ol className={styles.attemptList}>
-        {guesses.map((g) => (
-          <li key={g.id} className={styles.attempt}>
-            <span className={styles.attemptAt}>{Math.floor(g.atMs / 1000)} s</span>
+        {guesses.map((row) => (
+          <li key={row.id} className={styles.attempt}>
+            <span className={styles.attemptAt}>{Math.floor(row.atMs / 1000)} s</span>
             <div className={styles.attemptBody}>
               <span className={styles.attemptWho}>
-                {g.playerName}
-                {g.viaPhone && <Smartphone className={styles.viaPhone} size={18} aria-label="desde su móvil" />}
+                {row.playerName}
+                {row.viaPhone && <Smartphone className={styles.viaPhone} size={18} aria-label={g.viaPhone} />}
               </span>
-              {(g.title || g.titleCorrect) && (
+              {(row.title || row.titleCorrect) && (
                 <AttemptPart
-                  correct={g.titleCorrect}
-                  label={g.title ? `«${g.title}»` : "la canción, de palabra"}
-                  canAccept={!g.titleCorrect && !round.winnerPlayerId}
+                  correct={row.titleCorrect}
+                  label={row.title ? g.quoted(row.title) : g.songSpoken}
+                  canAccept={!row.titleCorrect && !round.winnerPlayerId}
                   busy={busy}
-                  onAccept={() => onAccept(g, "title")}
+                  onAccept={() => onAccept(row, "title")}
                 />
               )}
-              {(g.artist || g.artistCorrect) && (
+              {(row.artist || row.artistCorrect) && (
                 <AttemptPart
-                  correct={g.artistCorrect}
-                  label={g.artist ? `artista «${g.artist}»` : "el artista, de palabra"}
-                  canAccept={!g.artistCorrect && !round.artistWinnerPlayerId && g.atMs < artistDeadlineMs}
+                  correct={row.artistCorrect}
+                  label={row.artist ? g.artistQuoted(row.artist) : g.artistSpoken}
+                  canAccept={!row.artistCorrect && !round.artistWinnerPlayerId && row.atMs < artistDeadlineMs}
                   busy={busy}
-                  onAccept={() => onAccept(g, "artist")}
+                  onAccept={() => onAccept(row, "artist")}
                 />
               )}
-              {g.points > 0 && <span className={styles.attemptPts}>+{g.points}</span>}
+              {row.points > 0 && <span className={styles.attemptPts}>+{row.points}</span>}
             </div>
           </li>
         ))}
@@ -76,17 +81,18 @@ function AttemptPart({
   busy: boolean;
   onAccept: () => void;
 }) {
+  const { m } = useI18n();
   return (
     <span className={styles.attemptPart}>
       {correct ? (
-        <Check className={styles.ok} size={20} aria-label="bien" />
+        <Check className={styles.ok} size={20} aria-label={m.game.right} />
       ) : (
-        <X className={styles.no} size={20} aria-label="mal" />
+        <X className={styles.no} size={20} aria-label={m.game.wrong} />
       )}
       {label}
       {canAccept && (
         <button type="button" className={`${ui.btn} ${ui.onCard} ${styles.accept}`} onClick={onAccept} disabled={busy}>
-          Dar por bueno
+          {m.game.accept}
         </button>
       )}
     </span>

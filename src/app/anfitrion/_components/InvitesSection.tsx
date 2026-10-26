@@ -6,13 +6,17 @@ import access from "@/components/access.module.css";
 import { useConfirm, useToast } from "@/components/feedback/FeedbackProvider";
 import { RetryNotice } from "@/components/RetryNotice";
 import ui from "@/components/ui.module.css";
-import { api, formatDate } from "@/lib/client/api";
+import { api } from "@/lib/client/api";
+import { formatDate } from "@/i18n/format";
+import { useI18n } from "@/i18n/client";
 import type { Invite, NewInvite } from "../_lib/types";
 import { errorMessage, useHostData } from "../_lib/useHostData";
 import styles from "../host.module.css";
 import { Section } from "./PanelBits";
 
 export function InvitesSection() {
+  const { m, locale } = useI18n();
+  const h = m.host;
   const confirm = useConfirm();
   const toast = useToast();
   const { data, error, reload } = useHostData<{ invites: Invite[] }>("/api/host/invites");
@@ -32,15 +36,15 @@ export function InvitesSection() {
 
   const revoke = async (invite: Invite) => {
     const ok = await confirm({
-      title: "¿Anular esta invitación?",
-      body: `${invite.note ? `La de ${invite.note} ` : "El código "}dejará de servir. Puedes crear otra cuando quieras.`,
-      confirmLabel: "Anular",
+      title: h.revokeTitle,
+      body: h.revokeBody(invite.note),
+      confirmLabel: h.revoke,
       tone: "danger",
     });
     if (!ok) return;
     try {
       await api(`/api/host/invites/${invite.id}`, { method: "DELETE" });
-      toast({ text: "Invitación anulada." });
+      toast({ text: h.revoked });
       await reload();
     } catch (err) {
       toast({ text: errorMessage(err), tone: "error" });
@@ -48,33 +52,32 @@ export function InvitesSection() {
   };
 
   return (
-    <Section title="Invitaciones">
+    <Section title={h.invitesTitle}>
       <p className={styles.text}>
-        Cada código sirve una sola vez y caduca en 7 días. Para el modo Spotify, añade además a esa persona en el panel
-        de Spotify (caben 4 además de ti).
+        {h.invitesText}
       </p>
       <form className={styles.row} onSubmit={create}>
         <input
           className={`${access.input} ${styles.grow}`}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Para quién es (opcional)"
+          placeholder={h.forWhomPlaceholder}
           maxLength={60}
-          aria-label="Para quién es la invitación"
+          aria-label={h.forWhomLabel}
         />
         <button type="submit" className={`${ui.btn} ${ui.primary}`}>
           <KeyRound size={22} aria-hidden />
-          Crear invitación
+          {h.createInvite}
         </button>
       </form>
       {created && (
         <div className={styles.newCode} role="status">
-          <span className={styles.statLabel}>Cópialo ahora: no se volverá a mostrar</span>
+          <span className={styles.statLabel}>{h.copyNow}</span>
           <span className={styles.codeValue}>{created.code}</span>
-          {created.note && <span className={styles.itemMeta}>Para {created.note}</span>}
+          {created.note && <span className={styles.itemMeta}>{h.forNote(created.note)}</span>}
         </div>
       )}
-      {error && <RetryNotice on="card" message={`No se pudieron cargar las invitaciones. ${error}`} onRetry={reload} />}
+      {error && <RetryNotice on="card" message={h.cantLoadInvites(error)} onRetry={reload} />}
       {data && data.invites.length > 0 && (
         <ul className={styles.list}>
           {data.invites.map((i) => {
@@ -82,18 +85,18 @@ export function InvitesSection() {
             return (
               <li key={i.id} className={styles.item}>
                 <span className={styles.itemMain}>
-                  <span className={styles.itemTitle}>{i.note || "Sin nota"}</span>
+                  <span className={styles.itemTitle}>{i.note || h.noNote}</span>
                   <span className={styles.itemMeta}>
                     {i.usedAt
-                      ? `Usada por ${i.usedBy ?? "un miembro borrado"} el ${formatDate(i.usedAt)}`
+                      ? h.usedBy(i.usedBy, formatDate(locale, i.usedAt))
                       : expired
-                        ? "Caducada"
-                        : `Sin usar · caduca el ${formatDate(i.expiresAt)}`}
+                        ? h.expired
+                        : h.unusedUntil(formatDate(locale, i.expiresAt))}
                   </span>
                 </span>
                 {!i.usedAt && (
                   <button type="button" className={`${ui.btn} ${ui.onCard} ${styles.small}`} onClick={() => revoke(i)}>
-                    Anular
+                    {h.revoke}
                   </button>
                 )}
               </li>

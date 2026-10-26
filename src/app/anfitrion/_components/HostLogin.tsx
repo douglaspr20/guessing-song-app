@@ -6,11 +6,14 @@ import { AlertTriangle, ShieldCheck } from "lucide-react";
 import access from "@/components/access.module.css";
 import ui from "@/components/ui.module.css";
 import { api } from "@/lib/client/api";
+import { useI18n } from "@/i18n/client";
 import { errorMessage } from "../_lib/useHostData";
 import styles from "../host.module.css";
 
 /** Entrada del anfitrión: contraseña y código de la app de autenticación. */
 export function HostLogin({ onDone }: { onDone: () => void }) {
+  const { m } = useI18n();
+  const a = m.access;
   const ids = useId();
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
@@ -39,12 +42,12 @@ export function HostLogin({ onDone }: { onDone: () => void }) {
         <form className={access.body} onSubmit={submit}>
           <div>
             <h1 className={access.title} id={`${ids}-title`}>
-              Anfitrión
+              {a.hostTitle}
             </h1>
-            <p className={access.lede}>Contraseña y código de tu app de autenticación.</p>
+            <p className={access.lede}>{a.hostLede}</p>
           </div>
           <label className={access.field}>
-            <span className={access.label}>Contraseña</span>
+            <span className={access.label}>{a.password}</span>
             <input
               className={access.input}
               type="password"
@@ -56,7 +59,7 @@ export function HostLogin({ onDone }: { onDone: () => void }) {
             />
           </label>
           <label className={access.field}>
-            <span className={access.label}>Código de 6 dígitos</span>
+            <span className={access.label}>{a.sixDigitCode}</span>
             <input
               className={`${access.input} ${access.code}`}
               value={code}
@@ -77,10 +80,10 @@ export function HostLogin({ onDone }: { onDone: () => void }) {
           <div className={access.actions}>
             <button type="submit" className={`${ui.btn} ${ui.primary}`} disabled={busy}>
               <ShieldCheck size={22} aria-hidden />
-              {busy ? "Comprobando…" : "Entrar"}
+              {busy ? a.checking : a.signIn}
             </button>
             <Link href="/" className={`${ui.btn} ${ui.onCard}`}>
-              Volver
+              {a.back}
             </Link>
           </div>
         </form>

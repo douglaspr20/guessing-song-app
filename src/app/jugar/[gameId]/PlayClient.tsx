@@ -10,8 +10,12 @@ import { Scoreboard } from "@/components/Scoreboard";
 import { TeamDot } from "@/components/TeamDot";
 import { BandStatus } from "@/components/band/BandStatus";
 import ui from "@/components/ui.module.css";
-import { api, ApiError, catalogLabel, type Game } from "@/lib/client/api";
+import { api, ApiError, catalogLabel, type Game, errorText } from "@/lib/client/api";
 import { useLiveGame } from "@/lib/client/live";
+import { formatList, plural } from "@/i18n/format";
+import { useI18n } from "@/i18n/client";
+import type { Messages } from "@/i18n/messages";
+import type { Locale } from "@/i18n/locales";
 import { BuzzerPad } from "./BuzzerPad";
 import styles from "./play.module.css";
 
@@ -23,17 +27,19 @@ interface PlayState {
 }
 
 /** Cómo acabó la partida, dicho para quien la jugó. */
-function finaleLine(players: PlayGame["players"], myPlayerId: string, teams: boolean) {
+function finaleLine(players: PlayGame["players"], myPlayerId: string, teams: boolean, t: Messages["play"], locale: Locale) {
   const top = players[0];
-  if (!top || top.score === 0) return "Nadie sumó puntos.";
+  if (!top || top.score === 0) return t.nobodyScored;
   const tied = players.filter((p) => p.score === top.score);
-  if (tied.length > 1) return `Empate entre ${tied.map((p) => p.name).join(" y ")}.`;
-  return top.id === myPlayerId ? (teams ? "¡Ganó tu equipo!" : "¡Ganaste!") : `Ganó ${top.name}.`;
+  if (tied.length > 1) return t.tie(formatList(locale, tied.map((p) => p.name)));
+  return top.id === myPlayerId ? (teams ? t.yourTeamWon : t.youWon) : t.winnerWas(top.name);
 }
 
 /** El mando de quien se unió con el código: dónde va la partida y quién es él. */
 export function PlayClient() {
   const { gameId } = useParams<{ gameId: string }>();
+  const { m, locale } = useI18n();
+  const t = m.play;
   const [state, setState] = useState<PlayState | null>(null);
   /** Cuándo se leyó el estado: el tiempo que le queda a quien responde se mide desde ahí. */
   const [fetchedAt, setFetchedAt] = useState(0);
@@ -46,7 +52,7 @@ export function PlayClient() {
       setError(null);
     } catch (e) {
       const missing = e instanceof ApiError && e.status === 404;
-      setError({ missing, message: e instanceof ApiError ? e.message : "No se pudo conectar. Prueba otra vez." });
+      setError({ missing, message: errorText(e) });
     }
   }, [gameId]);
 
@@ -62,15 +68,15 @@ export function PlayClient() {
   if (error?.missing) {
     return (
       <>
-        <BandStatus text="Fuera de la partida" />
+        <BandStatus text={t.outBand} />
         <main className={styles.main}>
           <section className={`${ui.card} ${styles.card}`}>
             <div className={ui.cardStripes} />
             <div className={styles.body}>
-              <h1 className={styles.headline}>Ya no estás en esta partida</h1>
-              <p className={styles.lede}>Puede que haya terminado o que el anfitrión te haya sacado. Entra otra vez con el código.</p>
+              <h1 className={styles.headline}>{t.outTitle}</h1>
+              <p className={styles.lede}>{t.outLede}</p>
               <Link href="/unirse" className={`${ui.btn} ${ui.primary} ${ui.big}`}>
-                Unirme con un código
+                {t.joinWithCode}
               </Link>
             </div>
           </section>
@@ -82,9 +88,9 @@ export function PlayClient() {
   if (!state) {
     return (
       <>
-        <BandStatus text="Conectando" />
+        <BandStatus text={t.connecting} />
         <main className={styles.main}>
-          {error ? <RetryNotice message={error.message} onRetry={refresh} /> : <p className={styles.loading}>Rebobinando…</p>}
+          {error ? <RetryNotice message={error.message} onRetry={refresh} /> : <p className={styles.loading}>{m.common.loading}</p>}
         </main>
       </>
     );
@@ -96,16 +102,18 @@ export function PlayClient() {
   const round = game.round;
   const winner = round?.winnerPlayerId ? (game.players.find((p) => p.id === round.winnerPlayerId) ?? null) : null;
   const finished = game.status === "FINISHED" && round?.status !== "PLAYING";
-  const status = round ? `${cat} · Pista ${round.number} de ${game.totalRounds}` : `${cat} · ${game.totalRounds} pistas`;
+  const status = round
+    ? `${cat} · ${t.trackOf(round.number, game.totalRounds)}`
+    : `${cat} · ${plural(locale, game.totalRounds, t.tracks)}`;
 
   return (
     <>
-      <BandStatus text={finished ? `${cat} · Fin de la cinta` : status} />
+      <BandStatus text={finished ? `${cat} · ${t.endOfTape}` : status} />
       <main className={styles.main}>
         {live === "offline" && (
           <p className={`${ui.notice} ${ui.noticeError}`} role="status">
             <WifiOff size={20} aria-hidden />
-            Conexión inestable: lo que pase en la partida puede tardar unos segundos en llegarte.
+            {t.unstable}
           </p>
         )}
         <section className={`${ui.card} ${styles.card}`} aria-live="polite">
@@ -121,8 +129,8 @@ export function PlayClient() {
 
             {finished ? (
               <>
-                <h1 className={styles.headline}>Fin de la cinta</h1>
-                <p className={styles.lede}>{finaleLine(game.players, me.playerId, game.format === "teams")}</p>
+                <h1 className={styles.headline}>{t.endOfTape}</h1>
+                <p className={styles.lede}>{finaleLine(game.players, me.playerId, game.format === "teams", t, locale)}</p>
                 <Podium
                   entries={game.players.map((p) => ({
                     ...p,
@@ -132,23 +140,29 @@ export function PlayClient() {
                   tone="card"
                 />
                 <Link href="/" className={`${ui.btn} ${ui.onCard}`}>
-                  Volver al inicio
+                  {t.backHome}
                 </Link>
               </>
             ) : !round ? (
               <>
-                <h1 className={styles.headline}>Esperando a que empiece</h1>
-                <p className={styles.lede}>El anfitrión pondrá la primera pista en un momento. Mantén esta pantalla abierta.</p>
+                <h1 className={styles.headline}>{t.waitingTitle}</h1>
+                <p className={styles.lede}>{t.waitingLede}</p>
               </>
             ) : round.status === "PLAYING" ? (
               <>
-                <h1 className={styles.headline}>{round.buzz?.participantId === me.id ? "Tu turno" : `Pista ${round.number}`}</h1>
+                <h1 className={styles.headline}>{round.buzz?.participantId === me.id ? t.yourTurn : t.track(round.number)}</h1>
                 <BuzzerPad gameId={gameId} round={round} me={me} fetchedAt={fetchedAt} onChanged={refresh} />
               </>
             ) : (
               <>
                 <h1 className={styles.headline}>
-                  {!winner ? "Nadie la acertó" : winner.id === me.playerId ? (game.format === "teams" ? "¡La acertó tu equipo!" : "¡La acertaste!") : "Pista acertada"}
+                  {!winner
+                    ? t.nobodyGotIt
+                    : winner.id === me.playerId
+                      ? game.format === "teams"
+                        ? t.yourTeamGotIt
+                        : t.youGotIt
+                      : t.trackGuessed}
                 </h1>
                 {round.answer && (
                   <div className={styles.answer}>
@@ -161,14 +175,15 @@ export function PlayClient() {
                   </div>
                 )}
                 <p className={styles.lede}>
-                  {winner && winner.id !== me.playerId ? `La adivinó ${winner.name}. ` : ""}Esperando la siguiente pista.
+                  {winner && winner.id !== me.playerId ? t.guessedBy(winner.name) : ""}
+                  {t.waitingNext}
                 </p>
               </>
             )}
           </div>
         </section>
 
-        <Scoreboard players={game.players} title={`Marcador · ${cat}`} />
+        <Scoreboard players={game.players} title={t.scoreboard(cat)} />
       </main>
     </>
   );

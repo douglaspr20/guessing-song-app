@@ -74,9 +74,5 @@ export async function pickOpenTrack(opts: OpenPickOptions): Promise<PickedTrack>
     if (track) return { track, startMs: 0, genre, audioUrl: track.previewUrl };
   }
 
-  throw new AppError(
-    "No encontré canciones con vista previa para esos filtros. Prueba con otro género, años o palabra clave.",
-    404,
-    "NO_TRACKS_FOUND",
-  );
+  throw new AppError("NO_TRACKS_FOUND", 404);
 }

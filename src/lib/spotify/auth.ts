@@ -27,11 +27,7 @@ function config() {
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
   const redirectUri = process.env.SPOTIFY_REDIRECT_URI;
   if (!clientId || !clientSecret || !redirectUri) {
-    throw new AppError(
-      "Faltan SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET o SPOTIFY_REDIRECT_URI en .env.local",
-      500,
-      "SPOTIFY_NOT_CONFIGURED",
-    );
+    throw new AppError("SPOTIFY_NOT_CONFIGURED", 500);
   }
   return { clientId, clientSecret, redirectUri };
 }
@@ -67,7 +63,7 @@ async function requestToken(body: URLSearchParams): Promise<TokenResponse> {
   });
   if (!res.ok) {
     const detail = await res.text();
-    throw new AppError(`Spotify rechazó el token: ${detail}`, 502, "SPOTIFY_TOKEN_ERROR");
+    throw new AppError("SPOTIFY_TOKEN_ERROR", 502, { detail });
   }
   return res.json();
 }
@@ -90,10 +86,10 @@ export async function linkSpotifyAccount(
   tokens: FreshTokens,
   profile: { id: string; displayName: string | null },
 ) {
-  if (!tokens.refresh_token) throw new AppError("Spotify no devolvió refresh token", 502, "SPOTIFY_TOKEN_ERROR");
+  if (!tokens.refresh_token) throw new AppError("SPOTIFY_TOKEN_ERROR", 502);
   const owner = await db.spotifyAccount.findUnique({ where: { spotifyUserId: profile.id } });
   if (owner && owner.userId !== userId) {
-    throw new AppError("Esa cuenta de Spotify ya está vinculada a otro usuario", 409, "SPOTIFY_IN_USE");
+    throw new AppError("SPOTIFY_IN_USE", 409);
   }
   const data = {
     spotifyUserId: profile.id,
@@ -123,7 +119,7 @@ async function refresh(userId: string, refreshToken: string): Promise<string> {
 }
 
 const notLinked = () =>
-  new AppError("Conecta primero tu cuenta de Spotify", 401, "SPOTIFY_NOT_CONNECTED");
+  new AppError("SPOTIFY_NOT_CONNECTED", 401);
 
 /** Devuelve un access token válido del usuario, refrescándolo si hace falta. */
 export async function getValidAccessToken(userId: string, options: { forceRefresh?: boolean } = {}): Promise<string> {

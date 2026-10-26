@@ -7,12 +7,14 @@ import { api, type AccessStatus } from "@/lib/client/api";
 import { HostLogin } from "./_components/HostLogin";
 import { Panel } from "./_components/Panel";
 import { errorMessage } from "./_lib/useHostData";
+import { useI18n } from "@/i18n/client";
 import styles from "./host.module.css";
 
 type Load = { state: "loading" } | { state: "error"; message: string } | { state: "ready"; status: AccessStatus };
 
 /** Entrada del anfitrión o, con sesión, su panel. Si no se puede saber quién es, lo dice. */
 export function HostClient() {
+  const { m } = useI18n();
   const [load, setLoad] = useState<Load>({ state: "loading" });
 
   const refresh = useCallback(async () => {
@@ -31,11 +33,11 @@ export function HostClient() {
   const isHost = load.state === "ready" && load.status.user?.role === "host";
   return (
     <div className={styles.page}>
-      <BandStatus text={isHost ? "Anfitrión" : undefined} />
+      <BandStatus text={isHost ? m.host.band : undefined} />
       <main className={styles.main}>
         {load.state === "error" && (
           <div className={styles.loginWrap}>
-            <RetryNotice message={`No pudimos abrir el panel. ${load.message}`} onRetry={refresh} />
+            <RetryNotice message={m.host.cantOpen(load.message)} onRetry={refresh} />
           </div>
         )}
         {load.state === "ready" &&

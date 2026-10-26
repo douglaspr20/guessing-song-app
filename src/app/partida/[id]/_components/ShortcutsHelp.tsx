@@ -4,12 +4,15 @@ import { useEffect, useId, useRef } from "react";
 import ui from "@/components/ui.module.css";
 import dialogStyles from "@/components/feedback/feedback.module.css";
 import { SHORTCUT_HELP } from "../_lib/shortcuts";
+import { useI18n } from "@/i18n/client";
 import styles from "../game.module.css";
 
 const BACK_KEYCODES = [461, 10009];
 
 /** La chuleta de atajos: misma carátula que las confirmaciones; se cierra con Esc, Atrás o el botón. */
 export function ShortcutsHelp({ onClose }: { onClose: () => void }) {
+  const { m } = useI18n();
+  const g = m.game;
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
 
@@ -42,38 +45,38 @@ export function ShortcutsHelp({ onClose }: { onClose: () => void }) {
       <div className={ui.cardStripes} />
       <div className={dialogStyles.body}>
         <h2 className={dialogStyles.title} id={titleId}>
-          Atajos para la tele
+          {g.helpTitle}
         </h2>
         <table className={styles.helpTable}>
           <thead>
             <tr>
-              <th scope="col">Qué hace</th>
-              <th scope="col">Teclado</th>
-              <th scope="col">Mando</th>
+              <th scope="col">{g.helpWhat}</th>
+              <th scope="col">{g.helpKeyboard}</th>
+              <th scope="col">{g.helpRemote}</th>
             </tr>
           </thead>
           <tbody>
             {SHORTCUT_HELP.map((row) => (
-              <tr key={row.action}>
-                <td>{row.action}</td>
+              <tr key={row.id}>
+                <td>{g.shortcutActions[row.id]}</td>
                 <td>
                   {row.keys.map((k) => (
                     <kbd key={k} className={styles.helpKey}>
-                      {k}
+                      {k === "space" ? g.keySpace : k}
                     </kbd>
                   ))}
                 </td>
                 <td>
-                  {row.color && <span className={styles.remoteDot} data-color={row.color} aria-hidden />} {row.remote}
+                  {row.color && <span className={styles.remoteDot} data-color={row.color} aria-hidden />} {g.remoteKeys[row.id]}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        <p className={styles.fieldLabel}>Mientras escribes, las letras se escriben: Esc o Atrás sueltan el campo.</p>
+        <p className={styles.fieldLabel}>{g.helpTyping}</p>
         <div className={dialogStyles.actions}>
           <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={() => ref.current?.close()} autoFocus>
-            Entendido
+            {g.gotIt}
           </button>
         </div>
       </div>

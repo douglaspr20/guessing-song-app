@@ -1,6 +1,10 @@
+"use client";
+
 import { Cassette, type HintMark } from "@/components/Cassette";
 import type { Round } from "@/lib/client/api";
 import type { RoundRules } from "@/lib/game/scoring";
+import { plural } from "@/i18n/format";
+import { useI18n } from "@/i18n/client";
 import { hintSlots } from "../_lib/constants";
 import type { RoundClockView } from "../_lib/roundClock";
 
@@ -16,15 +20,19 @@ export function RoundCassette({
   rules: RoundRules;
   running: boolean;
 }) {
-  const hints: HintMark[] = hintSlots(rules).map((slot) => {
+  const { m, locale } = useI18n();
+  const g = m.game;
+  const hints: HintMark[] = hintSlots(rules, g.hintLabels).map((slot) => {
     const got = round.hints.find((h) => h.type === slot.key);
-    return { ...slot, value: got?.value ?? null, unlocked: !!got };
+    // La pista de palabras llega como número: se redacta aquí, en el idioma de la pantalla.
+    const value = got?.type === "words" && got.value ? plural(locale, Number(got.value), g.wordCount) : (got?.value ?? null);
+    return { ...slot, value, unlocked: !!got };
   });
 
   return (
     <Cassette
-      title={`Pista ${round.number} — ¿Qué canción es?`}
-      value={clock.started ? <PointsLabel round={round} clock={clock} /> : "Pulsa reproducir"}
+      title={g.cassetteTitle(round.number)}
+      value={clock.started ? <PointsLabel round={round} clock={clock} /> : g.pressPlay}
       remainingMs={clock.started ? clock.shownLeftMs : clock.fragmentMs}
       progress={clock.tapeProgress}
       running={running}
@@ -35,12 +43,17 @@ export function RoundCassette({
 }
 
 function PointsLabel({ round, clock }: { round: Round; clock: RoundClockView }) {
-  const dropsIn = clock.nextDropInMs !== null && !round.paused ? ` · baja en ${Math.ceil(clock.nextDropInMs / 1000)} s` : "";
+  const { m } = useI18n();
+  const g = m.game;
+  const dropsIn = clock.nextDropInMs !== null && !round.paused ? g.dropsIn(Math.ceil(clock.nextDropInMs / 1000)) : "";
   return (
     <>
-      Título <b>{clock.pointsNow} pts</b>
+      {g.titleWorth}{" "}
+      <b>
+        {clock.pointsNow} {m.common.pts}
+      </b>
       {dropsIn}
-      {clock.artistOpen ? " · artista +1" : ""}
+      {clock.artistOpen ? g.artistPlusOne : ""}
     </>
   );
 }

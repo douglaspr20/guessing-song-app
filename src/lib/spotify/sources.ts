@@ -192,8 +192,8 @@ export async function getMeWithToken(accessToken: string): Promise<SpotifyProfil
     cache: "no-store",
   });
   if (res.status === 403) {
-    throw new AppError("Esta cuenta de Spotify no está autorizada en la app", 403, "SPOTIFY_NOT_ALLOWED");
+    throw new AppError("SPOTIFY_NOT_ALLOWED", 403);
   }
-  if (!res.ok) throw new AppError(`Spotify ${res.status} al leer el perfil`, 502, "SPOTIFY_API_ERROR");
+  if (!res.ok) throw new AppError("SPOTIFY_API_ERROR", 502, { detail: `Spotify ${res.status} al leer el perfil` });
   return toProfile(await res.json());
 }

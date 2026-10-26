@@ -1,13 +1,16 @@
+import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import { BandProvider } from "@/components/band/BandStatus";
 import { FeedbackProvider } from "@/components/feedback/FeedbackProvider";
+import { LocaleRoot } from "@/i18n/LocaleRoot";
+import { getMessages } from "@/i18n/server";
 import { fontClasses } from "./fonts";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "Adivina la canción",
-  description: "El juego familiar de adivinar canciones con tu Spotify.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await getMessages();
+  return { title: m.common.brand, description: m.common.metaDescription };
+}
 
 export const viewport: Viewport = {
   themeColor: "#1D2747",
@@ -17,6 +20,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    // `lang` se corrige en el cliente con el idioma de la persona (ver I18nProvider).
     <html lang="es" className={fontClasses}>
       <body>
         {process.env.NODE_ENV !== "production" && (
@@ -28,10 +32,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             }}
           />
         )}
-        <FeedbackProvider>
-          {/* La banda de rayas de arriba: una para toda la app; cada pantalla pone su etiqueta con <BandStatus>. */}
-          <BandProvider>{children}</BandProvider>
-        </FeedbackProvider>
+        {/* El idioma sale de la cookie o del navegador: se lee por petición, dentro de Suspense. */}
+        <Suspense>
+          <LocaleRoot>
+            <FeedbackProvider>
+              {/* La banda de rayas de arriba: una para toda la app; cada pantalla pone su etiqueta con <BandStatus>. */}
+              <BandProvider>{children}</BandProvider>
+            </FeedbackProvider>
+          </LocaleRoot>
+        </Suspense>
       </body>
     </html>
   );

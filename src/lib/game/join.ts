@@ -41,13 +41,13 @@ async function assertCodeAttemptsAllowed(ipHash: string, now = new Date()) {
     where: { ipHash: attemptKey(ipHash), ok: false, createdAt: { gt: new Date(now.getTime() - JOIN_LIMITS.windowMs) } },
   });
   if (bad >= JOIN_LIMITS.badCodesPerIp) {
-    throw new AppError("Demasiados códigos incorrectos. Espera un rato antes de volver a probar.", 429, "TOO_MANY_ATTEMPTS");
+    throw new AppError("TOO_MANY_ATTEMPTS", 429, { key: "TOO_MANY_CODES" });
   }
 }
 
 const recordBadCode = (ipHash: string) => db.loginAttempt.create({ data: { ipHash: attemptKey(ipHash), ok: false } });
 
-const gameNotFound = () => new AppError("No hay ninguna partida con ese código", 404, "CODE_NOT_FOUND");
+const gameNotFound = () => new AppError("CODE_NOT_FOUND", 404);
 
 async function findJoinableGame(rawCode: string, ipHash: string) {
   await assertCodeAttemptsAllowed(ipHash);
@@ -119,10 +119,10 @@ const cleanName = (raw: string | undefined) => (raw ?? "").trim().replace(/\s+/g
 
 export async function joinGame(input: JoinInput, ctx: JoinContext) {
   const game = await findJoinableGame(input.code, ctx.ipHash);
-  if (!game.joinOpen) throw new AppError("El anfitrión cerró la entrada a esta partida", 403, "JOIN_CLOSED");
+  if (!game.joinOpen) throw new AppError("JOIN_CLOSED", 403);
 
   const name = cleanName(ctx.user ? (input.name || ctx.user.displayName) : input.name);
-  if (!name || name.length > 30) throw new AppError("Escribe tu nombre (hasta 30 letras)", 422, "INVALID_NAME");
+  if (!name || name.length > 30) throw new AppError("INVALID_NAME", 422);
 
   // Quien ya entró desde este navegador y vuelve a escribir su nombre (p. ej. al escanear otra vez el QR)
   // sigue siendo él: se le devuelve su sitio en vez de decirle que su nombre está ocupado.
@@ -146,16 +146,16 @@ export async function joinGame(input: JoinInput, ctx: JoinContext) {
     // La misma cuenta en la misma partida recupera su sitio en vez de duplicarse.
     if (ctx.user) {
       const mine = fresh.participants.find((p) => p.userId === ctx.user!.id);
-      if (mine?.kickedAt) throw new AppError("El anfitrión te sacó de esta partida", 403, "KICKED");
+      if (mine?.kickedAt) throw new AppError("KICKED", 403);
       if (mine) return tx.participant.update({ where: { id: mine.id }, data: { tokenHash } });
     }
 
     const active = fresh.participants.filter((p) => !p.kickedAt);
     if (active.length >= JOIN_LIMITS.maxParticipants) {
-      throw new AppError("La partida está completa", 409, "GAME_FULL");
+      throw new AppError("GAME_FULL", 409);
     }
     const lower = name.toLowerCase();
-    const nameTaken = () => new AppError("Ya hay alguien con ese nombre", 409, "NAME_TAKEN");
+    const nameTaken = () => new AppError("NAME_TAKEN", 409);
 
     if (fresh.format === "solo") {
       const existing = fresh.players.find((p) => p.name.toLowerCase() === lower);
@@ -165,7 +165,7 @@ export async function joinGame(input: JoinInput, ctx: JoinContext) {
           data: { gameId: fresh.id, playerId: existing.id, userId: ctx.user?.id, name: existing.name, tokenHash },
         });
       }
-      if (fresh.players.length >= JOIN_LIMITS.maxSolo) throw new AppError("La partida está completa", 409, "GAME_FULL");
+      if (fresh.players.length >= JOIN_LIMITS.maxSolo) throw new AppError("GAME_FULL", 409);
       const player = await tx.player.create({ data: { gameId: fresh.id, name } });
       return tx.participant.create({
         data: { gameId: fresh.id, playerId: player.id, userId: ctx.user?.id, name, tokenHash },
@@ -182,10 +182,10 @@ export async function joinGame(input: JoinInput, ctx: JoinContext) {
       });
     }
     const team = fresh.players.find((p) => p.id === input.teamId);
-    if (!team) throw new AppError("Elige un equipo", 422, "TEAM_REQUIRED");
-    if (team.members.length >= (fresh.maxTeamSize ?? 0)) throw new AppError(`${team.name} está lleno`, 409, "TEAM_FULL");
+    if (!team) throw new AppError("TEAM_REQUIRED", 422);
+    if (team.members.length >= (fresh.maxTeamSize ?? 0)) throw new AppError("TEAM_FULL", 409, { params: { team: team.name } });
     const people = fresh.players.reduce((n, p) => n + p.members.length, 0);
-    if (people >= MAX_PEOPLE) throw new AppError("La partida está completa", 409, "GAME_FULL");
+    if (people >= MAX_PEOPLE) throw new AppError("GAME_FULL", 409);
     const member = await tx.teamMember.create({ data: { playerId: team.id, name } });
     return tx.participant.create({
       data: { gameId: fresh.id, playerId: team.id, memberId: member.id, userId: ctx.user?.id, name, tokenHash },
@@ -236,7 +236,7 @@ export async function kickParticipant(gameId: string, participantId: string) {
     where: { id: participantId, gameId, kickedAt: null },
     data: { kickedAt: new Date() },
   });
-  if (!count) throw new AppError("Participante no encontrado", 404, "PARTICIPANT_NOT_FOUND");
+  if (!count) throw new AppError("PARTICIPANT_NOT_FOUND", 404);
   emit({ type: "participant_left", gameId, participantId });
 }
 

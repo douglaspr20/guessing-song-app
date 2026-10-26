@@ -102,10 +102,10 @@ export async function buzz(gameId: string, roundId: string, seat: Seat) {
   await settleIfExpired(round);
   round = await loadRound(gameId, roundId);
 
-  if (round.status !== "PLAYING") throw new AppError("La ronda ya terminó", 409, "ROUND_CLOSED");
-  if (!round.playStartedAt) throw new AppError("La canción aún no ha empezado a sonar", 409, "ROUND_NOT_STARTED");
+  if (round.status !== "PLAYING") throw new AppError("ROUND_CLOSED", 409);
+  if (!round.playStartedAt) throw new AppError("ROUND_NOT_STARTED", 409);
   if (await isLockedOut(roundId, seat)) {
-    throw new AppError("Ya fallaste en esta pista: espera a la siguiente", 409, "LOCKED_OUT");
+    throw new AppError("LOCKED_OUT", 409);
   }
   if (round.buzzParticipantId) throw await takenBy(round.buzzParticipantId);
   if (round.pausedAt) {
@@ -114,8 +114,8 @@ export async function buzz(gameId: string, roundId: string, seat: Seat) {
       elapsedMs: elapsedMs(round, new Date()),
     });
     throw ended
-      ? new AppError("Se acabó el fragmento: pídele al anfitrión que lo repita", 409, "FRAGMENT_ENDED")
-      : new AppError("El anfitrión pausó la canción", 409, "PAUSED");
+      ? new AppError("FRAGMENT_ENDED", 409)
+      : new AppError("PAUSED", 409);
   }
 
   const now = new Date();
@@ -132,7 +132,7 @@ export async function buzz(gameId: string, roundId: string, seat: Seat) {
   if (!count) {
     const after = await db.round.findUniqueOrThrow({ where: { id: roundId } });
     if (after.buzzParticipantId) throw await takenBy(after.buzzParticipantId);
-    throw new AppError("No se pudo pulsar: inténtalo otra vez", 409, "BUZZ_FAILED");
+    throw new AppError("BUZZ_FAILED", 409);
   }
 
   emit({ type: "buzz", gameId, roundId, participantId: seat.id, name: seat.name });
@@ -141,7 +141,9 @@ export async function buzz(gameId: string, roundId: string, seat: Seat) {
 
 async function takenBy(participantId: string) {
   const who = await db.participant.findUnique({ where: { id: participantId }, select: { name: true } });
-  return new AppError(who ? `Se te adelantó ${who.name}` : "Alguien se adelantó", 409, "BUZZ_TAKEN");
+  return who
+    ? new AppError("BUZZ_TAKEN", 409, { params: { name: who.name } })
+    : new AppError("BUZZ_TAKEN", 409, { key: "BUZZ_TAKEN_ANON" });
 }
 
 // ---------- Responder ----------
@@ -153,11 +155,11 @@ export async function answer(
   input: { title?: string; artist?: string },
 ) {
   const round = await loadRound(gameId, roundId);
-  if (round.status !== "PLAYING") throw new AppError("La ronda ya terminó", 409, "ROUND_CLOSED");
-  if (round.buzzParticipantId !== seat.id) throw new AppError("Ya no es tu turno", 409, "NOT_YOUR_TURN");
+  if (round.status !== "PLAYING") throw new AppError("ROUND_CLOSED", 409);
+  if (round.buzzParticipantId !== seat.id) throw new AppError("NOT_YOUR_TURN", 409);
   if (pastDeadline(round)) {
     await settleFailure(round, seat, "timeout");
-    throw new AppError("Se acabó el tiempo", 409, "TIME_UP");
+    throw new AppError("TIME_UP", 409);
   }
 
   const title = input.title?.trim() || null;
@@ -167,7 +169,7 @@ export async function answer(
   const now = new Date();
 
   const result = await db.$transaction(async (tx) => {
-    if (!(await clearBuzz(tx, round.id, seat.id))) throw new AppError("Ya no es tu turno", 409, "NOT_YOUR_TURN");
+    if (!(await clearBuzz(tx, round.id, seat.id))) throw new AppError("NOT_YOUR_TURN", 409);
     const a = await award(tx, round, seat.playerId, { title: titleCorrect, artist: artistCorrect, at: now });
     if (title || artist) {
       await tx.guess.create({

@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import type { Player } from "@/lib/client/api";
+import { useI18n } from "@/i18n/client";
 import { memberLine } from "@/lib/game/teams";
 import { TeamDot } from "./TeamDot";
 import ui from "./ui.module.css";
@@ -24,6 +25,7 @@ export function Scoreboard({
   /** Puntos recién ganados por jugador, para marcar la fila. */
   gains?: Record<string, number>;
 }) {
+  const { m } = useI18n();
   const listRef = useRef<HTMLOListElement>(null);
   /** Equipos con la lista de miembros desplegada. */
   const [open, setOpen] = useState<Set<string>>(new Set());
@@ -56,7 +58,7 @@ export function Scoreboard({
   }, [players]);
 
   return (
-    <section className={`${ui.card} ${styles.board}`} aria-label="Marcador">
+    <section className={`${ui.card} ${styles.board}`} aria-label={m.common.scoreboard}>
       <div className={ui.cardStripes} />
       <div className={styles.head}>
         <h2 className={ui.cardTitle}>{title}</h2>
@@ -68,7 +70,7 @@ export function Scoreboard({
           const gain = gains[p.id];
           return (
             <li key={p.id} data-id={p.id} className={`${styles.row} ${gain ? styles.bump : ""}`}>
-              <span className={styles.pos} aria-label={`Puesto ${place}`}>
+              <span className={styles.pos} aria-label={m.common.place(place)}>
                 {place}
               </span>
               {p.members.length ? (
@@ -101,7 +103,7 @@ export function Scoreboard({
               <span className={styles.pts}>
                 {gain ? <span className={styles.gain}>+{gain}</span> : null}
                 {p.score}
-                <small>pts</small>
+                <small>{m.common.pts}</small>
               </span>
             </li>
           );

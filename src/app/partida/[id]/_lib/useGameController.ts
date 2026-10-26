@@ -6,6 +6,8 @@ import { rulesFor } from "@/lib/game/scoring";
 import { TEAM_COLORS } from "@/lib/game/teams";
 import { api, type GuessResult, type GuessRow, type Round } from "@/lib/client/api";
 import { useLiveGame, type LiveEvent } from "@/lib/client/live";
+import { useI18n } from "@/i18n/client";
+import { compareText } from "@/i18n/format";
 import { BUZZ_EXPIRE_DELAY_MS, GAIN_FLASH_MS, INTERMISSION_MS } from "./constants";
 import { acceptedFeedback, buzzFeedback, describeGuess, spokenFeedback, type Feedback } from "./feedback";
 import { deriveRoundClock } from "./roundClock";
@@ -27,6 +29,8 @@ export interface GuessInput {
  * de la ronda y las acciones del anfitrión (empezar, repetir, pausar, revelar, registrar).
  */
 export function useGameController(gameId: string) {
+  const { m, locale } = useI18n();
+  const fb = m.game.feedback;
   const [showFinale, setShowFinale] = useState(false);
   const { game, guesses, fetchedAt, loadError, retryLoad, refresh } = useGame(gameId, (g) => {
     // Una partida terminada se abre directamente en el podio.
@@ -55,6 +59,7 @@ export function useGameController(gameId: string) {
     fetchedAt,
     now,
     player,
+    text: m.game.clock,
   });
 
   // Las fichas van en orden fijo (el marcador se reordena por puntos): la tecla 1 siempre es el mismo jugador.
@@ -62,7 +67,7 @@ export function useGameController(gameId: string) {
   const seats = [...(game?.players ?? [])].sort(
     game?.format === "teams"
       ? (a, b) => paletteOrder(a.color) - paletteOrder(b.color)
-      : (a, b) => a.name.localeCompare(b.name),
+      : (a, b) => compareText(locale)(a.name, b.name),
   );
   // Quién respondió: lo usan el formulario, «¡Acertó!» y los atajos. Por defecto, la primera ficha.
   const [selectedId, setSelectedId] = useState("");
@@ -126,7 +131,7 @@ export function useGameController(gameId: string) {
     gameId,
     (e) => {
       if (e.type === "buzz") setFeedback(null);
-      if (e.type === "buzz_resolved") setFeedback(buzzFeedback(e));
+      if (e.type === "buzz_resolved") setFeedback(buzzFeedback(e, fb));
       setLiveEvent(e);
       readState();
     },
@@ -287,7 +292,7 @@ export function useGameController(gameId: string) {
         json: { playerId, title: title.trim() || undefined, artist: artist.trim() || undefined },
       });
       sent = true;
-      setFeedback(describeGuess(name, r, { title: !!title.trim(), artist: !!artist.trim() }));
+      setFeedback(describeGuess(name, r, { title: !!title.trim(), artist: !!artist.trim() }, fb));
       if (r.points) flashGain(playerId, r.points);
       if (r.titleAwarded) await player.stop();
       await refresh();
@@ -302,7 +307,7 @@ export function useGameController(gameId: string) {
       const r = await api<GuessResult>(`/api/games/${gameId}/rounds/${round.id}/award`, {
         json: { playerId: selectedPlayer.id, [part]: true },
       });
-      setFeedback(spokenFeedback(selectedPlayer.name, part, r.points));
+      setFeedback(spokenFeedback(selectedPlayer.name, part, r.points, fb));
       flashGain(selectedPlayer.id, r.points);
       if (r.titleAwarded) await player.stop();
       await refresh();
@@ -324,7 +329,7 @@ export function useGameController(gameId: string) {
         json: { playerId: buzz.playerId, title: true },
       });
       const owner = game?.players.find((p) => p.id === buzz.playerId)?.name ?? buzz.name;
-      setFeedback(spokenFeedback(owner, "title", r.points));
+      setFeedback(spokenFeedback(owner, "title", r.points, fb));
       flashGain(buzz.playerId, r.points);
       await player.stop();
       await refresh();
@@ -338,7 +343,7 @@ export function useGameController(gameId: string) {
         `/api/games/${gameId}/rounds/${round.id}/guesses/${guess.id}/accept`,
         { json: { [part]: true } },
       );
-      setFeedback(acceptedFeedback(guess.playerName, r.points));
+      setFeedback(acceptedFeedback(guess.playerName, r.points, fb));
       flashGain(guess.playerId, r.points);
       if (r.titleAwarded) await player.stop();
       await refresh();

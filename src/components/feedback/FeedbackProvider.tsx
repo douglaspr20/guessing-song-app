@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { AlertTriangle, CheckCircle2, X } from "lucide-react";
+import { useI18n } from "@/i18n/client";
 import ui from "../ui.module.css";
 import styles from "./feedback.module.css";
 
@@ -117,12 +118,13 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
 }
 
 function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: number) => void }) {
+  const { m } = useI18n();
   return (
     <div className={`${styles.toast} ${styles[toast.tone]}`}>
       {toast.tone === "error" ? <AlertTriangle size={22} aria-hidden /> : <CheckCircle2 size={22} aria-hidden />}
       <span className={styles.toastText}>{toast.text}</span>
       {toast.tone === "error" && (
-        <button type="button" className={styles.close} onClick={() => onDismiss(toast.id)} aria-label="Cerrar aviso">
+        <button type="button" className={styles.close} onClick={() => onDismiss(toast.id)} aria-label={m.common.closeNotice}>
           <X size={22} aria-hidden />
         </button>
       )}
@@ -134,7 +136,8 @@ function ConfirmDialog({ options, onClose }: { options: ConfirmOptions; onClose:
   const ids = useId();
   const ref = useRef<HTMLDialogElement>(null);
   const [typed, setTyped] = useState("");
-  const { title, body, confirmLabel, cancelLabel = "Cancelar", tone = "default", typeToConfirm } = options;
+  const { m } = useI18n();
+  const { title, body, confirmLabel, cancelLabel = m.common.cancel, tone = "default", typeToConfirm } = options;
   const ready = !typeToConfirm || typed.trim().toUpperCase() === typeToConfirm.toUpperCase();
 
   // showModal: el navegador atrapa el foco, cierra con Esc y deja el resto de la página inerte.
@@ -178,7 +181,7 @@ function ConfirmDialog({ options, onClose }: { options: ConfirmOptions; onClose:
         {typeToConfirm && (
           <label className={styles.typeField}>
             <span className={styles.typeLabel}>
-              Escribe <b>{typeToConfirm}</b> para confirmar
+              {m.common.typeToConfirmBefore} <b>{typeToConfirm}</b> {m.common.typeToConfirmAfter}
             </span>
             <input
               className={styles.typeInput}

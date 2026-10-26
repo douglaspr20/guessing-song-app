@@ -1,14 +1,20 @@
+"use client";
+
 import Link from "next/link";
 import { Podium } from "@/components/Podium";
 import { TapeConfetti } from "@/components/TapeConfetti";
 import { TeamDot } from "@/components/TeamDot";
 import { BandStatus } from "@/components/band/BandStatus";
 import ui from "@/components/ui.module.css";
-import { catalogLabel, formatDate, type Game, type Player } from "@/lib/client/api";
+import { catalogLabel, type Game, type Player } from "@/lib/client/api";
+import { formatDate, formatList, plural } from "@/i18n/format";
+import { useI18n } from "@/i18n/client";
 import styles from "../game.module.css";
 
 /** Fin de la partida: la carátula se cierra con el podio, el ganador y confeti si alguien sumó. */
 export function Finale({ game }: { game: Game }) {
+  const { m, locale } = useI18n();
+  const g = m.game;
   const players = game.players;
   const entries = players.map((p) => ({ ...p, place: players.findIndex((q) => q.score === p.score) + 1 }));
   const top = players[0];
@@ -18,13 +24,13 @@ export function Finale({ game }: { game: Game }) {
   return (
     <>
       {!nobody && <TapeConfetti />}
-      <BandStatus text={`${cat} · Fin de la cinta`} />
+      <BandStatus text={`${cat} · ${g.endOfTape}`} />
       <main className={styles.main}>
         <section className={`${ui.card} ${styles.finale}`} aria-live="polite">
           <div className={styles.finaleBand}>
             <span className={styles.finaleTag}>{cat}</span>
             <span className={styles.finaleTag}>
-              {game.totalRounds} {game.totalRounds === 1 ? "pista" : "pistas"} · {formatDate(game.createdAt)}
+              {plural(locale, game.totalRounds, g.tracks)} · {formatDate(locale, game.createdAt)}
             </span>
           </div>
           <div className={styles.finaleBody}>
@@ -37,7 +43,7 @@ export function Finale({ game }: { game: Game }) {
               </div>
               <div className={styles.finaleSide}>
                 {entries.length > 3 && (
-                  <ol className={styles.restList} aria-label="Resto del marcador">
+                  <ol className={styles.restList} aria-label={g.restOfScoreboard}>
                     {entries.slice(3).map((p) => (
                       <li key={p.id}>
                         <span className={styles.restPos}>{p.place}</span>
@@ -51,10 +57,10 @@ export function Finale({ game }: { game: Game }) {
                 )}
                 <div className={styles.finaleActions}>
                   <Link href="/nueva" className={`${ui.btn} ${ui.primary} ${ui.big}`}>
-                    Grabar otra partida
+                    {g.recordAnother}
                   </Link>
                   <Link href="/" className={`${ui.btn} ${ui.onCard}`}>
-                    Volver a la estantería
+                    {m.common.backToShelf}
                   </Link>
                 </div>
               </div>
@@ -67,19 +73,21 @@ export function Finale({ game }: { game: Game }) {
 }
 
 function WinnerTitle({ players }: { players: Player[] }) {
+  const { m, locale } = useI18n();
+  const g = m.game;
   const top = players[0];
-  if (!top || top.score === 0) return <>Nadie sumó puntos</>;
+  if (!top || top.score === 0) return <>{g.nobodyScored}</>;
   const tied = players.filter((p) => p.score === top.score);
   if (tied.length > 1) {
     return (
       <>
-        Empate entre <span className={styles.finaleName}>{tied.map((p) => p.name).join(" y ")}</span>
+        {g.tieBetween} <span className={styles.finaleName}>{formatList(locale, tied.map((p) => p.name))}</span>
       </>
     );
   }
   return (
     <>
-      Ganó <span className={styles.finaleName}>{top.name}</span>
+      {g.won} <span className={styles.finaleName}>{top.name}</span>
     </>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { api, ApiError, type Game, type GuessRow } from "@/lib/client/api";
+import { api, ApiError, type Game, type GuessRow, errorText } from "@/lib/client/api";
 import { HINT_REFRESH_DELAY_MS } from "./constants";
 
 /**
@@ -38,7 +38,7 @@ export function useGame(gameId: string, onFirstLoad?: (game: Game) => void) {
         (e) =>
           setLoadError({
             missing: e instanceof ApiError && e.status === 404,
-            message: e instanceof ApiError ? e.message : "No se pudo conectar. Prueba otra vez.",
+            message: errorText(e),
           }),
       ),
     // Solo depende de la partida; onFirstLoad no debe relanzar la carga.

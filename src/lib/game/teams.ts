@@ -1,3 +1,4 @@
+import { setup as esSetup } from "@/i18n/messages/es/setup";
 /**
  * Partidas por equipos: paleta, límites y reparto de personas. Todo puro (sin base de datos)
  * para poder usarlo igual en el servidor, en el editor de /nueva y en los tests.
@@ -16,14 +17,14 @@ export const DEFAULT_TEAM_SIZE = 5;
 
 /** Colores de equipo, en el orden en que se reparten. Ninguno es el tomate (reservado a la acción principal). */
 export const TEAM_COLORS = [
-  { key: "azafran", label: "Azafrán", hex: "#e0a526" },
-  { key: "cielo", label: "Cielo", hex: "#4f9fd0" },
-  { key: "menta", label: "Menta", hex: "#3fb68b" },
-  { key: "ciruela", label: "Ciruela", hex: "#8a4a8f" },
-  { key: "teja", label: "Teja", hex: "#b8683a" },
-  { key: "pino", label: "Pino", hex: "#2f6b4f" },
-  { key: "lavanda", label: "Lavanda", hex: "#8f86d6" },
-  { key: "arena", label: "Arena", hex: "#c2ad7a" },
+  { key: "azafran", hex: "#e0a526" },
+  { key: "cielo", hex: "#4f9fd0" },
+  { key: "menta", hex: "#3fb68b" },
+  { key: "ciruela", hex: "#8a4a8f" },
+  { key: "teja", hex: "#b8683a" },
+  { key: "pino", hex: "#2f6b4f" },
+  { key: "lavanda", hex: "#8f86d6" },
+  { key: "arena", hex: "#c2ad7a" },
 ] as const;
 
 export type TeamColorKey = (typeof TEAM_COLORS)[number]["key"];
@@ -33,9 +34,12 @@ export function teamColor(key: string | null | undefined) {
   return TEAM_COLORS.find((c) => c.key === key) ?? null;
 }
 
-/** Nombre que nace con cada equipo, según su color. */
-export function defaultTeamName(colorKey: string) {
-  return `Equipo ${teamColor(colorKey)?.label ?? colorKey}`;
+/** Textos de equipos que dependen del idioma (la pantalla pasa los suyos; por defecto, en español). */
+export type TeamTexts = Pick<typeof esSetup, "teamColors" | "defaultTeamName" | "teamsProblems">;
+
+/** Nombre que nace con cada equipo, según su color: «Equipo Menta» / «Team Mint». */
+export function defaultTeamName(colorKey: string, text: TeamTexts = esSetup) {
+  return text.defaultTeamName(text.teamColors[colorKey as TeamColorKey] ?? colorKey);
 }
 
 /** Un equipo tal como lo maneja el editor y lo recibe la API. */
@@ -46,8 +50,8 @@ export interface TeamDraft {
 }
 
 /** `count` equipos vacíos con los primeros colores de la paleta y su nombre por defecto. */
-export function emptyTeams(count: number): TeamDraft[] {
-  return TEAM_COLORS.slice(0, count).map((c) => ({ name: defaultTeamName(c.key), color: c.key, members: [] }));
+export function emptyTeams(count: number, text: TeamTexts = esSetup): TeamDraft[] {
+  return TEAM_COLORS.slice(0, count).map((c) => ({ name: defaultTeamName(c.key, text), color: c.key, members: [] }));
 }
 
 /** ¿Caben `people` personas en `teamCount` equipos de como mucho `maxSize`? */
@@ -104,12 +108,17 @@ export function fillIn(teams: readonly TeamDraft[], name: string, maxSize: numbe
  * Cambia el número de equipos. Al bajar, los miembros de los que desaparecen pasan a los que quedan
  * (al más corto); al subir, los nuevos nacen vacíos con el siguiente color libre.
  */
-export function resizeTeams(teams: readonly TeamDraft[], count: number, maxSize: number): TeamDraft[] {
+export function resizeTeams(
+  teams: readonly TeamDraft[],
+  count: number,
+  maxSize: number,
+  text: TeamTexts = esSetup,
+): TeamDraft[] {
   if (count >= teams.length) {
     const used = new Set(teams.map((t) => t.color));
     const free = TEAM_COLORS.filter((c) => !used.has(c.key));
     const added = free.slice(0, count - teams.length).map((c) => ({
-      name: defaultTeamName(c.key),
+      name: defaultTeamName(c.key, text),
       color: c.key,
       members: [] as string[],
     }));
@@ -171,16 +180,17 @@ export function repeated(names: readonly string[]) {
 }
 
 /** Lo que impide grabar un reparto por equipos, o null si está bien (mismas reglas que el servidor). */
-export function teamsProblem(teams: readonly TeamDraft[], maxSize: number): string | null {
+export function teamsProblem(teams: readonly TeamDraft[], maxSize: number, text: TeamTexts = esSetup): string | null {
+  const p = text.teamsProblems;
   const people = everyone(teams);
-  if (!people.length) return "Añade a las personas que juegan.";
+  if (!people.length) return p.noPeople;
   const empty = teams.find((t) => !t.members.length);
-  if (empty) return `${empty.name || "Un equipo"} no tiene a nadie.`;
+  if (empty) return p.emptyTeam(empty.name || p.aTeam);
   const full = overfull(teams, maxSize)[0];
-  if (full) return `${full.name} tiene ${full.members.length} y el máximo es ${maxSize}.`;
-  if (teams.some((t) => !t.name.trim())) return "Cada equipo necesita un nombre.";
-  if (repeated(teams.map((t) => t.name.trim())).length) return "Hay equipos con el mismo nombre.";
-  if (repeated(people).length) return "Hay nombres de personas repetidos.";
-  if (people.length > MAX_PEOPLE) return `Como mucho ${MAX_PEOPLE} personas.`;
+  if (full) return p.overfull(full.name, full.members.length, maxSize);
+  if (teams.some((t) => !t.name.trim())) return p.unnamed;
+  if (repeated(teams.map((t) => t.name.trim())).length) return p.sameTeamName;
+  if (repeated(people).length) return p.repeatedPeople;
+  if (people.length > MAX_PEOPLE) return p.tooMany(MAX_PEOPLE);
   return null;
 }

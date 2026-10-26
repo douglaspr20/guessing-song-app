@@ -4,13 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { requestPlay } from "@/lib/client/play";
 import type { PlayerStatus } from "@/lib/client/spotifyDevice";
 import { useFragmentTimer } from "./useFragmentTimer";
+import { currentMessages } from "@/i18n/runtime";
 
 /** Espera a que el audio sepa su duración, para poder saltar a un punto concreto. */
 function whenSeekable(audio: HTMLAudioElement): Promise<void> {
   if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) return Promise.resolve();
   return new Promise((resolve, reject) => {
     audio.addEventListener("loadedmetadata", () => resolve(), { once: true });
-    audio.addEventListener("error", () => reject(new Error("No se pudo cargar la vista previa")), { once: true });
+    audio.addEventListener("error", () => reject(new Error(currentMessages().game.player.previewLoadFailed)), { once: true });
   });
 }
 
@@ -43,8 +44,8 @@ export function usePreviewPlayer(enabled = true) {
       setError(null);
       reset();
       const res = await requestPlay(gameId, roundId, { offsetMs });
-      if (!res.ok) throw new Error(res.data.message ?? "No se pudo reproducir");
-      if (!res.data.audioUrl) throw new Error("Esta canción no tiene vista previa");
+      if (!res.ok) throw new Error(res.data.message ?? currentMessages().game.player.cantPlay);
+      if (!res.data.audioUrl) throw new Error(currentMessages().game.player.noPreview);
 
       const el = audio();
       if (el.src !== res.data.audioUrl) el.src = res.data.audioUrl;
@@ -53,7 +54,7 @@ export function usePreviewPlayer(enabled = true) {
       try {
         await el.play();
       } catch {
-        throw new Error("El navegador bloqueó el audio: pulsa Repetir");
+        throw new Error(currentMessages().game.player.audioBlocked);
       }
       start(res.data.fragmentMs, res.data.remainingMs ?? res.data.fragmentMs);
       return res.data;
@@ -67,7 +68,7 @@ export function usePreviewPlayer(enabled = true) {
   }, [freeze]);
 
   const resume = useCallback(async () => {
-    await audioRef.current?.play().catch(() => setError("El navegador bloqueó el audio: pulsa Repetir"));
+    await audioRef.current?.play().catch(() => setError(currentMessages().game.player.audioBlocked));
     thaw();
   }, [thaw]);
 

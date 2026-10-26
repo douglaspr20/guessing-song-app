@@ -36,7 +36,7 @@ export async function requireOwner(): Promise<Owner> {
 export async function assertOwnsGame(owner: Owner, gameId: string) {
   const game = await db.game.findUnique({ where: { id: gameId }, select: { userId: true, guestId: true } });
   const mine = owner.kind === "user" ? game?.userId === owner.userId : game?.guestId === owner.guestId;
-  if (!game || !mine) throw new AppError("Partida no encontrada", 404, "GAME_NOT_FOUND");
+  if (!game || !mine) throw new AppError("GAME_NOT_FOUND", 404);
   if (owner.kind === "guest") await assertOpenModeAvailable();
 }
 

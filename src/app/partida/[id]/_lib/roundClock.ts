@@ -1,6 +1,7 @@
 import { nextTierInMs, pointsForElapsed, type RoundRules } from "@/lib/game/scoring";
 import type { FragmentPhase } from "@/hooks/useSpotifyPlayer";
 import type { Round } from "@/lib/client/api";
+import { game as esGame } from "@/i18n/messages/es/game";
 
 export interface RoundClockInput {
   round: Round | null;
@@ -12,7 +13,11 @@ export interface RoundClockInput {
   /** Reloj de pantalla (ms); 0 antes del primer tick. */
   now: number;
   player: { phase: FragmentPhase; remainingMs: number; fragmentMs: number };
+  /** Textos del contador en el idioma de la pantalla (`m.game.clock`); por defecto, en español. */
+  text?: ClockText;
 }
+
+type ClockText = typeof esGame.clock;
 
 export interface RoundClockView {
   open: boolean;
@@ -43,7 +48,15 @@ export interface RoundClockView {
 }
 
 /** Deriva todo lo que la pantalla de juego necesita saber del reloj de la ronda. */
-export function deriveRoundClock({ round, fragmentSeconds, rules, fetchedAt, now, player }: RoundClockInput): RoundClockView {
+export function deriveRoundClock({
+  round,
+  fragmentSeconds,
+  rules,
+  fetchedAt,
+  now,
+  player,
+  text = esGame.clock,
+}: RoundClockInput): RoundClockView {
   const open = round?.status === "PLAYING";
   const started = !!round?.playStartedAt;
   const fragmentMs = fragmentSeconds * 1000;
@@ -80,13 +93,13 @@ export function deriveRoundClock({ round, fragmentSeconds, rules, fetchedAt, now
     shownLeftMs: orphan ? orphanLeftMs : player.remainingMs,
     tapeProgress,
     canResume,
-    caption: round?.buzz ? `responde ${round.buzz.name || "alguien"}` : captionFor(started, canResume, player.phase),
+    caption: round?.buzz ? text.answering(round.buzz.name || text.someone) : captionFor(started, canResume, player.phase, text),
   };
 }
 
-function captionFor(started: boolean, canResume: boolean, phase: FragmentPhase): string {
-  if (!started) return "aún no ha sonado";
-  if (canResume) return "en pausa · pulsa Seguir";
-  if (phase === "ended" || phase === "idle") return "se acabó la cinta";
-  return "quedan para adivinar";
+function captionFor(started: boolean, canResume: boolean, phase: FragmentPhase, text: ClockText): string {
+  if (!started) return text.notStarted;
+  if (canResume) return text.paused;
+  if (phase === "ended" || phase === "idle") return text.ended;
+  return text.left;
 }

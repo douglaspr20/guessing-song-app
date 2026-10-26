@@ -7,6 +7,8 @@ import { Scoreboard } from "@/components/Scoreboard";
 import { BandStatus } from "@/components/band/BandStatus";
 import ui from "@/components/ui.module.css";
 import { catalogLabel } from "@/lib/client/api";
+import { plural } from "@/i18n/format";
+import { useI18n } from "@/i18n/client";
 import { AnswerForm } from "./_components/AnswerForm";
 import { AttemptsList } from "./_components/AttemptsList";
 import { BuzzBanner } from "./_components/BuzzBanner";
@@ -27,6 +29,8 @@ import styles from "./game.module.css";
 export function GameClient() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { m, locale } = useI18n();
+  const g = m.game;
   const ctl = useGameController(id);
   const { game, round, clock, player, rules, actions, can } = ctl;
   const [helpOpen, setHelpOpen] = useState(false);
@@ -38,7 +42,9 @@ export function GameClient() {
   if (ctl.showFinale) return <Finale game={game} />;
 
   const cat = catalogLabel(game.catalogNumber);
-  const status = round ? `${cat} · Pista ${round.number} de ${game.totalRounds}` : `${cat} · ${game.totalRounds} pistas`;
+  const status = round
+    ? `${cat} · ${g.trackOf(round.number, game.totalRounds)}`
+    : `${cat} · ${plural(locale, game.totalRounds, g.tracks)}`;
 
   if (ctl.intermission) {
     const secondsLeft = ctl.now ? Math.min(3, Math.max(1, Math.ceil((ctl.intermission.endsAt - ctl.now) / 1000))) : 3;
@@ -60,7 +66,7 @@ export function GameClient() {
         {ctl.liveStatus === "offline" && (
           <p className={`${ui.notice} ${ui.noticeError} ${styles.playerError}`} role="status">
             <WifiOff size={20} aria-hidden />
-            Se cortó la conexión en tiempo real: los móviles se enteran con unos segundos de retraso. Se reconecta sola.
+            {g.realtimeLost}
           </p>
         )}
 
@@ -137,13 +143,13 @@ export function GameClient() {
 
           <aside className={styles.side}>
             <JoinPanel game={game} onChanged={ctl.refresh} event={ctl.liveEvent} />
-            <Scoreboard players={game.players} title={`Marcador · ${cat}`} gains={ctl.gains} />
+            <Scoreboard players={game.players} title={g.scoreboard(cat)} gains={ctl.gains} />
             <button type="button" className={`${ui.btn} ${ui.onShell}`} onClick={() => router.push("/")}>
-              Salir a la estantería
+              {g.exitToShelf}
             </button>
             <button type="button" className={`${ui.btn} ${ui.onShell}`} onClick={() => setHelpOpen(true)}>
               <Keyboard size={22} aria-hidden />
-              Atajos
+              {g.shortcuts}
               <kbd className={styles.key}>?</kbd>
             </button>
           </aside>

@@ -10,6 +10,7 @@ import type { RoundClockView } from "../_lib/roundClock";
 import type { GameController, GuessInput } from "../_lib/useGameController";
 import { FeedbackLine } from "./FeedbackLine";
 import { Hint } from "./Hint";
+import { useI18n } from "@/i18n/client";
 import styles from "../game.module.css";
 
 interface Props {
@@ -47,6 +48,8 @@ export function AnswerForm({
   onAwardTitle,
   onAwardArtist,
 }: Props) {
+  const { m } = useI18n();
+  const g = m.game;
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
   const titleRef = useRef<HTMLInputElement>(null);
@@ -71,7 +74,7 @@ export function AnswerForm({
   return (
     <form className={`${ui.card} ${styles.answer}`} onSubmit={submit}>
       <fieldset className={styles.who}>
-        <legend className={styles.fieldLabel}>¿Quién lo dijo?</legend>
+        <legend className={styles.fieldLabel}>{g.whoSaidIt}</legend>
         {players.map((p, i) => (
           <label key={p.id} className={styles.whoOption}>
             <input type="radio" name="who" value={p.id} checked={selected?.id === p.id} onChange={() => onSelect(p.id)} />
@@ -88,20 +91,20 @@ export function AnswerForm({
       <div className={styles.spokenRow}>
         <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onAwardTitle} disabled={!can.awardTitle}>
           <ThumbsUp size={22} aria-hidden />
-          ¡Acertó la canción!
+          {g.gotSong}
           <Hint k="C" color="green" />
         </button>
         <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onAwardArtist} disabled={!can.awardArtist}>
-          ¡Acertó el artista!
+          {g.gotArtist}
           <Hint k="A" color="yellow" />
         </button>
-        {selected && <span className={styles.spokenWho}>a {selected.name}</span>}
+        {selected && <span className={styles.spokenWho}>{g.toPlayer(selected.name)}</span>}
       </div>
 
       <div className={styles.fields}>
         <label className={styles.field}>
           <span className={styles.fieldLabel}>
-            Canción · <b>{clock.started ? clock.pointsNow : 3} pts</b>
+            {g.song} · <b>{clock.started ? clock.pointsNow : 3} {m.common.pts}</b>
           </span>
           <input
             ref={titleRef}
@@ -109,44 +112,46 @@ export function AnswerForm({
             className={styles.handInput}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Lo que dijo…"
+            placeholder={g.whatTheySaid}
             autoComplete="off"
           />
         </label>
         <label className={styles.field}>
-          <span className={styles.fieldLabel}>Artista · {clock.artistOpen ? <b>+1</b> : "ya no suma"}</span>
+          <span className={styles.fieldLabel}>
+            {g.artist} · {clock.artistOpen ? <b>+1</b> : g.noLongerScores}
+          </span>
           <input
             type="text"
             className={styles.handInput}
             value={artist}
             onChange={(e) => setArtist(e.target.value)}
-            placeholder="Quién la canta…"
+            placeholder={g.whoSings}
             autoComplete="off"
           />
         </label>
       </div>
 
       <FeedbackLine feedback={feedback} />
-      {!clock.started && <p className={styles.fieldLabel}>Se puede responder cuando empiece a sonar.</p>}
+      {!clock.started && <p className={styles.fieldLabel}>{g.answerWhenPlaying}</p>}
 
       <div className={styles.submitRow}>
         <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onReplay} disabled={!can.play}>
           {clock.started ? <RotateCcw size={22} aria-hidden /> : <Play size={22} aria-hidden />}
-          {clock.started ? "Repetir" : "Reproducir"}
-          <Hint k={clock.started ? "R" : "Espacio"} />
+          {clock.started ? g.replay : g.play}
+          <Hint k={clock.started ? "R" : "space"} />
         </button>
         <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onTogglePause} disabled={!can.pause}>
           {clock.canResume ? <Play size={22} aria-hidden /> : <Pause size={22} aria-hidden />}
-          {clock.canResume ? "Seguir" : "Pausar"}
-          <Hint k="Espacio" />
+          {clock.canResume ? g.resume : g.pause}
+          <Hint k="space" />
         </button>
         <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onReveal} disabled={!can.reveal}>
           <Eye size={22} aria-hidden />
-          Revelar
+          {g.reveal}
           <Hint k="V" color="red" />
         </button>
         <button type="submit" className={`${ui.btn} ${ui.primary} ${styles.register}`} disabled={busy || !canSubmit}>
-          Registrar respuesta
+          {g.register}
         </button>
       </div>
     </form>

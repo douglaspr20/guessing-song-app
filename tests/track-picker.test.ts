@@ -126,7 +126,7 @@ describe("pickTrack con playlists bloqueadas", () => {
   it("salta las playlists que Spotify rechaza con 403", async () => {
     const { AppError } = await import("@/lib/errors");
     const playlist = vi.fn(async ({ playlistId }: { playlistId: string }) => {
-      if (playlistId === "ajena") throw new AppError("Spotify 403: Forbidden", 403, "SPOTIFY_API_ERROR");
+      if (playlistId === "ajena") throw new AppError("SPOTIFY_API_ERROR", 403, { detail: "Spotify 403: Forbidden" });
       return { items: [track("mia-1")], total: 1 };
     });
     const picked = await pickTrack({
@@ -149,7 +149,7 @@ describe("pickTrack con playlists bloqueadas", () => {
         source: {
           search: vi.fn(),
           playlist: vi.fn(async () => {
-            throw new AppError("Spotify 403: Forbidden", 403, "SPOTIFY_API_ERROR");
+            throw new AppError("SPOTIFY_API_ERROR", 403, { detail: "Spotify 403: Forbidden" });
           }),
         },
       }),
