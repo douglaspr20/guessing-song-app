@@ -28,6 +28,10 @@ export const common = {
   trackCassette: "Casete de la pista",
   hints: "Pistas",
   unavailable: "no disponible",
+  // Crédito del pie
+  madeBy: "Hecho por",
+  sourceCode: "Código en GitHub",
+  opensNewTab: "(se abre en otra pestaña)",
   // Stepper («Menos rondas» / «Más rondas»)
   less: (label: string) => `Menos ${label.toLowerCase()}`,
   more: (label: string) => `Más ${label.toLowerCase()}`,

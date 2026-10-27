@@ -265,6 +265,15 @@
   composes: linkBtn from "../components/styles/layout.module.css";
 }
 
+/* El crédito va a la izquierda del pie; los enlaces de la cuenta, a la derecha. */
+.footCredit {
+  margin-right: auto;
+}
+
+.connectCredit {
+  margin-top: 16px;
+}
+
 .inlineLink {
   background: none;
   border: 0;

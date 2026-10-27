@@ -1,0 +1,40 @@
+/* Crédito discreto: texto suave y pequeño, enlaces subrayados con área de toque de un control pequeño. */
+.credit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 16px;
+  color: var(--on-shell-soft);
+}
+
+.credit a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-h-sm);
+  padding: 0 4px;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.credit .name {
+  font-weight: 700;
+  color: var(--on-shell);
+}
+
+.credit a:hover {
+  color: var(--saffron);
+}
+
+/* Sobre cartulina (pantalla final): la tinta suave de la tarjeta, y el hover sin azafrán (no contrasta). */
+.onCard {
+  color: var(--card-ink-soft);
+}
+
+.onCard .name {
+  color: var(--ink);
+}
+
+.onCard a:hover {
+  color: var(--tomato-deep);
+}

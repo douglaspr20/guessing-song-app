@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Play, Plus, Trash2 } from "lucide-react";
+import { MadeBy } from "@/components/MadeBy";
 import { Notice } from "@/components/Notice";
 import { Podium } from "@/components/Podium";
 import { RetryNotice } from "@/components/RetryNotice";
@@ -106,6 +107,7 @@ export function Shelf({
       )}
 
       <div className={styles.foot}>
+        <MadeBy className={styles.footCredit} />
         {count > 0 && (
           <button type="button" className={styles.linkBtn} onClick={onDeleteAll}>
             {t.deleteHistory}
