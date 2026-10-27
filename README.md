@@ -173,6 +173,12 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
 
 The e2e tests run without Ably, Spotify, Google or iTunes: the server picks invented songs when `E2E_FAKE_ITUNES=1` (`src/lib/itunes/fake.ts`; never set it in production) and the browser gets silence instead of Apple's previews. In a failed CI run the Playwright report is attached as an artifact.
 
+## Analytics
+
+On Vercel the app loads **Vercel Web Analytics** (page views, no cookies) and **Speed Insights** (real Core Web Vitals) from `src/components/SiteAnalytics.tsx`. They are only mounted when `VERCEL=1`, so nothing is loaded locally, in CI or in the e2e tests.
+
+What is sent is cleaned first (`src/lib/client/analytics.ts`): game ids and join codes become the generic route (`/partida/[id]`, `/jugar/[gameId]`, `/unirse/[code]`), query strings are dropped, and the host dashboard (`/anfitrion`) is never measured. To see the data, enable *Analytics* and *Speed Insights* in the Vercel project (both have a free allowance on Hobby).
+
 ## Languages
 
 All interface text lives in typed dictionaries under `src/i18n/messages/` (one file per area: `home`, `access`, `setup`, `game`, `play`, `host`, `common`, plus `errors` for the API). Spanish is the source; every other language is declared with `satisfies typeof es…`, so TypeScript refuses to compile if a key is missing or a function takes different data, and `tests/i18n.test.ts` checks keys, `{variables}` and that every `AppError` thrown has a message.
