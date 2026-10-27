@@ -2,7 +2,7 @@
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  padding: clamp(24px, 3.4vw, 48px) var(--gutter) 140px;
+  padding: clamp(24px, 3.4vw, 48px) var(--gutter) 48px;
 }
 
 .back {
@@ -131,11 +131,6 @@
   gap: 24px 40px;
 }
 
-.owner {
-  font-size: 14px;
-  opacity: 0.75;
-}
-
 .inline {
   display: flex;
   flex-wrap: wrap;
@@ -195,10 +190,12 @@
 
 /* ---------- Barra de acción fija ---------- */
 
+/*
+ * Pegada abajo mientras se hace scroll, pero dentro del flujo de la página: al llegar al final todo el
+ * formulario queda por encima de ella, mida lo que mida la barra (en el móvil ocupa dos filas).
+ */
 .dock {
-  position: fixed;
-  left: 0;
-  right: 0;
+  position: sticky;
   bottom: 0;
   z-index: 10;
   background: var(--window);

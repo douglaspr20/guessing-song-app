@@ -1,0 +1,285 @@
+/*
+ * De dónde salen las canciones: las playlists son casetes de verdad (carcasa, etiqueta con rayas,
+ * ventana con bobinas) y los géneros, lomos en una estantería.
+ */
+
+/* ---------- Casetes de playlist ---------- */
+
+.cassettes {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+  gap: 16px;
+}
+
+.cassette {
+  position: relative;
+  width: 100%;
+  /* La proporción de un casete compacto: todos miden igual, se llamen como se llamen. */
+  aspect-ratio: 8 / 5;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 6px;
+  padding: 9px 11px 0;
+  border: var(--stroke) solid transparent;
+  border-radius: 14px;
+  color: var(--ink);
+  text-align: center;
+  cursor: pointer;
+  background-color: var(--shell);
+  /* Cuatro tornillos de la carcasa. */
+  background-image:
+    radial-gradient(circle at 8px 8px, var(--shell-hi) 0 3px, transparent 3.5px),
+    radial-gradient(circle at calc(100% - 8px) 8px, var(--shell-hi) 0 3px, transparent 3.5px),
+    radial-gradient(circle at 8px calc(100% - 8px), var(--shell-hi) 0 3px, transparent 3.5px),
+    radial-gradient(circle at calc(100% - 8px) calc(100% - 8px), var(--shell-hi) 0 3px, transparent 3.5px);
+  transition:
+    background-color var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out);
+}
+
+.cassette:hover:not(:disabled) {
+  background-color: var(--shell-hi);
+}
+
+.cassette:focus-visible {
+  outline: var(--stroke) solid var(--tomato-deep);
+  outline-offset: 3px;
+}
+
+.cassette:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Elegido: el azafrán es el color de lo activo. */
+.cassette[aria-pressed="true"] {
+  border-color: var(--saffron);
+}
+
+/*
+ * Etiqueta de cartulina como en un casete de verdad: la banda de tres rayas arriba, el nombre escrito a mano
+ * y, recortada en la propia etiqueta, la ventana con las bobinas.
+ */
+.label {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 7px minmax(0, 1fr) auto;
+  background: var(--card);
+  border-radius: 6px;
+  overflow: hidden;
+  padding-bottom: 6px;
+}
+
+.label::before {
+  content: "";
+  background: var(--tape-stripes);
+}
+
+.name {
+  align-self: center;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  /* Sin relleno vertical: así no asoma nada de una tercera línea por debajo. */
+  margin: 3px 0;
+  padding: 0 10px;
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: 19px;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+
+.name svg {
+  display: inline;
+  vertical-align: -2px;
+  margin-right: 4px;
+  color: var(--tomato-deep);
+}
+
+/* Ventana con las dos bobinas, recortada en la etiqueta. */
+.window {
+  justify-self: center;
+  width: 58%;
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 9%;
+  background: var(--window);
+  border-radius: var(--radius-pill);
+}
+
+.reel {
+  width: 22px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle, var(--card) 0 34%, var(--tape-brown) 36% 100%);
+}
+
+/* Dientes del eje: giran solo en el casete elegido (y nunca si se pide menos movimiento). */
+.reel::before {
+  content: "";
+  width: 22%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--window) 0 18%,
+    transparent 18% 33.3%,
+    var(--window) 33.3% 51.3%,
+    transparent 51.3% 66.6%,
+    var(--window) 66.6% 84.6%,
+    transparent 84.6% 100%
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cassette[aria-pressed="true"] .reel::before {
+    animation: spin 8s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Boca de la cinta abajo y, dentro, el número de canciones. */
+.mouth {
+  justify-self: center;
+  width: 78%;
+  padding: 3px 4px 4px;
+  clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%);
+  background: var(--window);
+  color: var(--on-shell-soft);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Marca de elegido: una etiqueta de azafrán pegada en la esquina. */
+.picked {
+  position: absolute;
+  top: -11px;
+  right: -11px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-tag);
+  background: var(--saffron);
+  color: var(--ink);
+  border: var(--stroke-thin) solid var(--ink);
+}
+
+@media (max-width: 640px) {
+  .cassettes {
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: 14px;
+  }
+  /* Más estrecho en el móvil: el casete gana algo de alto para que el nombre no choque con la ventana. */
+  .cassette {
+    aspect-ratio: 4 / 3;
+    padding: 8px 9px 0;
+  }
+  .name {
+    font-size: 17px;
+    padding: 0 6px;
+  }
+  .reel {
+    width: 20px;
+  }
+}
+
+/* ---------- Lomos de género ---------- */
+
+/* La estantería: los lomos se apoyan abajo y cada fila tiene su balda punteada. */
+.shelf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px 10px;
+  padding-top: 6px;
+  /* Una balda cada 62px (48 del lomo + 14 de hueco), alineada con el pie de cada fila. */
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 54px,
+    var(--card-rule) 54px 56px,
+    transparent 56px 62px
+  );
+}
+
+.spine {
+  display: inline-flex;
+  align-items: stretch;
+  min-height: var(--control-h-sm);
+  padding: 0;
+  border: var(--stroke-thin) solid var(--ink);
+  border-radius: var(--radius-tag);
+  overflow: hidden;
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    transform var(--dur) var(--ease-out),
+    background-color var(--dur) var(--ease-out);
+}
+
+/* El lomo del casete: las tres rayas apiladas en tercios. */
+.spine::before {
+  content: "";
+  flex: none;
+  width: 14px;
+  background: var(--tape-stripes);
+  border-right: var(--stroke-thin) solid var(--ink);
+}
+
+.spineText {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px 0 12px;
+}
+
+.spine:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+/* Elegido: se saca de la estantería y se rellena de azafrán. */
+.spine[aria-pressed="true"] {
+  background: var(--saffron);
+  transform: translateY(-4px);
+}
+
+.spine:focus-visible {
+  outline: var(--stroke) solid var(--tomato-deep);
+  outline-offset: 2px;
+}
+
+.spine:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spine,
+  .cassette {
+    transition: none;
+  }
+}
