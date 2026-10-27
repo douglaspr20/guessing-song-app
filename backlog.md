@@ -16,6 +16,7 @@ Estado al 27-10-2026. Marcas: `[x]` hecho, `[ ]` pendiente. Tamaño: S (horas), 
 - [x] Probar el teclado en un iPhone real.
 - [x] Probar el pulsador con varios móviles a la vez.
 - [x] Poner `ABLY_API_KEY` en Vercel (marcada como Sensitive).
+- [x] Vista previa al compartir: imagen Open Graph por idioma (`/og/es`, `/og/en`, generada con `ImageResponse` y las tipografías de la app), metadatos `openGraph` y `twitter`, e icono propio del casete (`icon.svg` y `apple-icon`). Fuera el favicon de Next y los SVG de plantilla. README con el enlace a la app y capturas nuevas.
 - [x] Crédito discreto «Hecho por Douglas Pérez · Código en GitHub» en la portada, el pie de la estantería y la pantalla final (nunca durante el juego).
 - [x] Playlists como casetes de tamaño fijo (nombre centrado y recortado, bobinas que giran al elegirlas) y géneros como lomos de una estantería.
 - [x] Analítica de Vercel (visitas sin cookies) y Speed Insights, solo en Vercel y con las URL limpias de ids y códigos; el panel del anfitrión no se mide.
@@ -34,9 +35,7 @@ La gente llega desde el post sin conocer el juego: lo primero que ve es la tarje
 
 ### Presentación
 
-- [ ] **Vista previa al compartir el enlace (S).** Hoy no hay imagen Open Graph ni `openGraph`/`metadataBase` en `src/app/layout.tsx`: LinkedIn, WhatsApp y X muestran el enlace sin imagen. Imagen generada (`opengraph-image` con `ImageResponse`) en el estilo del casete, en español e inglés, más los metadatos `openGraph` y `twitter`.
-- [ ] **Icono propio (S).** `src/app/favicon.ico` es el de Next por defecto. Un `icon.svg` y un `apple-icon` con el casete, y borrar los 5 SVG de plantilla de `public/` (no se usan).
-- [ ] **README al día (S).** Dice que la interfaz es solo en español; ya es ES/EN. Añadir el enlace a la app y una captura de la estantería y de las playlists como casetes.
+- [ ] **Comprobar la tarjeta en LinkedIn (sin código).** Tras desplegar `feat/share-preview`, pegar la URL en el [Post Inspector](https://www.linkedin.com/post-inspector/) para ver la tarjeta real y refrescar su caché.
 
 ### Capacidad
 

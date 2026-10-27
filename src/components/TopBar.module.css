@@ -30,7 +30,9 @@
   font-size: clamp(20px, 2vw, 30px);
 }
 
-.brand svg {
+.brandIcon {
+  width: 1.1em;
+  height: 1.1em;
   flex: none;
 }
 
