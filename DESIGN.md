@@ -315,6 +315,9 @@ El selector **ES · EN** vive en la banda superior, a la derecha de la etiqueta 
 
 **Voz en inglés.** El mismo tono cercano y de casete: frases cortas, segunda persona, sin jerga técnica («Rewinding…», «The tape got tangled», «Record a new game»). Los términos del juego se traducen siempre igual: casete → *cassette*, pista → *track*, estantería → *shelf*, «¡Lo sé!» → *I know it!*, anfitrión → *host*. La marca «Adivina la canción» no se traduce. Las teclas de los atajos son las mismas en los dos idiomas (V, C, A, N siguen los colores del mando).
 
+### Crédito «Hecho por»
+Una línea pequeña (16px, texto suave): «Hecho por **Douglas Pérez** · Código en GitHub». El nombre lleva a LinkedIn y el segundo enlace al repositorio; los dos se abren en otra pestaña (con aviso para lectores de pantalla) y tienen la altura de un control pequeño. Solo aparece en la portada, a la izquierda del pie de la estantería y debajo de los botones de la pantalla final (en tinta suave de cartulina). **Nunca durante el juego**, ni en `/nueva`, `/unirse` o el panel del anfitrión. Los datos viven en `src/lib/site.ts`.
+
 ### Cassette (signature)
 La carcasa (28px, tornillos) lleva una etiqueta de cartulina con el título manuscrito y «vale N pts» en tomate hondo. La ventana es una píldora de hasta 900px que se mide a sí misma (container query): bobinas de clamp(48px, 16cqw, 150px) y contador de clamp(40px, 15cqw, 150px), así el contador nunca invade una bobina. El rollo de cada bobina cambia de radio según la cinta que le queda; los dientes del eje giran solo mientras suena. El contador va en azafrán y pasa a tomate con poco tiempo. Debajo, tres marcas de pista (20, 40 y 60 s) con borde superior de 6px que se encienden en azafrán y escriben la pista en Kalam.
 

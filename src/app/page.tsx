@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { BandStatus } from "@/components/band/BandStatus";
 import { ChangePassword } from "@/components/ChangePassword";
+import { MadeBy } from "@/components/MadeBy";
 import { useToast } from "@/components/feedback/FeedbackProvider";
 import { useConfirmedAction } from "@/components/feedback/useConfirmedAction";
 import { RedeemInvite } from "@/components/RedeemInvite";
@@ -99,13 +100,16 @@ export default function Home() {
           </div>
         )}
         {view === "connect" && (
-          <Connect
-            error={loginError ?? notice}
-            paused={!!access?.openModePaused}
-            googleEnabled={!!access?.googleEnabled}
-            onGuest={playAsGuest}
-            onSignedIn={refresh}
-          />
+          <>
+            <Connect
+              error={loginError ?? notice}
+              paused={!!access?.openModePaused}
+              googleEnabled={!!access?.googleEnabled}
+              onGuest={playAsGuest}
+              onSignedIn={refresh}
+            />
+            <MadeBy className={styles.connectCredit} />
+          </>
         )}
         {view === "account" && user && access && (
           <Shelf

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { MadeBy } from "@/components/MadeBy";
 import { Podium } from "@/components/Podium";
 import { TapeConfetti } from "@/components/TapeConfetti";
 import { TeamDot } from "@/components/TeamDot";
@@ -63,6 +64,7 @@ export function Finale({ game }: { game: Game }) {
                     {m.common.backToShelf}
                   </Link>
                 </div>
+                <MadeBy on="card" className={styles.finaleCredit} />
               </div>
             </div>
           </div>

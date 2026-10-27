@@ -1,6 +1,6 @@
 # Backlog
 
-Estado al 24-10-2026. Marcas: `[x]` hecho, `[ ]` pendiente. Tamaño: S (horas), M (1-2 días), L (varios días).
+Estado al 27-10-2026. Marcas: `[x]` hecho, `[ ]` pendiente. Tamaño: S (horas), M (1-2 días), L (varios días). Lo pendiente va por prioridad (P0 primero) y, dentro de cada una, por categoría.
 
 ## Hecho
 
@@ -16,6 +16,7 @@ Estado al 24-10-2026. Marcas: `[x]` hecho, `[ ]` pendiente. Tamaño: S (horas), 
 - [x] Probar el teclado en un iPhone real.
 - [x] Probar el pulsador con varios móviles a la vez.
 - [x] Poner `ABLY_API_KEY` en Vercel (marcada como Sensitive).
+- [x] Crédito discreto «Hecho por Douglas Pérez · Código en GitHub» en la portada, el pie de la estantería y la pantalla final (nunca durante el juego).
 - [x] Playlists como casetes de tamaño fijo (nombre centrado y recortado, bobinas que giran al elegirlas) y géneros como lomos de una estantería.
 - [x] Analítica de Vercel (visitas sin cookies) y Speed Insights, solo en Vercel y con las URL limpias de ids y códigos; el panel del anfitrión no se mide.
 - [x] Refactor de componentes y estilos: pantallas grandes partidas (`_components/`, `_hooks/`, `_lib/` por ruta), componentes y hooks compartidos, y librería de estilos (`src/components/styles/`) con tokens nuevos.
@@ -24,48 +25,79 @@ Estado al 24-10-2026. Marcas: `[x]` hecho, `[ ]` pendiente. Tamaño: S (horas), 
 - [x] Bases de las previews: la integración de Neon ya crea una rama de base por cada despliegue de preview (`preview/<rama>`), así que las migraciones y los datos de un PR no tocan producción.
 - [x] En GitHub (_Settings → Branches_), proteger `master`: exigir pull request y el check `ci-ok`
 - [x] Tras fusionar `fix/vercel-status-check`, comprobar que en el siguiente despliegue aparece el check «Despliegue en Vercel» en el commit (Vercel informa con un estado de commit, no con «deployments»; el workflow anterior no se activaba nunca).
+- [x] En Vercel, activar _Analytics_ y _Speed Insights_ en el proyecto (pestañas del mismo nombre) para que empiecen a recoger datos.
 
-## Pendiente en GitHub y Vercel (manual)
 
-- [ ] En Vercel, activar *Analytics* y *Speed Insights* en el proyecto (pestañas del mismo nombre) para que empiecen a recoger datos.
+## P0 · Antes de publicarlo en LinkedIn
 
-## Calidad y base técnica
+La gente llega desde el post sin conocer el juego: lo primero que ve es la tarjeta del enlace y la portada, y si muchos entran a la vez el modo abierto tiene que aguantar.
+
+### Presentación
+
+- [ ] **Vista previa al compartir el enlace (S).** Hoy no hay imagen Open Graph ni `openGraph`/`metadataBase` en `src/app/layout.tsx`: LinkedIn, WhatsApp y X muestran el enlace sin imagen. Imagen generada (`opengraph-image` con `ImageResponse`) en el estilo del casete, en español e inglés, más los metadatos `openGraph` y `twitter`.
+- [ ] **Icono propio (S).** `src/app/favicon.ico` es el de Next por defecto. Un `icon.svg` y un `apple-icon` con el casete, y borrar los 5 SVG de plantilla de `public/` (no se usan).
+- [ ] **README al día (S).** Dice que la interfaz es solo en español; ya es ES/EN. Añadir el enlace a la app y una captura de la estantería y de las playlists como casetes.
+
+### Capacidad
+
+- [ ] **Revisar el aguante del modo abierto ante un pico (S).** La búsqueda de iTunes se llama desde el servidor, así que todas las visitas comparten las IP de Vercel y su límite (responde 403/429, que ya se traduce a `ITUNES_RATE_LIMITED`). Comprobar qué ve el jugador en ese caso, si conviene cachear búsquedas repetidas y si el tope global de 3000 partidas de invitados (`GUEST_LIMITS`) y el plan gratis de Neon bastan. Tener a mano el interruptor «pausar modo abierto» del panel.
+
+### El post (sin código)
+
+- [ ] **Material para el post.** Vídeo de 30-45 s de una partida real (tele + varios móviles pulsando «¡Lo sé!»), 3-4 capturas de apoyo, la historia (por qué y para quién) y tres puntos técnicos: Spotify Web Playback SDK, tiempo real con Ably, CI con e2e y acceso del anfitrión con TOTP.
+
+## P1 · Siguiente: valor alto y esfuerzo bajo
+
+### Medir
+
+- [ ] **Analítica mínima respetuosa (S).** Partidas creadas, terminadas y abandonadas, sin datos personales (eventos personalizados de Vercel Analytics). Hace falta antes del post para saber si atrae y dónde se cae la gente; sin esto, el resto del backlog se ordena a ciegas.
+- [ ] **Prueba con grupos reales (S, sin código).** Jugar con 5-10 grupos y anotar qué piden repetir. Decide qué de P2 y P3 importa de verdad.
+
+### Juego
+
+- [ ] **Repetir la última partida con un clic (S).** «Otra igual» en la pantalla final, con los mismos filtros, equipos y ajustes. Hoy «Grabar otra partida» obliga a configurarlo todo de nuevo.
+- [ ] **Compartir el resultado (M).** Imagen del podio para enviar al grupo de la familia (reutiliza la generación de imágenes de la vista previa). Es la forma natural de que el juego se difunda solo.
+- [ ] **Reconexión del móvil (M).** Si un jugador pierde la cookie o cambia de dispositivo, reclamar su nombre con un PIN corto de la partida en vez de depender de que el anfitrión lo eche.
+
+## P2 · Después: mejora la experiencia de quien ya juega
+
+### Contenido y búsqueda
 
 - [ ] **No repetir canciones entre partidas del mismo dueño (M).** Hoy solo evita repetidas dentro de una partida. Necesita historial de pistas por dueño y un límite (por ejemplo, las últimas N partidas) para no agotar el catálogo.
-
-## Contenido y búsqueda
-
-- [ ] **Mejorar la búsqueda (L).**
+- [ ] **Mejorar la búsqueda (L).** Empezar por el respaldo, que evita rondas fallidas; lo demás según lo que pidan los grupos.
+  - Respaldo: si en una ronda no se encuentra canción, buscar una parecida.
   - Añadir artistas concretos.
   - Buscar solo entre las más populares.
   - Ajustes especiales por usuario.
-  - Respaldo: si en una ronda no se encuentra canción, buscar una parecida.
 
-## Anfitrión y miembros
+### Plataforma
 
-- [ ] **Mejorar la tarjeta de miembros en la vista del anfitrión (S/M).** Con muchos miembros se vuelve molesta: buscador, paginación o lista plegable.
-- [ ] **Más miembros con Spotify (S).** El tope de 5 cuentas solo cambia si Spotify concede la cuota ampliada. El código ya está listo; cambiaría solo el panel de Spotify. Según fuentes de terceros exige empresa registrada y unos 250 000 usuarios activos al mes: verificar en la web oficial.
+- [ ] **Instalable como app (S).** Manifest y service worker para añadirla a la pantalla de inicio. Barato y se nota en el móvil; comparte el icono de P0.
 
-## Estadísticas
+### Estadísticas
 
 - [ ] **Estadísticas entre partidas (L).** Quién gana más, aciertos por género o década, rachas. Cada usuario ya tiene historial, así que hay datos.
 
-## Ideas nuevas (por priorizar)
+### Anfitrión y miembros
 
-Valor alto y esfuerzo razonable:
+- [ ] **Mejorar la tarjeta de miembros en la vista del anfitrión (S/M).** Con muchos miembros se vuelve molesta: buscador, paginación o lista plegable. Baja prioridad mientras los miembros sean pocos.
 
-- [ ] **Enlace discreto «Hecho por…» y, si se quiere, «invítame a un café» (S).** Solo en el pie de página y en la pantalla final, nunca durante el juego. Antes: revisar términos de Spotify e impuestos. Mejor esperar a tener usuarios reales.
-- [ ] **Prueba con grupos reales (S, sin código).** Jugar con 5-10 grupos y anotar qué piden repetir. Decide qué del backlog importa de verdad.
-- [ ] **Analítica mínima respetuosa (S).** Partidas creadas, terminadas y abandonadas, sin datos personales. Sin esto, el backlog se ordena a ciegas.
-- [ ] **Repetir la última partida con un clic (S).** «Otra igual» al terminar, con los mismos filtros, equipos y ajustes.
-- [ ] **Compartir el resultado (M).** Imagen del podio para enviar al grupo de familia.
-- [ ] **Reconexión del móvil (M).** Si un jugador pierde la cookie o cambia de dispositivo, poder reclamar su nombre con un PIN corto de la partida en vez de depender de que el anfitrión lo eche.
+## P3 · Futuro: según lo que pidan los grupos
 
-Pensando en el futuro:
+### Modos y contenido
 
 - [ ] **Modos de juego (M cada uno).** Solo artista, solo década, ronda relámpago, «adivina la letra» (cuidado con derechos de letras).
-- [ ] **Partidas pregrabadas por tema (M).** Paquetes por década o género listos para jugar, sin configurar filtros.
+- [ ] **Partidas pregrabadas por tema (M).** Paquetes por década o género listos para jugar, sin configurar filtros. Buena entrada para quien llega sin saber qué elegir.
+
+### Accesibilidad y público
+
 - [ ] **Accesibilidad y modo para niños (M).** Dificultad más fácil, pistas más generosas, textos más grandes.
 - [ ] **Modo espectador (M).** Ver la partida en una pantalla sin poder pulsar.
-- [ ] **Instalable como app (S).** Manifest y service worker para añadirla a la pantalla de inicio.
-- [ ] **Contenido con licencia (L, decisión de negocio).** Solo si se quiere monetizar: pedir cotización a proveedores de clips con licencia y consultar a un abogado sobre las vistas previas de iTunes. Ver el análisis de monetización de la conversación.
+
+## Bloqueado o decisión de negocio
+
+No dependen del código: esperan a terceros, a usuarios reales o a una decisión.
+
+- [ ] **«Invítame a un café» (S).** Junto al crédito «Hecho por», nunca durante el juego. Antes: revisar términos de Spotify e iTunes (cobrar dentro de la app) e impuestos. Mejor esperar a tener usuarios reales.
+- [ ] **Más miembros con Spotify (S).** El tope de 5 cuentas solo cambia si Spotify concede la cuota ampliada. El código ya está listo; cambiaría solo el panel de Spotify. Según fuentes de terceros exige empresa registrada y unos 250 000 usuarios activos al mes: verificar en la web oficial.
+- [ ] **Contenido con licencia (L).** Solo si se quiere monetizar: pedir cotización a proveedores de clips con licencia y consultar a un abogado sobre las vistas previas de iTunes. Ver el análisis de monetización de la conversación.

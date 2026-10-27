@@ -583,6 +583,10 @@
   gap: 12px;
 }
 
+.finaleCredit {
+  margin-top: 16px;
+}
+
 .playerError {
   margin-bottom: 20px;
 }

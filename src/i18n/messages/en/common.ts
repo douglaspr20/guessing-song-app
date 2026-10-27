@@ -29,6 +29,9 @@ export const common = {
   trackCassette: "Track cassette",
   hints: "Hints",
   unavailable: "not available",
+  madeBy: "Made by",
+  sourceCode: "Code on GitHub",
+  opensNewTab: "(opens in a new tab)",
   less: (label: string) => `Fewer ${label.toLowerCase()}`,
   more: (label: string) => `More ${label.toLowerCase()}`,
   errorPage: {
