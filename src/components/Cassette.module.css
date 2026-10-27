@@ -82,7 +82,7 @@
   height: var(--r);
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(circle, #6d4826 0 55%, #5b3a1e 56% 100%);
+  background: radial-gradient(circle, #6d4826 0 55%, var(--tape-brown) 56% 100%);
   transition:
     width 1s linear,
     height 1s linear;

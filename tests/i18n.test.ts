@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -86,7 +86,9 @@ describe("diccionarios", () => {
   it("cada error que lanza el servidor tiene su texto", () => {
     const files = execSync('git ls-files -co --exclude-standard -- "src/*.ts" "src/*.tsx"', { encoding: "utf8" })
       .trim()
-      .split("\n");
+      .split("\n")
+      // Git aún lista los archivos recién movidos o borrados que no se han confirmado.
+      .filter((file) => existsSync(file));
     const missing: string[] = [];
     for (const file of files) {
       const src = readFileSync(file, "utf8");

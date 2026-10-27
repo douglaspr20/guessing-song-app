@@ -48,7 +48,7 @@
 }
 .p3 .step {
   background: var(--tomato);
-  color: #fff;
+  color: var(--on-tomato);
 }
 
 /* Versión de estantería (historial). */

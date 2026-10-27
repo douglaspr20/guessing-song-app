@@ -2,7 +2,7 @@ import { EyeOff } from "lucide-react";
 import type { Game } from "@/lib/client/api";
 import { TeamDot } from "@/components/TeamDot";
 import { rulesFor } from "@/lib/game/scoring";
-import { TEAM_COLORS } from "@/lib/game/teams";
+import { byPalette } from "@/lib/game/standings";
 import { plural } from "@/i18n/format";
 import { useI18n } from "@/i18n/client";
 import styles from "../game.module.css";
@@ -18,11 +18,7 @@ export function ReadyCard({ game }: { game: Game }) {
   const open = game.mode === "open";
   const byTeams = game.format === "teams";
   // Equipos en el orden de la paleta (el de creación), no por puntos.
-  const teams = byTeams
-    ? [...game.players].sort(
-        (a, b) => TEAM_COLORS.findIndex((c) => c.key === a.color) - TEAM_COLORS.findIndex((c) => c.key === b.color),
-      )
-    : [];
+  const teams = byTeams ? [...game.players].sort(byPalette) : [];
 
   return (
     <div className={`${styles.revealCard} ${styles.readyCard}`}>

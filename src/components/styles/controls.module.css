@@ -1,0 +1,145 @@
+/* Librería de controles pequeños: segmentado, chips, botón cuadrado de icono y botón pequeño. */
+
+/* Segmentado: botones pegados dentro de un trazo; el elegido se rellena de tinta. */
+.segment {
+  display: inline-grid;
+  grid-auto-flow: column;
+  border: var(--stroke) solid var(--ink);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+
+/* Dos (o más) mitades iguales a todo lo ancho. */
+.segmentFill {
+  display: grid;
+  grid-auto-columns: 1fr;
+}
+
+.segment button {
+  min-height: var(--control-h);
+  padding: 0 22px;
+  background: transparent;
+  border: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 21px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.segment button + button {
+  border-left: var(--stroke) solid var(--ink);
+}
+
+.segment button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.segment button:focus-visible {
+  outline: var(--stroke) solid var(--tomato-deep);
+  outline-offset: -6px;
+}
+
+@media (max-width: 900px) {
+  .segment button {
+    padding: 0 14px;
+    font-size: 19px;
+  }
+}
+
+/* En el móvil las mitades iguales pueden partir el texto en dos líneas. */
+@media (max-width: 640px) {
+  .segmentFill {
+    width: 100%;
+  }
+  .segmentFill button {
+    padding: 8px 10px;
+    font-size: 18px;
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+}
+
+/* Chips: pastillas con borde fino; la elegida se rellena de tinta. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--hit-min);
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  border: var(--stroke-thin) solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 17px;
+  transition: background-color var(--dur) var(--ease-out);
+}
+
+.chip:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.chip:disabled {
+  opacity: 0.45;
+}
+
+.chip svg {
+  flex: none;
+}
+
+/* Chip con un nombre escrito a mano («¿Eres uno de estos?»). */
+.chipHand {
+  min-height: var(--control-h-sm);
+  padding: 0 18px;
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: 22px;
+}
+
+/* Botón cuadrado de icono (quitar, sacar): 44px, borde fino; al pasar se rellena de tinta. */
+.iconBtn {
+  width: var(--hit-min);
+  height: var(--hit-min);
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: var(--stroke-thin) solid var(--ink);
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink);
+  transition:
+    background-color var(--dur) var(--ease-out),
+    color var(--dur) var(--ease-out);
+}
+
+.iconBtn:hover {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.iconBtn:focus-visible {
+  outline: var(--stroke) solid var(--tomato-deep);
+  outline-offset: 2px;
+}
+
+/* Botón pequeño (acciones de una fila): se suma a `ui.btn`. */
+.small {
+  min-height: var(--control-h-sm);
+  font-size: 17px;
+  padding: 6px 14px;
+}
+

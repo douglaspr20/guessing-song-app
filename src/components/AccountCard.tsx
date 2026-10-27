@@ -1,9 +1,15 @@
 "use client";
 
 import { useId, useState, type FormEvent } from "react";
-import { AlertTriangle, LogIn, Ticket } from "lucide-react";
-import { api, errorText } from "@/lib/client/api";
+import { LogIn, Ticket } from "lucide-react";
+import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useI18n } from "@/i18n/client";
+import { api } from "@/lib/client/api";
+import { Card } from "./Card";
+import { Field } from "./Field";
+import { Notice } from "./Notice";
+import { Segmented } from "./Segmented";
+import form from "./styles/form.module.css";
 import ui from "./ui.module.css";
 import styles from "./access.module.css";
 
@@ -29,49 +35,38 @@ export function AccountCard({
   const [invite, setInvite] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { busy, error, run } = useAsyncAction();
   const registering = tab === "invite";
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
+    const ok = await run(async () => {
       if (registering) await api("/api/account/register", { json: { invite, username, password } });
       else await api("/api/account/login", { json: { username, password } });
-      onDone();
-    } catch (err) {
-      setError(errorText(err));
-    } finally {
-      setBusy(false);
-    }
+      return true;
+    });
+    if (ok) onDone();
   };
 
   return (
-    <section className={`${ui.card} ${styles.card}`} aria-labelledby={`${ids}-title`}>
-      <div className={ui.cardStripes} />
+    <Card className={styles.card} aria-labelledby={`${ids}-title`}>
       <form className={styles.body} onSubmit={submit}>
-        <div className={styles.tabs} role="group" aria-label={a.kindOfAccess}>
-          <button type="button" aria-pressed={!registering} onClick={() => setTab("login")}>
-            {a.tabLogin}
-          </button>
-          <button type="button" aria-pressed={registering} onClick={() => setTab("invite")}>
-            {a.tabInvite}
-          </button>
-        </div>
+        <Segmented
+          fill
+          label={a.kindOfAccess}
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: "login", label: a.tabLogin },
+            { value: "invite", label: a.tabInvite },
+          ]}
+        />
 
         <div>
           <h2 className={styles.title} id={`${ids}-title`}>
             {registering ? a.createTitle : a.loginTitle}
           </h2>
-          <p className={styles.lede}>
-            {registering
-              ? a.createLede
-              : googleEnabled
-                ? a.loginLedeGoogle
-                : a.loginLede}
-          </p>
+          <p className={styles.lede}>{registering ? a.createLede : googleEnabled ? a.loginLedeGoogle : a.loginLede}</p>
         </div>
 
         {googleEnabled && (
@@ -86,10 +81,9 @@ export function AccountCard({
         )}
 
         {registering && (
-          <label className={styles.field}>
-            <span className={styles.label}>{a.inviteCode}</span>
+          <Field label={a.inviteCode}>
             <input
-              className={`${styles.input} ${styles.code}`}
+              className={`${form.input} ${form.code}`}
               value={invite}
               onChange={(e) => setInvite(e.target.value)}
               placeholder="ABCD-EFGH-JKMN"
@@ -98,12 +92,11 @@ export function AccountCard({
               spellCheck={false}
               required
             />
-          </label>
+          </Field>
         )}
-        <label className={styles.field}>
-          <span className={styles.label}>{a.username}</span>
+        <Field label={a.username}>
           <input
-            className={styles.input}
+            className={form.input}
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder={registering ? a.usernameHint : ""}
@@ -114,11 +107,10 @@ export function AccountCard({
             maxLength={30}
             required
           />
-        </label>
-        <label className={styles.field}>
-          <span className={styles.label}>{a.password}</span>
+        </Field>
+        <Field label={a.password} hint={registering && a.passwordHint}>
           <input
-            className={styles.input}
+            className={form.input}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -127,17 +119,11 @@ export function AccountCard({
             maxLength={200}
             required
           />
-          {registering && <span className={styles.hint}>{a.passwordHint}</span>}
-        </label>
+        </Field>
 
-        {error && (
-          <p className={`${ui.notice} ${ui.noticeErrorOnCard}`} role="alert">
-            <AlertTriangle size={20} aria-hidden />
-            {error}
-          </p>
-        )}
+        {error && <Notice>{error}</Notice>}
 
-        <div className={styles.actions}>
+        <div className={form.actions}>
           <button type="submit" className={`${ui.btn} ${ui.primary}`} disabled={busy}>
             {registering ? <Ticket size={22} aria-hidden /> : <LogIn size={22} aria-hidden />}
             {busy ? m.common.oneMoment : registering ? a.createAccount : a.signIn}
@@ -147,7 +133,7 @@ export function AccountCard({
           </button>
         </div>
       </form>
-    </section>
+    </Card>
   );
 }
 

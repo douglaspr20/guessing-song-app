@@ -1,9 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, Minus, Plus, Shuffle } from "lucide-react";
+import { Plus, Shuffle } from "lucide-react";
+import { Notice } from "@/components/Notice";
 import { Stepper } from "@/components/Stepper";
+import form from "@/components/styles/form.module.css";
 import ui from "@/components/ui.module.css";
+import { useI18n } from "@/i18n/client";
+import { formatList } from "@/i18n/format";
 import {
   distribute,
   emptiestTeam,
@@ -18,12 +22,10 @@ import {
   overfull,
   repeated,
   resizeTeams,
-  teamColor,
   type TeamDraft,
 } from "@/lib/game/teams";
 import setup from "../setup.module.css";
-import { formatList } from "@/i18n/format";
-import { useI18n } from "@/i18n/client";
+import { TeamCard } from "./TeamCard";
 import styles from "./teams.module.css";
 
 interface Props {
@@ -37,39 +39,30 @@ interface Props {
 export function TeamsEditor({ teams, maxSize, onTeams, onMaxSize }: Props) {
   const { m, locale } = useI18n();
   const s = m.setup;
-  const [name, setName] = useState("");
-  const [full, setFull] = useState(false);
-
   const people = everyone(teams);
   const tooMany = overfull(teams, maxSize);
   const dups = repeated(people);
   const capacity = teams.length * maxSize;
+  /** Se intentó añadir a alguien y no cabía en ningún equipo. */
+  const [full, setFull] = useState(false);
 
-  const add = () => {
-    const n = name.trim();
-    if (!n) return;
-    const next = fillIn(teams, n, maxSize);
-    setFull(!next);
-    if (!next) return;
-    onTeams(next);
-    setName("");
-  };
-
-  const rename = (i: number, value: string) => onTeams(teams.map((t, j) => (j === i ? { ...t, name: value } : t)));
-  const remove = (i: number, member: string) =>
-    onTeams(teams.map((t, j) => (j === i ? { ...t, members: t.members.filter((m) => m !== member) } : t)));
+  const updateTeam = (i: number, change: (t: TeamDraft) => TeamDraft) => onTeams(teams.map((t, j) => (j === i ? change(t) : t)));
   const move = (from: number, member: string, to: number) => {
     const next = moveMember(teams, from, member, to, maxSize);
     if (next) onTeams(next);
   };
-
-  const canShuffle = people.length > 1 && fits(people.length, teams.length, maxSize);
+  const add = (name: string) => {
+    const next = fillIn(teams, name, maxSize);
+    setFull(!next);
+    if (next) onTeams(next);
+    return !!next;
+  };
 
   return (
     <div className={styles.editor}>
       <div className={setup.settingsRow}>
-        <div className={setup.field}>
-          <span className={setup.fieldLabel}>{s.teams}</span>
+        <div className={form.field}>
+          <span className={form.label}>{s.teams}</span>
           <Stepper
             label={s.teams}
             value={teams.length}
@@ -78,22 +71,76 @@ export function TeamsEditor({ teams, maxSize, onTeams, onMaxSize }: Props) {
             onChange={(n) => onTeams(resizeTeams(teams, n, maxSize, s))}
           />
         </div>
-        <div className={setup.field}>
-          <span className={setup.fieldLabel}>{s.maxPerTeam}</span>
+        <div className={form.field}>
+          <span className={form.label}>{s.maxPerTeam}</span>
           <Stepper label={s.maxPerTeam} value={maxSize} min={MIN_TEAM_SIZE} max={MAX_TEAM_SIZE} onChange={onMaxSize} />
         </div>
       </div>
-      <p className={setup.hint}>
-        Caben {capacity} personas. Un equipo puede quedarse con menos gente que otro.
-      </p>
+      <p className={setup.hint}>{s.capacity(capacity)}</p>
 
+      <AddPersonRow
+        onAdd={add}
+        onTyping={() => setFull(false)}
+        canShuffle={people.length > 1 && fits(people.length, teams.length, maxSize)}
+        onShuffle={() => onTeams(distribute(people, teams, maxSize))}
+      />
+
+      {full && emptiestTeam(teams, maxSize) === -1 && <Notice className={styles.notice}>{s.allFull}</Notice>}
+      {tooMany.map((t) => (
+        <Notice key={t.color} className={styles.notice}>
+          {s.overfull(t.name, t.members.length, maxSize)}
+        </Notice>
+      ))}
+      {people.length > capacity && <Notice className={styles.notice}>{s.tooManyPeople(people.length, capacity)}</Notice>}
+      {dups.length > 0 && <Notice className={styles.notice}>{s.repeatedPeople(formatList(locale, dups))}</Notice>}
+
+      <ul className={styles.teams}>
+        {teams.map((t, i) => (
+          <TeamCard
+            key={t.color}
+            team={t}
+            index={i}
+            teams={teams}
+            maxSize={maxSize}
+            onRename={(name) => updateTeam(i, (team) => ({ ...team, name }))}
+            onMove={(member, to) => move(i, member, to)}
+            onRemove={(member) => updateTeam(i, (team) => ({ ...team, members: team.members.filter((x) => x !== member) }))}
+          />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Escribir un nombre y añadirlo al equipo con menos gente (Enter también), o repartir a todos al azar. */
+function AddPersonRow({
+  onAdd,
+  onTyping,
+  canShuffle,
+  onShuffle,
+}: {
+  /** Devuelve false si no cabía en ningún equipo (el nombre se queda escrito). */
+  onAdd: (name: string) => boolean;
+  onTyping: () => void;
+  canShuffle: boolean;
+  onShuffle: () => void;
+}) {
+  const { m } = useI18n();
+  const s = m.setup;
+  const [name, setName] = useState("");
+  const add = () => {
+    const n = name.trim();
+    if (n && onAdd(n)) setName("");
+  };
+  return (
+    <>
       <div className={styles.addRow}>
         <input
           className={setup.handInput}
           value={name}
           onChange={(e) => {
             setName(e.target.value);
-            setFull(false);
+            onTyping();
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -109,83 +156,12 @@ export function TeamsEditor({ teams, maxSize, onTeams, onMaxSize }: Props) {
           <Plus size={24} strokeWidth={3} aria-hidden />
           {s.addPerson}
         </button>
-        <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={() => onTeams(distribute(people, teams, maxSize))} disabled={!canShuffle}>
+        <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onShuffle} disabled={!canShuffle}>
           <Shuffle size={22} aria-hidden />
           {s.shuffle}
         </button>
       </div>
       <p className={styles.addHint}>{s.addHint}</p>
-
-      {full && emptiestTeam(teams, maxSize) === -1 && (
-        <Notice>{s.allFull}</Notice>
-      )}
-      {tooMany.map((t) => (
-        <Notice key={t.color}>
-          {s.overfull(t.name, t.members.length, maxSize)}
-        </Notice>
-      ))}
-      {people.length > capacity && <Notice>{s.tooManyPeople(people.length, capacity)}</Notice>}
-      {dups.length > 0 && <Notice>{s.repeatedPeople(formatList(locale, dups))}</Notice>}
-
-      <ul className={styles.teams}>
-        {teams.map((t, i) => (
-          <li key={t.color} className={styles.team} style={{ ["--team" as string]: teamColor(t.color)?.hex }}>
-            <div className={styles.teamHead}>
-              <span className={styles.swatch} aria-hidden />
-              <input
-                className={`${setup.handInput} ${styles.teamName}`}
-                value={t.name}
-                onChange={(e) => rename(i, e.target.value)}
-                maxLength={30}
-                aria-label={s.teamNameLabel(i + 1, s.teamColors[t.color])}
-              />
-              <span className={styles.count} aria-label={s.teamCount(t.members.length, maxSize)}>
-                {t.members.length}/{maxSize}
-              </span>
-            </div>
-            {t.members.length === 0 ? (
-              <p className={styles.nobody}>{s.nobodyYet}</p>
-            ) : (
-              <ul className={styles.members}>
-                {t.members.map((m, k) => (
-                  <li key={`${m}-${k}`} className={styles.member}>
-                    <span className={styles.memberName}>{m}</span>
-                    <select
-                      className={styles.move}
-                      value={i}
-                      onChange={(e) => move(i, m, Number(e.target.value))}
-                      aria-label={s.teamOf(m)}
-                    >
-                      {teams.map((other, j) => (
-                        <option key={other.color} value={j} disabled={j !== i && other.members.length >= maxSize}>
-                          {other.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className={styles.removeBtn}
-                      onClick={() => remove(i, m)}
-                      aria-label={s.removePerson(m)}
-                    >
-                      <Minus size={22} strokeWidth={3} aria-hidden />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function Notice({ children }: { children: React.ReactNode }) {
-  return (
-    <p className={`${ui.notice} ${ui.noticeErrorOnCard} ${styles.notice}`} role="alert">
-      <AlertTriangle size={20} aria-hidden />
-      {children}
-    </p>
+    </>
   );
 }

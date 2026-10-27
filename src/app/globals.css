@@ -23,6 +23,23 @@
   /* Texto sobre carcasa */
   --on-shell: #f4eedf;
   --on-shell-soft: #b9c3e3;
+  /* Campos y texto sobre tomate */
+  --field: #fffaf0;
+  --placeholder: #6b6a63;
+  --on-tomato: #ffffff;
+  /* Cinta del casete */
+  --tape-brown: #5b3a1e;
+  /* Avisos de error */
+  --notice-error-ink: #ffd6cf;
+  --notice-error-bg: #4a1d24;
+  --notice-error-card-bg: #fbe3df;
+  /* Las tres rayas de la cinta, de arriba abajo (banda, carátulas, lomos). */
+  --tape-stripes: linear-gradient(
+    to bottom,
+    var(--saffron) 0 33.4%,
+    var(--tomato) 33.4% 66.7%,
+    var(--sky) 66.7% 100%
+  );
 
   --font-display: var(--font-cond), "Arial Narrow", sans-serif;
   --font-script: var(--font-hand), cursive;
@@ -31,9 +48,19 @@
   --radius-shell: 28px;
   --radius-card: 16px;
   --radius-control: 12px;
+  --radius-tag: 4px;
+  --radius-pill: 999px;
   --stroke: 3px;
+  --stroke-thin: 2px;
+
+  /* Alturas: banda superior, controles y área mínima de toque. */
+  --band-h: 92px;
+  --control-h: 56px;
+  --control-h-sm: 48px;
+  --hit-min: 44px;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur: 160ms;
   --gutter: clamp(16px, 3.4vw, 48px);
 }
 

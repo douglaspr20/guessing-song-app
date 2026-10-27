@@ -118,7 +118,7 @@
   border: var(--stroke) solid var(--tomato);
   border-radius: var(--radius-card);
   background: var(--tomato);
-  color: #fff;
+  color: var(--on-tomato);
   font-family: var(--font-display);
   font-weight: 800;
   font-size: clamp(56px, 16vw, 96px);
@@ -202,7 +202,7 @@
   min-height: 64px;
   border: var(--stroke) solid var(--ink);
   border-radius: var(--radius-control);
-  background: #fffaf0;
+  background: var(--field);
   color: var(--ink);
   font-family: var(--font-script);
   font-weight: 700;

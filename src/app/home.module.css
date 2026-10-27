@@ -1,15 +1,9 @@
 .page {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+  composes: page from "../components/styles/layout.module.css";
 }
 
 .main {
-  flex: 1;
-  width: 100%;
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: clamp(24px, 4vw, 56px) var(--gutter) 48px;
+  composes: main from "../components/styles/layout.module.css";
 }
 
 /* ---------- Conectar ---------- */
@@ -19,29 +13,15 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
   gap: clamp(24px, 4vw, 64px);
   align-items: center;
-  min-height: calc(100vh - 92px - 104px);
+  composes: stage from "../components/styles/layout.module.css";
 }
 
 .headline {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(56px, 7.4vw, 104px);
-  line-height: 0.92;
-  letter-spacing: -0.01em;
-  text-transform: uppercase;
-  text-wrap: balance;
-}
-
-.headline em {
-  font-style: normal;
-  color: var(--saffron);
+  composes: headline from "../components/styles/layout.module.css";
 }
 
 .lede {
-  margin-top: 24px;
-  max-width: 34ch;
-  font-size: clamp(20px, 1.7vw, 24px);
-  color: var(--on-shell-soft);
+  composes: lede from "../components/styles/layout.module.css";
 }
 
 .lede strong {
@@ -78,26 +58,15 @@
 /* ---------- Estantería ---------- */
 
 .shelfHead {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 24px;
-  margin-bottom: clamp(24px, 3vw, 40px);
+  composes: pageHead from "../components/styles/layout.module.css";
 }
 
 .shelfTitle {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(44px, 5vw, 72px);
-  line-height: 0.95;
-  text-transform: uppercase;
+  composes: pageTitle from "../components/styles/layout.module.css";
 }
 
 .shelfSub {
-  margin-top: 8px;
-  font-size: 20px;
-  color: var(--on-shell-soft);
+  composes: pageSub from "../components/styles/layout.module.css";
 }
 
 .shelf {
@@ -123,12 +92,7 @@
   align-items: center;
   gap: 12px;
   padding: 10px 20px;
-  background: linear-gradient(
-    to bottom,
-    var(--saffron) 0 33.4%,
-    var(--tomato) 33.4% 66.7%,
-    var(--sky) 66.7% 100%
-  );
+  background: var(--tape-stripes);
 }
 
 .spineMeta {
@@ -294,22 +258,11 @@
 }
 
 .foot {
-  margin-top: 40px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 24px;
+  composes: foot from "../components/styles/layout.module.css";
 }
 
 .linkBtn {
-  display: inline-flex;
-  align-items: center;
-  min-height: 48px;
-  padding: 0 6px;
-  background: none;
-  border: 0;
-  color: var(--on-shell-soft);
-  text-decoration: underline;
-  font-size: 17px;
+  composes: linkBtn from "../components/styles/layout.module.css";
 }
 
 .inlineLink {
@@ -323,12 +276,7 @@
 }
 
 .loading {
-  padding: 80px 0;
-  font-family: var(--font-display);
-  font-size: 28px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--on-shell-soft);
+  composes: loading from "../components/styles/layout.module.css";
 }
 
 @media (max-width: 900px) {

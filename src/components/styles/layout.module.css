@@ -1,0 +1,105 @@
+/*
+ * Librería de maquetación compartida: página, ancho de lectura, titulares y pie.
+ * Los módulos de cada pantalla la reutilizan con `composes: … from "@/components/styles/layout.module.css"`
+ * (ruta relativa) o importándola directamente.
+ */
+
+/* La página ocupa el alto que deja la banda. */
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Contenido a 1440px como mucho, con el canal lateral de la app. */
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: clamp(24px, 4vw, 56px) var(--gutter) 48px;
+}
+
+/* Escena a pantalla completa (portada, errores, entrada del anfitrión): alto menos la banda y el pie. */
+.stage {
+  min-height: calc(100vh - var(--band-h) - 104px);
+}
+
+/* Titular grande sobre la carcasa: condensada en mayúsculas, la segunda línea en azafrán. */
+.headline {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(56px, 7.4vw, 104px);
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.headline em {
+  font-style: normal;
+  color: var(--saffron);
+}
+
+.lede {
+  margin-top: 24px;
+  max-width: 34ch;
+  font-size: clamp(20px, 1.7vw, 24px);
+  color: var(--on-shell-soft);
+}
+
+/* Título de pantalla («Tu estantería», «Panel del anfitrión», «Grabar partida nueva»). */
+.pageTitle {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(44px, 5vw, 72px);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.pageSub {
+  margin-top: 8px;
+  font-size: 20px;
+  color: var(--on-shell-soft);
+}
+
+/* Cabecera de pantalla: título a la izquierda y la acción principal a la derecha. */
+.pageHead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px 24px;
+  margin-bottom: clamp(24px, 3vw, 40px);
+}
+
+/* Pie con enlaces secundarios (salir, borrar historial…). */
+.foot {
+  margin-top: 40px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 24px;
+}
+
+.linkBtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-h-sm);
+  padding: 0 6px;
+  background: none;
+  border: 0;
+  color: var(--on-shell-soft);
+  text-decoration: underline;
+  font-size: 17px;
+}
+
+/* «Rebobinando…» mientras carga una pantalla. */
+.loading {
+  padding: 80px 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--on-shell-soft);
+}

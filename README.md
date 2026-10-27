@@ -191,9 +191,13 @@ src/lib/access/    sessions, passwords, TOTP, encryption, guests, limits, host p
 src/lib/game/      service (use cases), scoring, matcher, track picker, filters (zod), event bus
 src/lib/client/    browser API client and the shared Spotify player
 src/i18n/          languages: locale detection, dictionaries, formatting helpers
-src/app/           pages (shelf, new game, game) and API route handlers
+src/app/           pages and API route handlers; each route keeps its own _components/ (UI),
+                   _hooks/ (React hooks) and _lib/ (pure helpers and types)
+src/hooks/         shared hooks: useNow / useRemainingMs, useAsyncAction, players (Spotify, preview)
+src/components/    shared UI: Card, Notice, Field, Segmented, Chip, PlayerName, Stepper, cassette,
+                   scoreboard, podium; feedback/ (confirm, toasts, useConfirmedAction)
+src/components/styles/  shared CSS Modules (layout, form, controls) composed by each screen
 e2e/               Playwright tests and their helpers (database reset, host TOTP, invites)
-src/components/    cassette timer, scoreboard, podium, stepper, confetti
 prisma/            schema and migrations
 ```
 

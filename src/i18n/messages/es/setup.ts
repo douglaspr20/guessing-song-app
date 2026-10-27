@@ -101,6 +101,7 @@ export const setup = {
   personName: "Nombre de una persona",
   addPerson: "Añadir persona",
   shuffle: "Repartir al azar",
+  capacity: (n: number) => `Caben ${n} personas. Un equipo puede quedarse con menos gente que otro.`,
   addHint: "Entra en el equipo con menos gente. Después puedes cambiarla de equipo.",
   allFull: "Todos los equipos están llenos: sube el máximo o añade otro equipo.",
   overfull: (team: string, count: number, max: number) => `${team} tiene ${count} y el máximo es ${max}. Pasa a alguien a otro equipo.`,

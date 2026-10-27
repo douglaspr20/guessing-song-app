@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Copy, DoorClosed, DoorOpen, UserMinus } from "lucide-react";
 import QRCode from "qrcode";
-import { useConfirm, useToast } from "@/components/feedback/FeedbackProvider";
+import { useToast } from "@/components/feedback/FeedbackProvider";
+import { useConfirmedAction } from "@/components/feedback/useConfirmedAction";
 import { TeamDot } from "@/components/TeamDot";
 import ui from "@/components/ui.module.css";
-import { api, type Game } from "@/lib/client/api";
+import { api, errorText, type Game } from "@/lib/client/api";
 import type { LiveEvent } from "@/lib/client/live";
 import { plural } from "@/i18n/format";
 import { useI18n } from "@/i18n/client";
@@ -36,7 +37,7 @@ export function JoinPanel({
   const { m, locale } = useI18n();
   const g = m.game;
   const toast = useToast();
-  const confirm = useConfirm();
+  const act = useConfirmedAction();
   const [people, setPeople] = useState<Joined[]>([]);
   const [url, setUrl] = useState("");
   const [qr, setQr] = useState("");
@@ -47,7 +48,7 @@ export function JoinPanel({
     // El enlace depende del origen del navegador: se calcula tras montar.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setUrl(link);
-    QRCode.toString(link, { type: "svg", margin: 1, color: { dark: "#1d2747", light: "#0000" } }).then(setQr, () => setQr(""));
+    QRCode.toString(link, { type: "svg", margin: 1, color: { dark: getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#1d2747", light: "#0000" } }).then(setQr, () => setQr(""));
   }, [game.code]);
 
   const load = useCallback(
@@ -85,26 +86,18 @@ export function JoinPanel({
       await api(`/api/games/${game.id}`, { method: "PATCH", json: { joinOpen: !game.joinOpen } });
       await onChanged();
     } catch (e) {
-      toast({ tone: "error", text: (e as Error).message });
+      toast({ tone: "error", text: errorText(e) });
     } finally {
       setBusy(false);
     }
   };
 
-  const kick = async (p: Joined) => {
-    const ok = await confirm({
-      title: g.kickTitle(p.name),
-      body: g.kickBody,
-      confirmLabel: g.kick,
+  const kick = (p: Joined) =>
+    act({
+      question: { title: g.kickTitle(p.name), body: g.kickBody, confirmLabel: g.kick },
+      run: () => api(`/api/games/${game.id}/participants/${p.id}`, { method: "DELETE" }),
+      after: load,
     });
-    if (!ok) return;
-    try {
-      await api(`/api/games/${game.id}/participants/${p.id}`, { method: "DELETE" });
-      await load();
-    } catch (e) {
-      toast({ tone: "error", text: (e as Error).message });
-    }
-  };
 
   const started = !!game.round;
   const finished = game.status === "FINISHED";

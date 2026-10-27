@@ -75,7 +75,7 @@
   min-height: 56px;
   border: var(--stroke) solid var(--ink);
   border-radius: var(--radius-control);
-  background: #fffaf0;
+  background: var(--field);
   color: var(--ink);
   padding: 0 14px;
   font-family: var(--font-display);

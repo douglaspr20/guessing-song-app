@@ -3,9 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, errorText } from "@/lib/client/api";
 
-/** Mensaje para la familia a partir de cualquier error de la API. */
-export const errorMessage = errorText;
-
 /**
  * Carga datos del panel. Si fallan, `error` lo dice y `reload` reintenta: una sección nunca
  * queda vacía en silencio como si no hubiera nada.
@@ -19,7 +16,7 @@ export function useHostData<T>(url: string) {
       setData(await api<T>(url));
       setError(null);
     } catch (err) {
-      setError(errorMessage(err));
+      setError(errorText(err));
     }
   }, [url]);
 

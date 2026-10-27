@@ -33,7 +33,7 @@ export function TangledTapeArt() {
         <rect x="58" y="46" width="304" height="6" style={c(TAPE)} />
         <rect x="58" y="52" width="304" height="6" style={c("var(--sky)")} />
         <text x="74" y="90" style={{ fill: "var(--ink)", fontFamily: "var(--font-script)", fontWeight: 700, fontSize: 26 }}>
-          Mix de la abuela
+          {m.common.errorPage.tangledLabel}
         </text>
 
         {/* Ventana con las bobinas: la izquierda aún tiene cinta, la derecha quedó vacía */}

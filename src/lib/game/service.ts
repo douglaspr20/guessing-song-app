@@ -5,6 +5,7 @@ import { Prisma, type Game, type Participant, type Player, type Round, type Team
 import { ownerData, ownerWhere, type Owner } from "@/lib/access/owner";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
+import { withPlaces } from "./standings";
 import { fakeItunesSource } from "@/lib/itunes/fake";
 import { searchSongs } from "@/lib/itunes/search";
 import { startPlayback } from "@/lib/spotify/playback";
@@ -372,7 +373,7 @@ export async function listGames(owner: Owner, limit = 12) {
         /** Personas en total (en equipos, la suma de sus miembros). */
         peopleCount: g.format === "teams" ? g.players.reduce((n, p) => n + p.members.length, 0) : g.players.length,
         // Empates: comparten puesto los que tienen los mismos puntos.
-        podium: players.slice(0, 3).map((p) => ({ ...p, place: players.findIndex((q) => q.score === p.score) + 1 })),
+        podium: withPlaces(players).slice(0, 3),
       };
     }),
   };

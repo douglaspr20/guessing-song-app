@@ -40,6 +40,7 @@ export const common = {
       "Algo se trabó al reproducir esta pantalla. Dale unas vueltas con el lápiz y prueba otra vez: casi siempre vuelve a sonar.",
     rewind: "Rebobinar",
     digest: (digest: string) => `Código del error: ${digest}`,
+    tangledLabel: "Mix de la abuela",
     tangledArt: "Un casete roto con la cinta enredada y un lápiz en la bobina",
     globalTitle: "Se enredó la cinta · Adivina la canción",
     code404: "Error 404",

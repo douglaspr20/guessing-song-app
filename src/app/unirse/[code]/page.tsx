@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { JoinFlow } from "@/components/JoinFlow";
+import { JoinFlow } from "@/components/join/JoinFlow";
 
 /** El enlace (o el QR) que comparte el anfitrión: lleva el código y se comprueba solo. */
 export default function JoinWithCodePage() {
