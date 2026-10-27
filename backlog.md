@@ -16,6 +16,7 @@ Estado al 24-10-2026. Marcas: `[x]` hecho, `[ ]` pendiente. Tamaño: S (horas), 
 - [x] Probar el teclado en un iPhone real.
 - [x] Probar el pulsador con varios móviles a la vez.
 - [x] Poner `ABLY_API_KEY` en Vercel (marcada como Sensitive).
+- [x] Playlists como casetes de tamaño fijo (nombre centrado y recortado, bobinas que giran al elegirlas) y géneros como lomos de una estantería.
 - [x] Analítica de Vercel (visitas sin cookies) y Speed Insights, solo en Vercel y con las URL limpias de ids y códigos; el panel del anfitrión no se mide.
 - [x] Refactor de componentes y estilos: pantallas grandes partidas (`_components/`, `_hooks/`, `_lib/` por ruta), componentes y hooks compartidos, y librería de estilos (`src/components/styles/`) con tokens nuevos.
 - [x] Interfaz en español e inglés: idioma del navegador o selector ES · EN (cookie), cada dispositivo con el suyo y errores de la API traducidos. Añadir un idioma es copiar `src/i18n/messages/en/` (ver README).
@@ -39,7 +40,6 @@ Estado al 24-10-2026. Marcas: `[x]` hecho, `[ ]` pendiente. Tamaño: S (horas), 
   - Buscar solo entre las más populares.
   - Ajustes especiales por usuario.
   - Respaldo: si en una ronda no se encuentra canción, buscar una parecida.
-- [ ] **Vista de playlist tipo casete (M).** Sustituir la lista actual por tarjetas de casete, en línea con el diseño «Casete grabado».
 
 ## Anfitrión y miembros
 

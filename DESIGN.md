@@ -235,7 +235,7 @@ Una carcasa índigo profunda con papel crema encima y tres colores de cinta que 
 
 ## Layout
 
-Contenedor máximo de 1440px centrado con margen lateral fluido (gutter). La banda superior mide 92px (72px en móvil). En juego, columna principal flexible y columna lateral de 320 a 460px para el marcador, pegajosa arriba; pasa a una columna por debajo de 1100px. Grabar partida reparte 5fr y 7fr y se apila por debajo de 1000px, con una barra de acción fija abajo sobre ventana. La estantería es una rejilla auto-fill de casetes de mínimo 600px. Los separadores internos son líneas punteadas de 2px en raya de cartulina. Los controles miden 56px de alto como mínimo (48px en móvil para fichas y botones secundarios). Breakpoints observados: 1100px, 1000px, 900px y 640px.
+Contenedor máximo de 1440px centrado con margen lateral fluido (gutter). La banda superior mide 92px (72px en móvil). En juego, columna principal flexible y columna lateral de 320 a 460px para el marcador, pegajosa arriba; pasa a una columna por debajo de 1100px. Grabar partida reparte 5fr y 7fr y se apila por debajo de 1000px, con una barra de acción pegada abajo sobre ventana (sticky, dentro del flujo: al final de la página no tapa nada, mida lo que mida en el móvil). La estantería es una rejilla auto-fill de casetes de mínimo 600px. Los separadores internos son líneas punteadas de 2px en raya de cartulina. Los controles miden 56px de alto como mínimo (48px en móvil para fichas y botones secundarios). Breakpoints observados: 1100px, 1000px, 900px y 640px.
 
 ## Elevation & Depth
 
@@ -262,8 +262,12 @@ Etiquetas de cinta que se pulsan: condensada mayúscula, trazo de 3px, sin relle
 - **Estados:** al pulsar baja 2px (translateY); deshabilitado al 45% de opacidad.
 
 ### Chips
-- **Filtro:** píldora de 44px con trazo de 2px en tinta, Barlow 600 a 17px; seleccionado (aria-pressed) se rellena de tinta.
+- **Ficha:** píldora de 44px con trazo de 2px en tinta, Barlow 600 a 17px; elegida (aria-pressed) se rellena de tinta. Queda para elecciones sueltas («¿Eres uno de estos?», en Kalam a 48px); los géneros y las playlists tienen su propia forma (abajo).
 - **Fichas de jugador:** radios ocultos sobre píldoras de 56px con trazo de 3px y nombre en Kalam; marcada se rellena de tinta; atajo de teclado (1 a 9) en condensada al 60%. Foco con anillo tomate. Van en orden alfabético fijo (no por puntos), para que cada número sea siempre el mismo jugador.
+
+### De dónde salen las canciones (/nueva)
+- **Lomo de género:** cada género es el lomo de un casete en una estantería. Etiqueta rectangular de 48px con esquinas de etiqueta (4px) y trazo de 2px en tinta; a la izquierda, un bloque de 14px con las tres rayas apiladas (la Three Stripes Rule en vertical, como un lomo); el nombre en condensada 700 mayúscula a 17px. Los lomos se apoyan abajo y cada fila tiene su balda punteada de 2px en raya de cartulina. **Elegido:** se saca 4px de la estantería, se rellena de azafrán (el color de lo activo) y lleva ✓ (icono `Check`); al pasar el ratón sube 2px. Con el máximo de 10 elegidos, los demás se apagan al 45%.
+- **Casete de playlist:** cada playlist es un casete de tamaño fijo (proporción 8:5, 4:3 en móvil; rejilla de mínimo 176px, 148px en móvil). Carcasa de 14px con cuatro tornillos; etiqueta de cartulina con la banda de rayas arriba, el nombre en Kalam 700 a 19px centrado (dos líneas como mucho, con «…»; el nombre completo en el `title` y en el nombre accesible) y la ventana con dos bobinas recortada en la etiqueta; abajo, la boca de la cinta con «N CANCIONES» (y «de Ana» en las ajenas) en condensada tabular. **Elegido:** borde de 3px en azafrán, etiqueta ✓ azafrán en la esquina y las bobinas giran despacio (8 s por vuelta; quietas con `prefers-reduced-motion`). Hover: la carcasa pasa a brillo de carcasa. Las ajenas y las que piden reconectar se apagan al 45%. «Canciones que te gustan» lleva un corazón en tomate hondo.
 
 ### Equipos
 - **Paleta:** ocho colores con nombre (Azafrán, Cielo, Menta, Ciruela, Teja, Pino, Lavanda y Arena), repartidos en ese orden. Ninguno es el tomate, que sigue reservado a la acción principal. El color nunca va solo: siempre acompaña al nombre del equipo.

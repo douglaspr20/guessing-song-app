@@ -1,15 +1,15 @@
 "use client";
 
-import { Check, Heart } from "lucide-react";
-import { Chip, chipsClass } from "@/components/Chip";
 import { Field } from "@/components/Field";
 import form from "@/components/styles/form.module.css";
 import { useI18n } from "@/i18n/client";
 import type { Catalog, Playlist } from "@/lib/client/api";
 import type { SetupForm } from "@/lib/game/setup";
 import styles from "../setup.module.css";
+import { GenreSpine, genreShelfClass } from "./GenreSpine";
+import { PlaylistCassette } from "./PlaylistCassette";
+import songs from "./songs.module.css";
 
-const LIKED_ID = "liked";
 const MAX_GENRES = 10;
 
 type Props = { form: SetupForm; update: (patch: (form: SetupForm) => Partial<SetupForm>) => void };
@@ -28,19 +28,17 @@ export function SearchFilters({ form: f, update, catalog }: Props & { catalog: C
           <h3 className={form.label}>{t.genres}</h3>
           <span className={styles.hint}>{f.genres.length ? t.genresChosen(f.genres.length) : t.anyGenre}</span>
         </div>
-        <div className={chipsClass}>
+        <div className={genreShelfClass}>
           {catalog?.genres.map((g) => {
             const on = f.genres.includes(g);
             return (
-              <Chip
+              <GenreSpine
                 key={g}
-                pressed={on}
-                onClick={() => update((s) => ({ genres: toggled(s.genres, g) }))}
+                label={t.genreLabels[g] ?? g}
+                on={on}
                 disabled={!on && f.genres.length >= MAX_GENRES}
-              >
-                {on && <Check size={16} strokeWidth={3} aria-hidden />}
-                {g}
-              </Chip>
+                onToggle={() => update((s) => ({ genres: toggled(s.genres, g) }))}
+              />
             );
           })}
         </div>
@@ -100,8 +98,8 @@ export function PlaylistPicker({
 }: Props & { playlists: Playlist[] | null; usableCount: number }) {
   const { m } = useI18n();
   const t = m.setup;
-  const chip = (p: Playlist) => (
-    <PlaylistChip
+  const cassette = (p: Playlist) => (
+    <PlaylistCassette
       key={p.id}
       p={p}
       on={f.playlistIds.includes(p.id)}
@@ -116,12 +114,12 @@ export function PlaylistPicker({
         <span className={styles.hint}>{t.playlistsChosen(usableCount)}</span>
       </div>
       {!playlists && <p className={styles.hint}>{t.loadingPlaylists}</p>}
-      <div className={chipsClass}>{playlists?.filter((p) => p.readable).map(chip)}</div>
+      <div className={songs.cassettes}>{playlists?.filter((p) => p.readable).map(cassette)}</div>
       {others.length > 0 && (
         <>
           <h3 className={`${form.label} ${styles.othersTitle}`}>{t.othersPlaylists}</h3>
           <p className={`${styles.hint} ${styles.othersHint}`}>{t.othersPlaylistsHint}</p>
-          <div className={chipsClass}>{others.map(chip)}</div>
+          <div className={songs.cassettes}>{others.map(cassette)}</div>
         </>
       )}
       {playlists?.some((p) => p.needsReconnect) && (
@@ -130,24 +128,5 @@ export function PlaylistPicker({
         </p>
       )}
     </div>
-  );
-}
-
-function PlaylistChip({ p, on, onToggle }: { p: Playlist; on: boolean; onToggle: () => void }) {
-  const { m } = useI18n();
-  const t = m.setup;
-  return (
-    <Chip
-      pressed={on}
-      disabled={p.needsReconnect || !p.readable}
-      title={!p.readable ? t.othersPlaylistTitle : undefined}
-      onClick={onToggle}
-    >
-      {p.id === LIKED_ID && <Heart size={16} strokeWidth={3} aria-hidden />}
-      {on && p.id !== LIKED_ID && <Check size={16} strokeWidth={3} aria-hidden />}
-      {p.id === LIKED_ID ? t.likedSongs : p.name || t.untitled}
-      {p.totalTracks !== null && <span aria-label={t.songs(p.totalTracks)}>· {p.totalTracks}</span>}
-      {!p.readable && p.owner && <span className={styles.owner}>{t.byOwner(p.owner)}</span>}
-    </Chip>
   );
 }

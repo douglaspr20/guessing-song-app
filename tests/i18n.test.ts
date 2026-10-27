@@ -7,6 +7,7 @@ import { errorMessage, isErrorKey } from "@/i18n/errors";
 import { formatList, plural } from "@/i18n/format";
 import { fromAcceptLanguage, localeFromRequest, readCookie, resolveLocale } from "@/i18n/locales";
 import { MESSAGES } from "@/i18n/messages";
+import { GENRES } from "@/lib/spotify/catalog";
 import { errors as enErrors } from "@/i18n/messages/en/errors";
 import { errors as esErrors } from "@/i18n/messages/es/errors";
 import { AppError, toErrorResponse } from "@/lib/errors";
@@ -81,6 +82,12 @@ describe("diccionarios", () => {
   it("español e inglés tienen las mismas claves, datos y {variables}", () => {
     expect(differences(MESSAGES.es, MESSAGES.en)).toEqual([]);
     expect(differences(esErrors, enErrors)).toEqual([]);
+  });
+
+  it("cada género del catálogo tiene nombre en los dos idiomas", () => {
+    for (const locale of ["es", "en"] as const) {
+      expect(GENRES.filter((g) => !MESSAGES[locale].setup.genreLabels[g])).toEqual([]);
+    }
   });
 
   it("cada error que lanza el servidor tiene su texto", () => {
