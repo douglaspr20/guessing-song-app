@@ -11,11 +11,7 @@ export function encryptionKey(): Buffer {
   const raw = process.env.TOKEN_ENCRYPTION_KEY;
   const key = raw ? Buffer.from(raw, "base64") : null;
   if (!key || key.length !== 32) {
-    throw new AppError(
-      "Falta configurar el cifrado de tokens en el servidor",
-      500,
-      "ACCESS_NOT_CONFIGURED",
-    );
+    throw new AppError("ACCESS_NOT_CONFIGURED", 500);
   }
   return key;
 }

@@ -2,13 +2,16 @@
 
 import { useId, useState, type FormEvent } from "react";
 import { AlertTriangle, Ticket } from "lucide-react";
-import { api, ApiError } from "@/lib/client/api";
+import { api, errorText } from "@/lib/client/api";
+import { useI18n } from "@/i18n/client";
 import ui from "./ui.module.css";
 import access from "./access.module.css";
 import styles from "./RedeemInvite.module.css";
 
 /** Una cuenta gratis canjea el código que le dio el anfitrión y gana el modo Spotify. */
 export function RedeemInvite({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
+  const { m } = useI18n();
+  const a = m.access;
   const ids = useId();
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -22,7 +25,7 @@ export function RedeemInvite({ onDone, onCancel }: { onDone: () => void; onCance
       await api("/api/account/invite", { json: { invite: code } });
       onDone();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo conectar. Prueba otra vez.");
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -34,12 +37,12 @@ export function RedeemInvite({ onDone, onCancel }: { onDone: () => void; onCance
       <form className={styles.body} onSubmit={submit}>
         <div className={styles.copy}>
           <h2 className={access.title} id={`${ids}-title`}>
-            Canjea tu invitación
+            {a.redeemTitle}
           </h2>
-          <p className={access.lede}>Con el código del anfitrión se abre el modo Spotify: canciones enteras desde tu cuenta Premium.</p>
+          <p className={access.lede}>{a.redeemLede}</p>
         </div>
         <label className={`${access.field} ${styles.field}`}>
-          <span className={access.label}>Código de invitación</span>
+          <span className={access.label}>{a.inviteCode}</span>
           <input
             className={`${access.input} ${access.code}`}
             value={code}
@@ -55,10 +58,10 @@ export function RedeemInvite({ onDone, onCancel }: { onDone: () => void; onCance
         <div className={`${access.actions} ${styles.actions}`}>
           <button type="submit" className={`${ui.btn} ${ui.primary}`} disabled={busy}>
             <Ticket size={22} aria-hidden />
-            {busy ? "Comprobando…" : "Canjear"}
+            {busy ? a.checking : a.redeem}
           </button>
           <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onCancel}>
-            Cancelar
+            {m.common.cancel}
           </button>
         </div>
         {error && (

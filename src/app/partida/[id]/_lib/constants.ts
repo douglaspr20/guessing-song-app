@@ -9,13 +9,13 @@ export const BUZZ_EXPIRE_DELAY_MS = 2500;
 /** Margen tras la hora prevista de una pista antes de pedirla al servidor. */
 export const HINT_REFRESH_DELAY_MS = 200;
 
-const HINT_LABELS: Record<HintType, string> = { words: "Palabras", artist: "Artista", letters: "Letras" };
+const HINT_ORDER: HintType[] = ["words", "artist", "letters"];
 
 /** Las tres marcas de pista del casete, con el segundo en que sale cada una según las reglas de la partida. */
-export function hintSlots(rules: RoundRules) {
-  return (Object.keys(HINT_LABELS) as HintType[]).map((key) => ({
+export function hintSlots(rules: RoundRules, labels: Record<HintType, string>) {
+  return HINT_ORDER.map((key) => ({
     key,
-    label: HINT_LABELS[key],
+    label: labels[key],
     at: `${rules.hintAtMs[key] / 1000} s`,
   }));
 }

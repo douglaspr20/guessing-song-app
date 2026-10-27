@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Settings2, SkipForward, Trophy } from "lucide-react";
 import ui from "@/components/ui.module.css";
 import { Hint } from "./Hint";
+import { useI18n } from "@/i18n/client";
 import styles from "../game.module.css";
 
 /** Botones para avanzar con la ronda cerrada (o antes de la primera): empezar, siguiente pista o ver el podio. */
@@ -21,12 +22,14 @@ export function NextActions({
   onNext: () => void;
   onFinale: () => void;
 }) {
+  const { m } = useI18n();
+  const g = m.game;
   if (finished) {
     return (
       <div className={styles.nextRow}>
         <button type="button" className={`${ui.btn} ${ui.primary} ${ui.big}`} onClick={onFinale}>
           <Trophy size={28} aria-hidden />
-          Ver el podio
+          {g.seePodium}
           <Hint k="N" color="blue" />
         </button>
       </div>
@@ -39,7 +42,7 @@ export function NextActions({
         // Antes de la primera pista todavía se pueden cambiar jugadores, rondas y filtros.
         <Link href={`/nueva?editar=${gameId}`} className={`${ui.btn} ${ui.onShell} ${ui.big}`}>
           <Settings2 size={26} aria-hidden />
-          Editar ajustes
+          {g.editSettings}
         </Link>
       )}
       <button
@@ -49,7 +52,7 @@ export function NextActions({
         disabled={!canNext}
       >
         <SkipForward size={28} aria-hidden />
-        {hasRound ? "Siguiente pista" : "Empezar"}
+        {hasRound ? g.nextTrack : g.start}
         <Hint k="N" color="blue" />
       </button>
     </div>

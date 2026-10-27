@@ -12,7 +12,7 @@ export const LOGIN_LIMITS = {
 };
 
 const tooMany = () =>
-  new AppError("Demasiados intentos. Espera un rato antes de volver a probar.", 429, "TOO_MANY_ATTEMPTS");
+  new AppError("TOO_MANY_ATTEMPTS", 429);
 
 /** Lanza 429 si esta IP (o el total) acumula demasiados fallos recientes. */
 export async function assertLoginAllowed(ipHash: string, now = new Date()) {
@@ -33,4 +33,4 @@ export async function recordLoginAttempt(ipHash: string, ok: boolean) {
 
 /** Mensaje único para cualquier fallo de credenciales: no dice qué parte falló. */
 export const invalidCredentials = () =>
-  new AppError("Usuario, contraseña o código incorrectos", 401, "INVALID_CREDENTIALS");
+  new AppError("INVALID_CREDENTIALS", 401);

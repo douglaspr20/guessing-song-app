@@ -5,6 +5,7 @@ import { useConfirm, useToast } from "@/components/feedback/FeedbackProvider";
 import ui from "@/components/ui.module.css";
 import { api, type AccessStatus } from "@/lib/client/api";
 import { errorMessage } from "../_lib/useHostData";
+import { useI18n } from "@/i18n/client";
 import styles from "../host.module.css";
 import { GuestsSection } from "./GuestsSection";
 import { InvitesSection } from "./InvitesSection";
@@ -13,14 +14,16 @@ import { SpotifySection } from "./SpotifySection";
 
 /** Panel del anfitrión: Spotify, invitaciones, miembros y modo sin cuenta. */
 export function Panel({ status, onSignedOut }: { status: AccessStatus; onSignedOut: () => void }) {
+  const { m } = useI18n();
+  const h = m.host;
   const confirm = useConfirm();
   const toast = useToast();
 
   const signOutEverywhere = async () => {
     const ok = await confirm({
-      title: "¿Cerrar todas tus sesiones?",
-      body: "Saldrás del panel en todos tus dispositivos, también en este. Para volver necesitarás la contraseña y el código.",
-      confirmLabel: "Cerrar sesiones",
+      title: h.signOutAllTitle,
+      body: h.signOutAllBody,
+      confirmLabel: h.signOutAllConfirm,
       tone: "danger",
     });
     if (!ok) return;
@@ -40,11 +43,11 @@ export function Panel({ status, onSignedOut }: { status: AccessStatus; onSignedO
     <>
       <div className={styles.head}>
         <div>
-          <h1 className={styles.title}>Panel del anfitrión</h1>
-          <p className={styles.sub}>Invitaciones, miembros y el modo sin cuenta.</p>
+          <h1 className={styles.title}>{h.title}</h1>
+          <p className={styles.sub}>{h.sub}</p>
         </div>
         <Link href="/" className={`${ui.btn} ${ui.onShell}`}>
-          Mi estantería
+          {h.myShelf}
         </Link>
       </div>
 
@@ -57,10 +60,10 @@ export function Panel({ status, onSignedOut }: { status: AccessStatus; onSignedO
 
       <div className={styles.foot}>
         <button type="button" className={styles.linkBtn} onClick={signOutEverywhere}>
-          Cerrar todas mis sesiones
+          {h.signOutAll}
         </button>
         <button type="button" className={styles.linkBtn} onClick={signOut}>
-          Salir
+          {h.signOut}
         </button>
       </div>
     </>

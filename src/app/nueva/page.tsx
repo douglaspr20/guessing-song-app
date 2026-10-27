@@ -19,6 +19,8 @@ import {
   type GameFormat,
   type TeamDraft,
 } from "@/lib/game/teams";
+import { formatList, plural } from "@/i18n/format";
+import { useI18n } from "@/i18n/client";
 import { TeamsEditor } from "./_components/TeamsEditor";
 import styles from "./setup.module.css";
 
@@ -38,6 +40,8 @@ export default function NewGamePage() {
 
 function NewGame() {
   const router = useRouter();
+  const { m, locale } = useI18n();
+  const t = m.setup;
   /** Partida aún sin empezar que se está editando (desde «Editar ajustes» del juego). */
   const searchParams = useSearchParams();
   const editId = searchParams.get("editar");
@@ -48,7 +52,7 @@ function NewGame() {
   const [players, setPlayers] = useState<string[]>(["", ""]);
   /** "solo": todos contra todos. "teams": cada equipo puntúa junto. */
   const [format, setFormat] = useState<GameFormat>("solo");
-  const [teams, setTeams] = useState<TeamDraft[]>(() => emptyTeams(DEFAULT_TEAMS));
+  const [teams, setTeams] = useState<TeamDraft[]>(() => emptyTeams(DEFAULT_TEAMS, t));
   const [maxTeamSize, setMaxTeamSize] = useState(DEFAULT_TEAM_SIZE);
   const [rounds, setRounds] = useState(10);
   /** Quien juega desde el móvil: segundos para responder tras pulsar y quién queda fuera al fallar. */
@@ -161,18 +165,18 @@ function NewGame() {
   const byTeams = format === "teams";
   const people = byTeams ? everyone(teams).length : names.length;
   const whoProblem = byTeams
-    ? teamsProblem(teams, maxTeamSize)
+    ? teamsProblem(teams, maxTeamSize, t)
     : names.length === 0
-      ? "Escribe el nombre de al menos un jugador."
+      ? t.needOnePlayer
       : duplicates.length
-        ? "Hay nombres repetidos."
+        ? t.repeatedNames
         : null;
   const blocker =
     whoProblem ??
     (effectiveSource === "playlists" && usableIds.length === 0
-      ? "Elige al menos una playlist."
+      ? t.needPlaylist
       : yearsInvalid
-        ? "El año «desde» es mayor que el año «hasta»."
+        ? t.yearsInverted
         : null);
 
   const setPlayer = (i: number, v: string) => setPlayers((ps) => ps.map((p, j) => (j === i ? v : p)));
@@ -232,13 +236,13 @@ function NewGame() {
 
   return (
     <>
-      <BandStatus text={editId ? "Editando casete" : "Casete nuevo · Lado A"} />
+      <BandStatus text={editId ? t.bandEditing : t.bandNew} />
       <main className={styles.main}>
         <Link href="/" className={styles.back}>
           <ArrowLeft size={22} aria-hidden />
-          Volver a la estantería
+          {m.common.backToShelf}
         </Link>
-        <h1 className={styles.title}>{editId ? "Cambiar ajustes" : "Grabar partida nueva"}</h1>
+        <h1 className={styles.title}>{editId ? t.titleEditing : t.titleNew}</h1>
 
         <div className={styles.grid}>
           {/* ---------- Quién juega ---------- */}
@@ -248,20 +252,20 @@ function NewGame() {
               <div className={styles.section}>
                 <div className={styles.sectionHead}>
                   <h2 className={styles.h} id={`${ids}-players`}>
-                    Quién juega
+                    {t.whoPlays}
                   </h2>
                   <span className={styles.hint}>
                     {byTeams
-                      ? `${teams.length} equipos · ${people} ${people === 1 ? "persona" : "personas"}`
-                      : `${names.length} ${names.length === 1 ? "jugador" : "jugadores"}`}
+                      ? `${t.teamsCount(teams.length)} · ${plural(locale, people, t.people)}`
+                      : plural(locale, names.length, t.players)}
                   </span>
                 </div>
-                <div className={`${styles.segment} ${styles.formatSwitch}`} role="group" aria-label="Formato de la partida">
+                <div className={`${styles.segment} ${styles.formatSwitch}`} role="group" aria-label={t.format}>
                   <button type="button" aria-pressed={!byTeams} onClick={() => setFormat("solo")}>
-                    Todos contra todos
+                    {t.solo}
                   </button>
                   <button type="button" aria-pressed={byTeams} onClick={() => setFormat("teams")}>
-                    Por equipos
+                    {t.byTeams}
                   </button>
                 </div>
                 {byTeams && <TeamsEditor teams={teams} maxSize={maxTeamSize} onTeams={setTeams} onMaxSize={setMaxTeamSize} />}
@@ -278,16 +282,16 @@ function NewGame() {
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && i === players.length - 1 && p.trim()) addPlayer();
                         }}
-                        placeholder={`Nombre del jugador ${i + 1}`}
+                        placeholder={t.playerPlaceholder(i + 1)}
                         maxLength={30}
-                        aria-label={`Jugador ${i + 1}`}
+                        aria-label={t.player(i + 1)}
                         autoFocus={i === players.length - 1 && i > 1}
                       />
                       <button
                         type="button"
                         className={styles.iconBtn}
                         onClick={() => removePlayer(i)}
-                        aria-label={`Quitar jugador ${i + 1}`}
+                        aria-label={t.removePlayer(i + 1)}
                         disabled={players.length === 1 && !p}
                       >
                         <Minus size={26} strokeWidth={3} aria-hidden />
@@ -302,12 +306,12 @@ function NewGame() {
                   disabled={players.length >= MAX_PLAYERS}
                 >
                   <Plus size={24} strokeWidth={3} aria-hidden />
-                  Añadir jugador
+                  {t.addPlayer}
                 </button>
                 {duplicates.length > 0 && (
                   <p className={`${ui.notice} ${ui.noticeErrorOnCard} ${styles.dup}`} role="alert">
                     <AlertTriangle size={20} aria-hidden />
-                    Repetido: {duplicates.join(", ")}. Cada jugador necesita un nombre distinto.
+                    {t.repeatedPlayers(formatList(locale, duplicates))}
                   </p>
                 )}
                 </>
@@ -323,46 +327,45 @@ function NewGame() {
               <div className={styles.section}>
                 <div className={styles.sectionHead}>
                   <h2 className={styles.h} id={`${ids}-sound`}>
-                    Cómo se juega
+                    {t.howToPlay}
                   </h2>
                 </div>
                 {/* Un invitado solo juega con vistas previas: ni siquiera ve la opción de Spotify. */}
                 {canLink && (
-                  <div className={styles.segment} role="group" aria-label="Modo de juego">
+                  <div className={styles.segment} role="group" aria-label={t.gameMode}>
                     <button type="button" aria-pressed={!open} onClick={() => setMode("spotify")} disabled={connected === false}>
-                      Spotify · canción completa
+                      {t.spotifyMode}
                     </button>
                     <button type="button" aria-pressed={open} onClick={() => setMode("open")}>
-                      Sin cuenta · 30 s
+                      {t.openMode}
                     </button>
                   </div>
                 )}
                 <p className={styles.hint} style={{ margin: "10px 0 18px" }}>
                   {open ? (
                     <>
-                      Suenan vistas previas de 30 s de iTunes, sin cuenta. El título vale 3, 2 o 1 punto antes de los 10 s,
-                      de los 20 s o después.
+                      {t.openHint}
                       {connected === false && canLink && (
                         <>
                           {" "}
-                          Para canciones enteras, <a href="/api/auth/login">conecta tu Spotify Premium</a>.
+                          {t.connectBefore} <a href="/api/auth/login">{t.connectLink}</a>.
                         </>
                       )}
                     </>
                   ) : (
-                    "Suena la canción entera desde tu Spotify Premium, desde un punto al azar."
+                    t.spotifyHint
                   )}
                 </p>
                 <div className={styles.settingsRow}>
                   <div className={styles.field}>
-                    <span className={styles.fieldLabel}>Rondas</span>
-                    <Stepper label="Rondas" value={rounds} min={1} max={50} onChange={setRounds} />
+                    <span className={styles.fieldLabel}>{t.rounds}</span>
+                    <Stepper label={t.rounds} value={rounds} min={1} max={50} onChange={setRounds} />
                   </div>
                   {!open && (
                     <div className={styles.field}>
-                      <span className={styles.fieldLabel}>Fragmento</span>
+                      <span className={styles.fieldLabel}>{t.fragment}</span>
                       <Stepper
-                        label="Segundos de fragmento"
+                        label={t.fragmentSeconds}
                         value={fragmentSeconds}
                         min={60}
                         max={180}
@@ -377,17 +380,16 @@ function NewGame() {
 
               <div className={styles.section}>
                 <div className={styles.sectionHead}>
-                  <h2 className={styles.h}>Desde el móvil</h2>
+                  <h2 className={styles.h}>{t.fromPhone}</h2>
                 </div>
                 <p className={styles.hint} style={{ marginBottom: 18 }}>
-                  Quien se une con el código pulsa «¡Lo sé!»: la canción se pausa y tiene este tiempo para escribir el título
-                  y el artista. Si falla, queda fuera de esa pista.
+                  {t.fromPhoneHint}
                 </p>
                 <div className={styles.settingsRow}>
                   <div className={styles.field}>
-                    <span className={styles.fieldLabel}>Tiempo para responder</span>
+                    <span className={styles.fieldLabel}>{t.answerTime}</span>
                     <Stepper
-                      label="Segundos para responder"
+                      label={t.answerSeconds}
                       value={answerSeconds}
                       min={MIN_ANSWER_SECONDS}
                       max={MAX_ANSWER_SECONDS}
@@ -398,13 +400,13 @@ function NewGame() {
                   </div>
                   {byTeams && (
                     <div className={styles.field}>
-                      <span className={styles.fieldLabel}>Al fallar queda fuera</span>
-                      <div className={`${styles.segment} ${styles.formatSwitch}`} role="group" aria-label="Quién queda fuera al fallar">
+                      <span className={styles.fieldLabel}>{t.lockout}</span>
+                      <div className={`${styles.segment} ${styles.formatSwitch}`} role="group" aria-label={t.lockoutGroup}>
                         <button type="button" aria-pressed={lockout === "person"} onClick={() => setLockout("person")}>
-                          Solo esa persona
+                          {t.lockoutPerson}
                         </button>
                         <button type="button" aria-pressed={lockout === "team"} onClick={() => setLockout("team")}>
-                          Todo su equipo
+                          {t.lockoutTeam}
                         </button>
                       </div>
                     </div>
@@ -415,14 +417,14 @@ function NewGame() {
               {!open && (
                 <div className={styles.section}>
                   <div className={styles.sectionHead}>
-                    <h2 className={styles.h}>De dónde salen las canciones</h2>
+                    <h2 className={styles.h}>{t.songSource}</h2>
                   </div>
-                  <div className={styles.segment} role="group" aria-label="Fuente de canciones">
+                  <div className={styles.segment} role="group" aria-label={t.songSourceGroup}>
                     <button type="button" aria-pressed={source === "search"} onClick={() => setSource("search")}>
-                      Búsqueda general
+                      {t.searchSource}
                     </button>
                     <button type="button" aria-pressed={source === "playlists"} onClick={() => setSource("playlists")}>
-                      Mis playlists
+                      {t.playlistSource}
                     </button>
                   </div>
                 </div>
@@ -432,9 +434,9 @@ function NewGame() {
                 <>
                   <div className={styles.section}>
                     <div className={styles.sectionHead}>
-                      <h3 className={styles.fieldLabel}>Géneros</h3>
+                      <h3 className={styles.fieldLabel}>{t.genres}</h3>
                       <span className={styles.hint}>
-                        {genres.length ? `${genres.length} elegidos` : "Sin elegir: cualquier género"}
+                        {genres.length ? t.genresChosen(genres.length) : t.anyGenre}
                       </span>
                     </div>
                     <div className={styles.chips}>
@@ -456,18 +458,18 @@ function NewGame() {
                   <div className={styles.section}>
                     <div className={styles.inline}>
                       <label className={styles.field}>
-                        <span className={styles.fieldLabel}>Idioma</span>
+                        <span className={styles.fieldLabel}>{t.language}</span>
                         <select className={styles.select} value={language} onChange={(e) => setLanguage(e.target.value)}>
-                          <option value="">Cualquiera</option>
+                          <option value="">{t.anyLanguage}</option>
                           {catalog?.languages.map((l) => (
                             <option key={l.id} value={l.id}>
-                              {l.label}
+                              {t.musicLanguages[l.id] ?? l.id}
                             </option>
                           ))}
                         </select>
                       </label>
                       <label className={styles.field}>
-                        <span className={styles.fieldLabel}>Desde</span>
+                        <span className={styles.fieldLabel}>{t.from}</span>
                         <input
                           className={`${styles.textInput} ${styles.year}`}
                           inputMode="numeric"
@@ -477,7 +479,7 @@ function NewGame() {
                         />
                       </label>
                       <label className={styles.field}>
-                        <span className={styles.fieldLabel}>Hasta</span>
+                        <span className={styles.fieldLabel}>{t.to}</span>
                         <input
                           className={`${styles.textInput} ${styles.year}`}
                           inputMode="numeric"
@@ -488,28 +490,27 @@ function NewGame() {
                       </label>
                     </div>
                     <label className={styles.field} style={{ marginTop: 18 }}>
-                      <span className={styles.fieldLabel}>Palabra clave</span>
+                      <span className={styles.fieldLabel}>{t.keyword}</span>
                       <input
                         className={styles.textInput}
-                        placeholder="Un artista, «bolero», «en español»…"
+                        placeholder={t.keywordPlaceholder}
                         value={keywords}
                         maxLength={100}
                         onChange={(e) => setKeywords(e.target.value)}
                       />
                     </label>
                     <p className={styles.hint} style={{ marginTop: 10 }}>
-                      Spotify no sabe el idioma de cada canción: el idioma elige el país de búsqueda. Para acertar
-                      seguro, usa tus playlists.
+                      {t.languageHint}
                     </p>
                   </div>
                 </>
               ) : (
                 <div className={styles.section}>
                   <div className={styles.sectionHead}>
-                    <h3 className={styles.fieldLabel}>Playlists</h3>
-                    <span className={styles.hint}>{usableIds.length} elegidas</span>
+                    <h3 className={styles.fieldLabel}>{t.playlists}</h3>
+                    <span className={styles.hint}>{t.playlistsChosen(usableIds.length)}</span>
                   </div>
-                  {!playlists && <p className={styles.hint}>Cargando tus playlists…</p>}
+                  {!playlists && <p className={styles.hint}>{t.loadingPlaylists}</p>}
                   <div className={styles.chips}>
                     {playlists?.filter((p) => p.readable).map((p) => (
                       <PlaylistChip key={p.id} p={p} on={playlistIds.includes(p.id)} onToggle={() => toggle(playlistIds, setPlaylistIds, p.id)} />
@@ -518,11 +519,10 @@ function NewGame() {
                   {!!playlists?.some((p) => !p.readable) && (
                     <>
                       <h3 className={styles.fieldLabel} style={{ marginTop: 20 }}>
-                        Playlists de otras personas
+                        {t.othersPlaylists}
                       </h3>
                       <p className={styles.hint} style={{ margin: "4px 0 10px" }}>
-                        Spotify no deja que el juego lea playlists de otras personas (solo las tuyas y las colaborativas).
-                        Para usar sus canciones, cópialas a una playlist tuya.
+                        {t.othersPlaylistsHint}
                       </p>
                       <div className={styles.chips}>
                         {playlists
@@ -535,7 +535,7 @@ function NewGame() {
                   )}
                   {needsReconnect && (
                     <p className={`${styles.hint} ${styles.reconnect}`}>
-                      Para usar tus canciones que te gustan, <a href="/api/auth/login">vuelve a conectar Spotify</a>.
+                      {t.reconnectBefore} <a href="/api/auth/login">{t.reconnectLink}</a>.
                     </p>
                   )}
                 </div>
@@ -543,7 +543,7 @@ function NewGame() {
 
               {sample && (
                 <p className={styles.sample}>
-                  Con estos filtros sonaría algo como <strong>{sample}</strong>
+                  {t.sampleBefore} <strong>{sample}</strong>
                 </p>
               )}
             </div>
@@ -556,10 +556,11 @@ function NewGame() {
           <div>
             <div className={styles.summary}>
               {byTeams
-                ? `${teams.length} equipos · ${people || "sin"} ${people === 1 ? "persona" : "personas"}`
-                : `${names.length || "Sin"} ${names.length === 1 ? "jugador" : "jugadores"}`}{" "}
-              · {rounds}{" "}
-              {rounds === 1 ? "ronda" : "rondas"} · {open ? 30 : fragmentSeconds} s por canción
+                ? `${t.teamsCount(teams.length)} · ${people ? plural(locale, people, t.people) : t.noPeople}`
+                : names.length
+                  ? plural(locale, names.length, t.players)
+                  : t.noPlayers}{" "}
+              · {plural(locale, rounds, t.roundsCount)} · {t.perSong(open ? 30 : fragmentSeconds)}
             </div>
             {(blocker || error) && (
               <div className={styles.why} role="status">
@@ -570,10 +571,10 @@ function NewGame() {
           <div className={styles.dockActions}>
             <button type="button" className={`${ui.btn} ${ui.onShell}`} onClick={tryFilters} disabled={busy || (effectiveSource === "playlists" && !usableIds.length)}>
               <Shuffle size={22} aria-hidden />
-              Probar filtros
+              {t.tryFilters}
             </button>
             <button type="button" className={`${ui.btn} ${ui.primary}`} onClick={start} disabled={busy || !!blocker}>
-              {editId ? "Guardar y volver" : "Grabar y empezar"}
+              {editId ? t.saveAndBack : t.recordAndStart}
             </button>
           </div>
         </div>
@@ -583,20 +584,22 @@ function NewGame() {
 }
 
 function PlaylistChip({ p, on, onToggle }: { p: Playlist; on: boolean; onToggle: () => void }) {
+  const { m } = useI18n();
+  const t = m.setup;
   return (
     <button
       type="button"
       className={styles.chip}
       aria-pressed={on}
       disabled={p.needsReconnect || !p.readable}
-      title={!p.readable ? "Spotify no permite usar playlists de otras personas" : undefined}
+      title={!p.readable ? t.othersPlaylistTitle : undefined}
       onClick={onToggle}
     >
       {p.id === LIKED_ID && <Heart size={16} strokeWidth={3} aria-hidden />}
       {on && p.id !== LIKED_ID && <Check size={16} strokeWidth={3} aria-hidden />}
-      {p.name || "Sin nombre"}
-      {p.totalTracks !== null && <span aria-label={`${p.totalTracks} canciones`}>· {p.totalTracks}</span>}
-      {!p.readable && p.owner && <span className={styles.owner}>de {p.owner}</span>}
+      {p.id === LIKED_ID ? t.likedSongs : p.name || t.untitled}
+      {p.totalTracks !== null && <span aria-label={t.songs(p.totalTracks)}>· {p.totalTracks}</span>}
+      {!p.readable && p.owner && <span className={styles.owner}>{t.byOwner(p.owner)}</span>}
     </button>
   );
 }

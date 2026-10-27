@@ -22,6 +22,8 @@ import {
   type TeamDraft,
 } from "@/lib/game/teams";
 import setup from "../setup.module.css";
+import { formatList } from "@/i18n/format";
+import { useI18n } from "@/i18n/client";
 import styles from "./teams.module.css";
 
 interface Props {
@@ -33,6 +35,8 @@ interface Props {
 
 /** Quién juega en una partida por equipos: cuántos equipos, cuántas personas caben y a quién le toca cuál. */
 export function TeamsEditor({ teams, maxSize, onTeams, onMaxSize }: Props) {
+  const { m, locale } = useI18n();
+  const s = m.setup;
   const [name, setName] = useState("");
   const [full, setFull] = useState(false);
 
@@ -65,18 +69,18 @@ export function TeamsEditor({ teams, maxSize, onTeams, onMaxSize }: Props) {
     <div className={styles.editor}>
       <div className={setup.settingsRow}>
         <div className={setup.field}>
-          <span className={setup.fieldLabel}>Equipos</span>
+          <span className={setup.fieldLabel}>{s.teams}</span>
           <Stepper
-            label="Equipos"
+            label={s.teams}
             value={teams.length}
             min={MIN_TEAMS}
             max={MAX_TEAMS}
-            onChange={(n) => onTeams(resizeTeams(teams, n, maxSize))}
+            onChange={(n) => onTeams(resizeTeams(teams, n, maxSize, s))}
           />
         </div>
         <div className={setup.field}>
-          <span className={setup.fieldLabel}>Máximo por equipo</span>
-          <Stepper label="Máximo por equipo" value={maxSize} min={MIN_TEAM_SIZE} max={MAX_TEAM_SIZE} onChange={onMaxSize} />
+          <span className={setup.fieldLabel}>{s.maxPerTeam}</span>
+          <Stepper label={s.maxPerTeam} value={maxSize} min={MIN_TEAM_SIZE} max={MAX_TEAM_SIZE} onChange={onMaxSize} />
         </div>
       </div>
       <p className={setup.hint}>
@@ -97,31 +101,31 @@ export function TeamsEditor({ teams, maxSize, onTeams, onMaxSize }: Props) {
               add();
             }
           }}
-          placeholder="Nombre de una persona"
+          placeholder={s.personName}
           maxLength={30}
-          aria-label="Nombre de una persona"
+          aria-label={s.personName}
         />
         <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={add} disabled={!name.trim()}>
           <Plus size={24} strokeWidth={3} aria-hidden />
-          Añadir persona
+          {s.addPerson}
         </button>
         <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={() => onTeams(distribute(people, teams, maxSize))} disabled={!canShuffle}>
           <Shuffle size={22} aria-hidden />
-          Repartir al azar
+          {s.shuffle}
         </button>
       </div>
-      <p className={styles.addHint}>Entra en el equipo con menos gente. Después puedes cambiarla de equipo.</p>
+      <p className={styles.addHint}>{s.addHint}</p>
 
       {full && emptiestTeam(teams, maxSize) === -1 && (
-        <Notice>Todos los equipos están llenos: sube el máximo o añade otro equipo.</Notice>
+        <Notice>{s.allFull}</Notice>
       )}
       {tooMany.map((t) => (
         <Notice key={t.color}>
-          {t.name} tiene {t.members.length} y el máximo es {maxSize}. Pasa a alguien a otro equipo.
+          {s.overfull(t.name, t.members.length, maxSize)}
         </Notice>
       ))}
-      {people.length > capacity && <Notice>Hay {people.length} personas y solo caben {capacity}.</Notice>}
-      {dups.length > 0 && <Notice>Repetido: {dups.join(", ")}. Cada persona necesita un nombre distinto.</Notice>}
+      {people.length > capacity && <Notice>{s.tooManyPeople(people.length, capacity)}</Notice>}
+      {dups.length > 0 && <Notice>{s.repeatedPeople(formatList(locale, dups))}</Notice>}
 
       <ul className={styles.teams}>
         {teams.map((t, i) => (
@@ -133,14 +137,14 @@ export function TeamsEditor({ teams, maxSize, onTeams, onMaxSize }: Props) {
                 value={t.name}
                 onChange={(e) => rename(i, e.target.value)}
                 maxLength={30}
-                aria-label={`Nombre del equipo ${i + 1} (${teamColor(t.color)?.label})`}
+                aria-label={s.teamNameLabel(i + 1, s.teamColors[t.color])}
               />
-              <span className={styles.count} aria-label={`${t.members.length} de ${maxSize}`}>
+              <span className={styles.count} aria-label={s.teamCount(t.members.length, maxSize)}>
                 {t.members.length}/{maxSize}
               </span>
             </div>
             {t.members.length === 0 ? (
-              <p className={styles.nobody}>Aún sin nadie</p>
+              <p className={styles.nobody}>{s.nobodyYet}</p>
             ) : (
               <ul className={styles.members}>
                 {t.members.map((m, k) => (
@@ -150,7 +154,7 @@ export function TeamsEditor({ teams, maxSize, onTeams, onMaxSize }: Props) {
                       className={styles.move}
                       value={i}
                       onChange={(e) => move(i, m, Number(e.target.value))}
-                      aria-label={`Equipo de ${m}`}
+                      aria-label={s.teamOf(m)}
                     >
                       {teams.map((other, j) => (
                         <option key={other.color} value={j} disabled={j !== i && other.members.length >= maxSize}>
@@ -162,7 +166,7 @@ export function TeamsEditor({ teams, maxSize, onTeams, onMaxSize }: Props) {
                       type="button"
                       className={styles.removeBtn}
                       onClick={() => remove(i, m)}
-                      aria-label={`Quitar a ${m}`}
+                      aria-label={s.removePerson(m)}
                     >
                       <Minus size={22} strokeWidth={3} aria-hidden />
                     </button>

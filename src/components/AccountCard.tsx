@@ -2,7 +2,8 @@
 
 import { useId, useState, type FormEvent } from "react";
 import { AlertTriangle, LogIn, Ticket } from "lucide-react";
-import { api, ApiError } from "@/lib/client/api";
+import { api, errorText } from "@/lib/client/api";
+import { useI18n } from "@/i18n/client";
 import ui from "./ui.module.css";
 import styles from "./access.module.css";
 
@@ -21,6 +22,8 @@ export function AccountCard({
   onDone: () => void;
   onCancel: () => void;
 }) {
+  const { m } = useI18n();
+  const a = m.access;
   const ids = useId();
   const [tab, setTab] = useState<AccountTab>(initialTab);
   const [invite, setInvite] = useState("");
@@ -39,7 +42,7 @@ export function AccountCard({
       else await api("/api/account/login", { json: { username, password } });
       onDone();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo conectar. Prueba otra vez.");
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -49,25 +52,25 @@ export function AccountCard({
     <section className={`${ui.card} ${styles.card}`} aria-labelledby={`${ids}-title`}>
       <div className={ui.cardStripes} />
       <form className={styles.body} onSubmit={submit}>
-        <div className={styles.tabs} role="group" aria-label="Tipo de acceso">
+        <div className={styles.tabs} role="group" aria-label={a.kindOfAccess}>
           <button type="button" aria-pressed={!registering} onClick={() => setTab("login")}>
-            Entrar
+            {a.tabLogin}
           </button>
           <button type="button" aria-pressed={registering} onClick={() => setTab("invite")}>
-            Tengo una invitación
+            {a.tabInvite}
           </button>
         </div>
 
         <div>
           <h2 className={styles.title} id={`${ids}-title`}>
-            {registering ? "Crea tu cuenta" : "Entra a tu estantería"}
+            {registering ? a.createTitle : a.loginTitle}
           </h2>
           <p className={styles.lede}>
             {registering
-              ? "Con el código que te dio el anfitrión: cuenta con modo Spotify. Tus partidas solo las ves tú."
+              ? a.createLede
               : googleEnabled
-                ? "Con Google tienes cuenta gratis al momento; el modo Spotify llega con una invitación."
-                : "Tus partidas y, si lo vinculas, tu Spotify."}
+                ? a.loginLedeGoogle
+                : a.loginLede}
           </p>
         </div>
 
@@ -76,15 +79,15 @@ export function AccountCard({
             {/* Navegación completa: Google necesita la redirección real, no un fetch. */}
             <a href="/api/auth/google/login" className={`${ui.btn} ${ui.onCard} ${styles.google}`}>
               <GoogleMark />
-              Continuar con Google
+              {a.continueWithGoogle}
             </a>
-            <p className={styles.or}>{registering ? "o con tu invitación" : "o con tu usuario"}</p>
+            <p className={styles.or}>{registering ? a.orWithInvite : a.orWithUser}</p>
           </>
         )}
 
         {registering && (
           <label className={styles.field}>
-            <span className={styles.label}>Código de invitación</span>
+            <span className={styles.label}>{a.inviteCode}</span>
             <input
               className={`${styles.input} ${styles.code}`}
               value={invite}
@@ -98,12 +101,12 @@ export function AccountCard({
           </label>
         )}
         <label className={styles.field}>
-          <span className={styles.label}>Usuario</span>
+          <span className={styles.label}>{a.username}</span>
           <input
             className={styles.input}
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder={registering ? "letras, números, _ o ." : ""}
+            placeholder={registering ? a.usernameHint : ""}
             autoComplete="username"
             autoCapitalize="none"
             spellCheck={false}
@@ -113,7 +116,7 @@ export function AccountCard({
           />
         </label>
         <label className={styles.field}>
-          <span className={styles.label}>Contraseña</span>
+          <span className={styles.label}>{a.password}</span>
           <input
             className={styles.input}
             type="password"
@@ -124,7 +127,7 @@ export function AccountCard({
             maxLength={200}
             required
           />
-          {registering && <span className={styles.hint}>Al menos 8 caracteres. Mejor una frase que no uses en otro sitio.</span>}
+          {registering && <span className={styles.hint}>{a.passwordHint}</span>}
         </label>
 
         {error && (
@@ -137,10 +140,10 @@ export function AccountCard({
         <div className={styles.actions}>
           <button type="submit" className={`${ui.btn} ${ui.primary}`} disabled={busy}>
             {registering ? <Ticket size={22} aria-hidden /> : <LogIn size={22} aria-hidden />}
-            {busy ? "Un momento…" : registering ? "Crear cuenta" : "Entrar"}
+            {busy ? m.common.oneMoment : registering ? a.createAccount : a.signIn}
           </button>
           <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onCancel}>
-            Cancelar
+            {m.common.cancel}
           </button>
         </div>
       </form>

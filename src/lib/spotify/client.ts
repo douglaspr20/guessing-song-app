@@ -44,7 +44,7 @@ export async function spotifyFetch<T>(userId: string, path: string, req: Spotify
   } else if (res.status === 429) {
     const wait = Number(res.headers.get("Retry-After") ?? "1");
     if (wait > MAX_RETRY_AFTER_S) {
-      throw new AppError("Spotify está limitando las peticiones, prueba en un momento", 429, "SPOTIFY_RATE_LIMITED");
+      throw new AppError("SPOTIFY_RATE_LIMITED", 429);
     }
     await new Promise((r) => setTimeout(r, wait * 1000));
     res = await send(false);
@@ -58,7 +58,7 @@ export async function spotifyFetch<T>(userId: string, path: string, req: Spotify
     } catch {
       // cuerpo vacío o no JSON
     }
-    throw new AppError(`Spotify ${res.status}: ${message}`, res.status >= 500 ? 502 : res.status, "SPOTIFY_API_ERROR");
+    throw new AppError("SPOTIFY_API_ERROR", res.status >= 500 ? 502 : res.status, { detail: `Spotify ${res.status}: ${message}` });
   }
 
   // 204 No Content (p. ej. play/pause)

@@ -19,9 +19,13 @@ export const test = base.extend<{ cleanDb: void }>({
 
 export { expect } from "@playwright/test";
 
-/** Otro navegador con forma de móvil (la persona que se une con el código). */
-export async function phoneContext(browser: Browser, baseURL: string | undefined): Promise<BrowserContext> {
-  const context = await browser.newContext({ ...devices["Pixel 7"], baseURL });
+/** Otro navegador con forma de móvil (la persona que se une con el código), en español salvo que se pida otro idioma. */
+export async function phoneContext(
+  browser: Browser,
+  baseURL: string | undefined,
+  locale = "es-ES",
+): Promise<BrowserContext> {
+  const context = await browser.newContext({ ...devices["Pixel 7"], baseURL, locale });
   await stubPreviews(context);
   return context;
 }

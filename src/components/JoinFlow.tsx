@@ -8,8 +8,10 @@ import { TeamDot } from "@/components/TeamDot";
 import { RetryNotice } from "@/components/RetryNotice";
 import ui from "@/components/ui.module.css";
 import access from "@/components/access.module.css";
-import { api, ApiError, type AccessStatus } from "@/lib/client/api";
+import { api, ApiError, type AccessStatus, errorText } from "@/lib/client/api";
 import { memberLine } from "@/lib/game/teams";
+import { plural } from "@/i18n/format";
+import { useI18n } from "@/i18n/client";
 import styles from "./JoinFlow.module.css";
 
 interface Lookup {
@@ -30,6 +32,8 @@ const clean = (raw: string) => raw.toUpperCase().replace(/[^A-Z0-9]/g, "").slice
  */
 export function JoinFlow() {
   const router = useRouter();
+  const { m, locale } = useI18n();
+  const j = m.join;
   // En /unirse/ABC123 el código viene en la dirección; en /unirse se escribe a mano.
   const initialCode = useParams<{ code?: string }>().code ?? "";
   const ids = useId();
@@ -97,7 +101,7 @@ export function JoinFlow() {
       });
       router.push(`/jugar/${r.gameId}`);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo conectar. Prueba otra vez.");
+      setError(errorText(err));
       setBusy(false);
     }
   };
@@ -110,7 +114,7 @@ export function JoinFlow() {
 
   return (
     <>
-      <BandStatus text="Unirse" />
+      <BandStatus text={j.band} />
       <main className={styles.main}>
         <section className={`${ui.card} ${styles.card}`} aria-labelledby={`${ids}-title`}>
           <div className={ui.cardStripes} />
@@ -118,12 +122,12 @@ export function JoinFlow() {
             <form className={access.body} onSubmit={submitCode}>
               <div>
                 <h1 className={access.title} id={`${ids}-title`}>
-                  Unirme a una partida
+                  {j.title}
                 </h1>
-                <p className={access.lede}>Escribe el código de 6 letras o números que te pasó quien la grabó.</p>
+                <p className={access.lede}>{j.lede}</p>
               </div>
               <label className={access.field}>
-                <span className={access.label}>Código de la partida</span>
+                <span className={access.label}>{j.codeLabel}</span>
                 <input
                   className={`${access.input} ${styles.code}`}
                   value={code}
@@ -142,11 +146,11 @@ export function JoinFlow() {
                 />
               </label>
               {error && <Problem id={`${ids}-err`}>{error}</Problem>}
-              {offline && <RetryNotice message="No pudimos comprobar el código." onRetry={() => lookup()} />}
+              {offline && <RetryNotice message={j.cantCheck} onRetry={() => lookup()} />}
               <div className={access.actions}>
                 <button type="submit" className={`${ui.btn} ${ui.primary} ${ui.big}`} disabled={busy || code.length !== 6}>
                   <ArrowRight size={24} aria-hidden />
-                  {busy ? "Buscando…" : "Continuar"}
+                  {busy ? j.searching : j.continue}
                 </button>
               </div>
             </form>
@@ -154,27 +158,28 @@ export function JoinFlow() {
             <form className={access.body} onSubmit={submitJoin}>
               <div>
                 <h1 className={access.title} id={`${ids}-title`}>
-                  {found.format === "teams" ? "¿En qué equipo juegas?" : "¿Cómo te llamas?"}
+                  {found.format === "teams" ? j.whichTeam : j.whatsYourName}
                 </h1>
                 <p className={access.lede}>
-                  Partida <strong className={styles.codeTag}>{found.code}</strong>
+                  {j.game} <strong className={styles.codeTag}>{found.code}</strong>
                   {" · "}
                   <button type="button" className={styles.again} onClick={reset}>
-                    Cambiar código
+                    {j.changeCode}
                   </button>
                 </p>
               </div>
 
-              {!found.joinOpen && <Problem>El anfitrión cerró la entrada a esta partida.</Problem>}
-              {found.joinOpen && found.full && <Problem>La partida está completa.</Problem>}
+              {!found.joinOpen && <Problem>{j.closed}</Problem>}
+              {found.joinOpen && found.full && <Problem>{j.full}</Problem>}
 
               {user ? (
                 <p className={styles.asUser}>
-                  Entras como <strong>{user.displayName}</strong>, con tu cuenta.
+                  {j.asUserBefore} <strong>{user.displayName}</strong>
+                  {j.asUserAfter}
                 </p>
               ) : (
                 <label className={access.field}>
-                  <span className={access.label}>Tu nombre</span>
+                  <span className={access.label}>{j.yourName}</span>
                   <input
                     className={access.input}
                     value={name}
@@ -185,14 +190,14 @@ export function JoinFlow() {
                     maxLength={30}
                     autoComplete="nickname"
                     autoFocus
-                    placeholder="Cómo te ve la sala"
+                    placeholder={j.namePlaceholder}
                   />
                 </label>
               )}
 
               {!user && found.pending.length > 0 && (
                 <div className={styles.pending}>
-                  <span className={access.label}>¿Eres uno de estos?</span>
+                  <span className={access.label}>{j.areYouOne}</span>
                   <div className={styles.chips}>
                     {found.pending.map((p) => (
                       <button
@@ -211,7 +216,7 @@ export function JoinFlow() {
 
               {found.format === "teams" && !claims && (
                 <fieldset className={styles.teams}>
-                  <legend className={access.label}>Tu equipo</legend>
+                  <legend className={access.label}>{j.yourTeam}</legend>
                   {found.teams.map((t) => (
                     <label key={t.id} className={styles.team} data-full={t.free === 0}>
                       <input
@@ -228,9 +233,9 @@ export function JoinFlow() {
                           {t.name}
                         </span>
                         <span className={styles.teamMembers}>
-                          {t.members.length ? memberLine(t.members, 4) : "Aún sin nadie"}
+                          {t.members.length ? memberLine(t.members, 4) : m.join.nobodyYet}
                           {" · "}
-                          {t.free === 0 ? "lleno" : t.free === 1 ? "queda 1 hueco" : `quedan ${t.free} huecos`}
+                          {t.free === 0 ? m.join.teamFull : plural(locale, t.free, m.join.spotsLeft)}
                         </span>
                       </span>
                     </label>
@@ -238,7 +243,7 @@ export function JoinFlow() {
                 </fieldset>
               )}
               {found.format === "teams" && claims && (
-                <p className={styles.asUser}>El anfitrión ya te apuntó: entrarás directo en tu equipo.</p>
+                <p className={styles.asUser}>{j.alreadyListed}</p>
               )}
 
               {error && <Problem>{error}</Problem>}
@@ -249,7 +254,7 @@ export function JoinFlow() {
                   disabled={busy || !ready || !found.joinOpen || found.full}
                 >
                   <LogIn size={24} aria-hidden />
-                  {busy ? "Entrando…" : "Entrar"}
+                  {busy ? j.entering : j.enter}
                 </button>
               </div>
             </form>

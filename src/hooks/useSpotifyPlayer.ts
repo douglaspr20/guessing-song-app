@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { requestPlay } from "@/lib/client/play";
 import { ensurePlayer, getPlayer, getServerState, getState, reconnect, subscribe } from "@/lib/client/spotifyDevice";
 import { useFragmentTimer } from "./useFragmentTimer";
+import { currentMessages } from "@/i18n/runtime";
 
 export type { PlayerStatus } from "@/lib/client/spotifyDevice";
 export type { FragmentPhase } from "./useFragmentTimer";
@@ -39,7 +40,7 @@ export function useSpotifyPlayer(enabled = true) {
   const playFragment = useCallback(
     async (gameId: string, roundId: string, offsetMs = 0) => {
       let deviceId = getState().deviceId;
-      if (!deviceId) throw new Error("El reproductor aún no está listo");
+      if (!deviceId) throw new Error(currentMessages().game.player.notReady);
       setError(null);
       reset();
       let res = await requestPlay(gameId, roundId, { deviceId, offsetMs });
@@ -48,7 +49,7 @@ export function useSpotifyPlayer(enabled = true) {
         deviceId = await reconnect();
         res = await requestPlay(gameId, roundId, { deviceId, offsetMs });
       }
-      if (!res.ok) throw new Error(res.data.message ?? "No se pudo reproducir");
+      if (!res.ok) throw new Error(res.data.message ?? currentMessages().game.player.cantPlay);
       start(res.data.fragmentMs, res.data.remainingMs ?? res.data.fragmentMs);
       return res.data;
     },

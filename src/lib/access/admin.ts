@@ -38,7 +38,7 @@ export async function listMembers() {
 
 async function loadMember(id: string) {
   const user = await db.user.findUnique({ where: { id } });
-  if (!user || user.role !== "member") throw new AppError("Miembro no encontrado", 404, "MEMBER_NOT_FOUND");
+  if (!user || user.role !== "member") throw new AppError("MEMBER_NOT_FOUND", 404);
   return user;
 }
 

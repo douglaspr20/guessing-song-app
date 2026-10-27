@@ -1,5 +1,6 @@
 // Cliente de la API para las pantallas. Solo tipos del servidor (se borran al compilar).
 import type { PublicGame, PublicRound, listGames, getRoundGuesses } from "@/lib/game/service";
+import { currentMessages } from "@/i18n/runtime";
 
 export type Game = PublicGame;
 export type Round = PublicRound;
@@ -32,7 +33,7 @@ export interface AccessStatus {
 
 export interface Catalog {
   genres: string[];
-  languages: { id: string; label: string; market: string }[];
+  languages: { id: string; market: string }[];
   decades: number[];
 }
 
@@ -68,8 +69,6 @@ export class ApiError extends Error {
   }
 }
 
-export const SERVER_DOWN = "El servidor no respondió. Prueba otra vez en un momento.";
-
 export async function api<T>(url: string, init: { method?: string; json?: unknown } = {}): Promise<T> {
   const res = await fetch(url, {
     method: init.method ?? (init.json !== undefined ? "POST" : "GET"),
@@ -80,7 +79,9 @@ export async function api<T>(url: string, init: { method?: string; json?: unknow
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     // Un fallo del servidor no le dice nada útil a la familia: mensaje común y que pueda reintentar.
-    const message = res.status >= 500 ? SERVER_DOWN : (data.message ?? "Algo salió mal");
+    const { common } = currentMessages();
+    // El servidor ya responde en el idioma de la persona (cookie o Accept-Language).
+    const message = res.status >= 500 ? common.serverDown : (data.message ?? common.somethingWrong);
     throw new ApiError(message, data.error ?? "UNKNOWN", res.status);
   }
   return data as T;
@@ -95,5 +96,7 @@ export function formatClock(ms: number) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-const dateFmt = new Intl.DateTimeFormat("es", { day: "numeric", month: "short", year: "numeric" });
-export const formatDate = (iso: string | Date) => dateFmt.format(new Date(iso));
+/** Texto de un error para mostrarlo: el de la API, o «No se pudo conectar» si ni siquiera respondió. */
+export function errorText(err: unknown): string {
+  return err instanceof ApiError ? err.message : currentMessages().common.cantConnect;
+}

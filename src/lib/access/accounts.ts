@@ -17,26 +17,26 @@ export const usernameSchema = z
   .string()
   .trim()
   .toLowerCase()
-  .regex(/^[a-z0-9_.]{3,30}$/, "El usuario debe tener de 3 a 30 letras, números, «_» o «.»");
+  .regex(/^[a-z0-9_.]{3,30}$/, "USERNAME_FORMAT");
 
 export const passwordSchema = z
   .string()
-  .min(8, "La contraseña debe tener al menos 8 caracteres")
-  .max(200, "La contraseña es demasiado larga");
+  .min(8, "PASSWORD_TOO_SHORT")
+  .max(200, "PASSWORD_TOO_LONG");
 
 export const registerSchema = z.object({
-  invite: z.string().min(1, "Falta el código de invitación"),
+  invite: z.string().min(1, "INVITE_REQUIRED"),
   username: usernameSchema,
   password: passwordSchema,
-  displayName: z.string().trim().min(1).max(40).optional(),
+  displayName: z.string().trim().min(1, "DISPLAY_NAME_INVALID").max(40, "DISPLAY_NAME_INVALID").optional(),
 });
 
-const badInvite = () => new AppError("El código de invitación no es válido o ya se usó", 422, "INVALID_INVITE");
+const badInvite = () => new AppError("INVALID_INVITE", 422);
 
 /** Alta de un miembro con un código de invitación de un solo uso. */
 export async function registerMember(input: z.input<typeof registerSchema>, now = new Date()) {
   const data = registerSchema.parse(input);
-  const taken = () => new AppError("Ese nombre de usuario no está disponible", 409, "USERNAME_TAKEN");
+  const taken = () => new AppError("USERNAME_TAKEN", 409);
   if (RESERVED_USERNAMES.has(data.username)) throw taken();
   const passwordHash = await hashPassword(data.password);
   const codeHash = sha256(normalizeInviteCode(data.invite));
@@ -75,7 +75,7 @@ export async function redeemInvite(userId: string, rawCode: string, now = new Da
   return db.$transaction(async (tx) => {
     const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
     if (user.spotifyAllowed || user.role === "host") {
-      throw new AppError("Tu cuenta ya tiene el modo Spotify", 409, "ALREADY_INVITED");
+      throw new AppError("ALREADY_INVITED", 409);
     }
     const claimed = await tx.invite.updateMany({
       where: { codeHash, usedAt: null, expiresAt: { gt: now } },

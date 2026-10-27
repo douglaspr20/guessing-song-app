@@ -46,6 +46,7 @@ Spotify only grants extended API access to registered businesses with 250k+ mont
 - **Host override:** accept an answer the matcher rejected (great for people who describe an English song they can't spell); points are computed from the moment the answer was given.
 - **Pause that really pauses:** the server-side clock for points and hints freezes too. Reloading mid-round leaves the round paused and **Seguir** resumes the clip where it stopped.
 - **Instant next round:** the next song is picked in the background while the current one plays.
+- **Spanish and English:** the interface follows the browser's language, with an **ES · EN** switch in the top band that is remembered in a cookie. Each device keeps its own language (the TV in Spanish, a phone in English), and API errors come back in the language of whoever asked. The song-language filter is separate.
 - **Shelf of past games** with a podium (ties share a place), a 3-second suspense countdown between rounds, and a final podium with tape-strip confetti.
 
 ## Tech stack
@@ -172,6 +173,16 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
 
 The e2e tests run without Ably, Spotify, Google or iTunes: the server picks invented songs when `E2E_FAKE_ITUNES=1` (`src/lib/itunes/fake.ts`; never set it in production) and the browser gets silence instead of Apple's previews. In a failed CI run the Playwright report is attached as an artifact.
 
+## Languages
+
+All interface text lives in typed dictionaries under `src/i18n/messages/` (one file per area: `home`, `access`, `setup`, `game`, `play`, `host`, `common`, plus `errors` for the API). Spanish is the source; every other language is declared with `satisfies typeof es…`, so TypeScript refuses to compile if a key is missing or a function takes different data, and `tests/i18n.test.ts` checks keys, `{variables}` and that every `AppError` thrown has a message.
+
+- **Components:** `const { m, locale } = useI18n()` and `m.home.title`; texts with data are functions (`m.game.trackOf(2, 10)`); plurals are `{ one, other }` objects resolved with `plural(locale, n, forms)` from `src/i18n/format.ts` (dates and name lists live there too).
+- **Server:** `getLocale()` / `getMessages()` in server components; route handlers translate errors through `handle()`, which reads the `idioma` cookie or `Accept-Language`.
+- **Errors:** `new AppError("CODE", status)` takes its text from `messages/*/errors.ts`; a code with several wordings passes `{ key }`, data goes in `{ params }` and technical details for the logs in `{ detail }`.
+
+**Adding a language:** add its code to `LOCALES` and `LOCALE_NAMES` in `src/i18n/locales.ts`, copy `src/i18n/messages/en/` to the new folder and translate it, and register it in `src/i18n/messages/index.ts`.
+
 ## Project structure
 
 ```
@@ -179,6 +190,7 @@ src/lib/spotify/   OAuth + token refresh, API client with retries, sources, play
 src/lib/access/    sessions, passwords, TOTP, encryption, guests, limits, host panel actions
 src/lib/game/      service (use cases), scoring, matcher, track picker, filters (zod), event bus
 src/lib/client/    browser API client and the shared Spotify player
+src/i18n/          languages: locale detection, dictionaries, formatting helpers
 src/app/           pages (shelf, new game, game) and API route handlers
 e2e/               Playwright tests and their helpers (database reset, host TOTP, invites)
 src/components/    cassette timer, scoreboard, podium, stepper, confetti

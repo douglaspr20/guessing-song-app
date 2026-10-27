@@ -304,6 +304,11 @@ Etiquetas de cinta que se pulsan: condensada mayúscula, trazo de 3px, sin relle
 ### Navigation
 - **Banda superior:** banda de rayas de borde a borde, 92px; a la izquierda la marca y a la derecha el estado («C-014 · Lado A · Pista 3 de 10») como etiquetas de cartulina con esquinas de 4px en condensada 800 mayúscula.
 
+### Idioma
+El selector **ES · EN** vive en la banda superior, a la derecha de la etiqueta de estado: dos teclas de condensada 800 en mayúscula sobre una etiqueta de cartulina, la activa en tinta sobre cartulina invertida. Cada idioma se nombra en sí mismo (`aria-label` «Español» / «English»). Al cambiar se recarga la página: el servidor pinta todo de nuevo en ese idioma.
+
+**Voz en inglés.** El mismo tono cercano y de casete: frases cortas, segunda persona, sin jerga técnica («Rewinding…», «The tape got tangled», «Record a new game»). Los términos del juego se traducen siempre igual: casete → *cassette*, pista → *track*, estantería → *shelf*, «¡Lo sé!» → *I know it!*, anfitrión → *host*. La marca «Adivina la canción» no se traduce. Las teclas de los atajos son las mismas en los dos idiomas (V, C, A, N siguen los colores del mando).
+
 ### Cassette (signature)
 La carcasa (28px, tornillos) lleva una etiqueta de cartulina con el título manuscrito y «vale N pts» en tomate hondo. La ventana es una píldora de hasta 900px que se mide a sí misma (container query): bobinas de clamp(48px, 16cqw, 150px) y contador de clamp(40px, 15cqw, 150px), así el contador nunca invade una bobina. El rollo de cada bobina cambia de radio según la cinta que le queda; los dientes del eje giran solo mientras suena. El contador va en azafrán y pasa a tomate con poco tiempo. Debajo, tres marcas de pista (20, 40 y 60 s) con borde superior de 6px que se encienden en azafrán y escriben la pista en Kalam.
 

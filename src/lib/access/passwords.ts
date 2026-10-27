@@ -16,7 +16,7 @@ export function temporaryPassword() {
 }
 
 /** El anfitrión no cambia su contraseña desde la app: se responde como si la acción no existiera. */
-const notAvailable = () => new AppError("No encontrado", 404, "NOT_FOUND");
+const notAvailable = () => new AppError("NOT_FOUND", 404);
 
 /**
  * Un miembro cambia su contraseña (o pone una, si hasta ahora solo entraba con Google).
@@ -37,10 +37,10 @@ export async function changePassword(
     const ok = !!input.current && (await verifyPassword(input.current, user.passwordHash));
     if (!ok) {
       await recordLoginAttempt(ipHash, false);
-      throw new AppError("La contraseña actual no es correcta", 401, "WRONG_PASSWORD");
+      throw new AppError("WRONG_PASSWORD", 401);
     }
     if (input.current === next) {
-      throw new AppError("La nueva contraseña tiene que ser distinta de la actual", 422, "SAME_PASSWORD");
+      throw new AppError("SAME_PASSWORD", 422);
     }
   }
 
@@ -60,7 +60,7 @@ export async function changePassword(
  */
 export async function resetMemberPassword(memberId: string) {
   const user = await db.user.findUnique({ where: { id: memberId } });
-  if (!user || user.role !== "member") throw new AppError("Miembro no encontrado", 404, "MEMBER_NOT_FOUND");
+  if (!user || user.role !== "member") throw new AppError("MEMBER_NOT_FOUND", 404);
   const password = temporaryPassword();
   await db.user.update({
     where: { id: memberId },

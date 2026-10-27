@@ -53,6 +53,9 @@ describe("isCorrectArtist", () => {
     ["lavoé", ["Héctor Lavoe"]],
     ["gaynor", ["Gloria Gaynor"]],
     ["Gaynorr", ["Gloria Gaynor"]],
+    ["Simon y Garfunkel", ["Simon & Garfunkel"]],
+    ["simon and garfunkel", ["Simon & Garfunkel"]],
+    ["Sam & Dave", ["Sam and Dave"]],
   ])("acepta %j para %j", (guess, artists) => {
     expect(isCorrectArtist(guess, artists)).toBe(true);
   });

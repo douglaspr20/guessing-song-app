@@ -8,6 +8,8 @@ import { TeamDot } from "@/components/TeamDot";
 import ui from "@/components/ui.module.css";
 import { api, type Game } from "@/lib/client/api";
 import type { LiveEvent } from "@/lib/client/live";
+import { plural } from "@/i18n/format";
+import { useI18n } from "@/i18n/client";
 import styles from "../game.module.css";
 
 interface Joined {
@@ -31,6 +33,8 @@ export function JoinPanel({
   /** Último aviso de la partida (la conexión en tiempo real la lleva la pantalla de la tele). */
   event: LiveEvent | null;
 }) {
+  const { m, locale } = useI18n();
+  const g = m.game;
   const toast = useToast();
   const confirm = useConfirm();
   const [people, setPeople] = useState<Joined[]>([]);
@@ -69,9 +73,9 @@ export function JoinPanel({
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(url);
-      toast({ tone: "ok", text: "Enlace copiado: pégalo en el chat." });
+      toast({ tone: "ok", text: g.linkCopied });
     } catch {
-      toast({ tone: "error", text: "No se pudo copiar. Selecciona el enlace y cópialo a mano." });
+      toast({ tone: "error", text: g.cantCopy });
     }
   };
 
@@ -89,9 +93,9 @@ export function JoinPanel({
 
   const kick = async (p: Joined) => {
     const ok = await confirm({
-      title: `¿Sacar a ${p.name}?`,
-      body: "Deja de ver la partida y no puede volver a entrar con su cuenta. Sus puntos se quedan.",
-      confirmLabel: "Sacar",
+      title: g.kickTitle(p.name),
+      body: g.kickBody,
+      confirmLabel: g.kick,
     });
     if (!ok) return;
     try {
@@ -109,37 +113,39 @@ export function JoinPanel({
   return (
     <details className={`${ui.card} ${styles.join}`} open={!started}>
       <summary className={styles.joinSummary}>
-        <span className={ui.cardTitle}>Únete con tu móvil</span>
+        <span className={ui.cardTitle}>{g.joinTitle}</span>
         <span className={styles.joinCodeSmall}>{game.code}</span>
       </summary>
       <div className={styles.joinBody}>
         <div className={styles.joinTop}>
           <div>
-            <p className={styles.joinHint}>Entra en <strong>{url ? new URL(url).host : "…"}/unirse</strong> y escribe</p>
-            <p className={styles.joinCode} aria-label={`Código ${game.code.split("").join(" ")}`}>
+            <p className={styles.joinHint}>
+              {g.joinGoTo} <strong>{url ? new URL(url).host : "…"}/unirse</strong> {g.joinAndType}
+            </p>
+            <p className={styles.joinCode} aria-label={g.codeLabel(game.code.split("").join(" "))}>
               {game.code}
             </p>
           </div>
           {qr && (
-            <div className={styles.joinQr} role="img" aria-label="Código QR para unirse" dangerouslySetInnerHTML={{ __html: qr }} />
+            <div className={styles.joinQr} role="img" aria-label={g.qrLabel} dangerouslySetInnerHTML={{ __html: qr }} />
           )}
         </div>
 
         <div className={styles.joinActions}>
           <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={copy} disabled={!url}>
             <Copy size={20} aria-hidden />
-            Copiar enlace
+            {g.copyLink}
           </button>
           <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={toggleOpen} disabled={busy} aria-pressed={!game.joinOpen}>
             {game.joinOpen ? <DoorClosed size={20} aria-hidden /> : <DoorOpen size={20} aria-hidden />}
-            {game.joinOpen ? "Cerrar entrada" : "Abrir entrada"}
+            {game.joinOpen ? g.closeEntry : g.openEntry}
           </button>
         </div>
-        {!game.joinOpen && <p className={styles.joinHint}>La entrada está cerrada: nadie nuevo puede unirse.</p>}
+        {!game.joinOpen && <p className={styles.joinHint}>{g.entryClosed}</p>}
 
         <div>
           <p className={styles.joinListTitle}>
-            {people.length === 0 ? "Aún no se ha unido nadie" : `${people.length} ${people.length === 1 ? "persona dentro" : "personas dentro"}`}
+            {people.length === 0 ? g.nobodyJoined : plural(locale, people.length, g.peopleInside)}
           </p>
           {people.length > 0 && (
             <ul className={styles.joinList}>
@@ -154,7 +160,7 @@ export function JoinPanel({
                     type="button"
                     className={styles.joinKick}
                     onClick={() => kick(p)}
-                    aria-label={`Sacar a ${p.name}`}
+                    aria-label={g.kickLabel(p.name)}
                   >
                     <UserMinus size={20} aria-hidden />
                   </button>

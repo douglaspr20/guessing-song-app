@@ -1,3 +1,6 @@
+"use client";
+
+import { useI18n } from "@/i18n/client";
 import styles from "./errors.module.css";
 
 const TAPE = "#5b3a1e"; // cinta magnética (mismo marrón que las bobinas del casete)
@@ -9,8 +12,9 @@ const c = (fill: string) => ({ fill });
  * aparecer y el lápiz gira de vez en cuando; con movimiento reducido todo queda quieto.
  */
 export function TangledTapeArt() {
+  const { m } = useI18n();
   return (
-    <svg className={styles.broken} viewBox="0 0 420 400" role="img" aria-label="Un casete roto con la cinta enredada y un lápiz en la bobina">
+    <svg className={styles.broken} viewBox="0 0 420 400" role="img" aria-label={m.common.errorPage.tangledArt}>
       <g className={styles.shell}>
         {/* Carcasa con tornillos */}
         <rect x="20" y="20" width="380" height="240" rx="26" style={c("var(--shell)")} />

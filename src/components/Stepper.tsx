@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Minus, Plus } from "lucide-react";
+import { useI18n } from "@/i18n/client";
 import styles from "./Stepper.module.css";
 
 /**
@@ -25,6 +26,7 @@ export function Stepper({
   unit?: string;
   onChange: (v: number) => void;
 }) {
+  const { m } = useI18n();
   /** Lo que se está escribiendo; null cuando el campo muestra el valor guardado. */
   const [draft, setDraft] = useState<string | null>(null);
   const clamp = (v: number) => Math.min(max, Math.max(min, v));
@@ -48,7 +50,7 @@ export function Stepper({
           set(value - step);
         }}
         disabled={value <= min}
-        aria-label={`Menos ${label.toLowerCase()}`}
+        aria-label={m.common.less(label)}
       >
         <Minus size={26} strokeWidth={3} aria-hidden />
       </button>
@@ -80,7 +82,7 @@ export function Stepper({
           set(value + step);
         }}
         disabled={value >= max}
-        aria-label={`Más ${label.toLowerCase()}`}
+        aria-label={m.common.more(label)}
       >
         <Plus size={26} strokeWidth={3} aria-hidden />
       </button>

@@ -197,30 +197,30 @@ async function catalogNumberOf(game: Game) {
 }
 
 export const spotifyInviteRequired = () =>
-  new AppError("El modo Spotify es solo con invitación", 403, "SPOTIFY_INVITE_REQUIRED");
+  new AppError("SPOTIFY_INVITE_REQUIRED", 403);
 
 /** Usuario cuyo Spotify suena en una partida de Spotify. */
 function spotifyUserOf(game: Pick<Game, "userId">) {
-  if (!game.userId) throw new AppError("Esta partida no tiene una cuenta de Spotify", 409, "SPOTIFY_NOT_CONNECTED");
+  if (!game.userId) throw new AppError("SPOTIFY_NOT_CONNECTED", 409, { key: "GAME_WITHOUT_SPOTIFY" });
   return game.userId;
 }
 
 async function loadGame(gameId: string) {
   const game = await db.game.findUnique({ where: { id: gameId }, include: { players: { include: { members: true } }, rounds: true, participants: true },
   });
-  if (!game) throw new AppError("Partida no encontrada", 404, "GAME_NOT_FOUND");
+  if (!game) throw new AppError("GAME_NOT_FOUND", 404);
   return game;
 }
 
 export async function loadRound(gameId: string, roundId: string) {
   const round = await db.round.findUnique({ where: { id: roundId }, include: { game: true } });
-  if (!round || round.gameId !== gameId) throw new AppError("Ronda no encontrada", 404, "ROUND_NOT_FOUND");
+  if (!round || round.gameId !== gameId) throw new AppError("ROUND_NOT_FOUND", 404);
   return round;
 }
 
 async function loadPlayer(gameId: string, playerId: string) {
   const player = await db.player.findUnique({ where: { id: playerId } });
-  if (!player || player.gameId !== gameId) throw new AppError("Jugador no encontrado", 404, "PLAYER_NOT_FOUND");
+  if (!player || player.gameId !== gameId) throw new AppError("PLAYER_NOT_FOUND", 404);
   return player;
 }
 
@@ -291,10 +291,10 @@ export async function createGame(input: CreateGameInput, owner: Owner): Promise<
   const data = createGameSchema.parse(input);
   if (data.mode === "spotify") {
     // Un invitado no tiene Spotify: para él el modo ni existe.
-    if (owner.kind !== "user") throw new AppError("No encontrado", 404, "NOT_FOUND");
+    if (owner.kind !== "user") throw new AppError("NOT_FOUND", 404);
     if (!owner.spotifyAllowed) throw spotifyInviteRequired();
     if (!(await db.spotifyAccount.count({ where: { userId: owner.userId } }))) {
-      throw new AppError("Conecta tu Spotify para grabar partidas con canción completa", 409, "SPOTIFY_NOT_LINKED");
+      throw new AppError("SPOTIFY_NOT_LINKED", 409);
     }
   }
 
@@ -334,7 +334,7 @@ export async function createGame(input: CreateGameInput, owner: Owner): Promise<
       throw err;
     }
   }
-  throw new AppError("No se pudo generar un código de partida", 500, "CODE_GENERATION_FAILED");
+  throw new AppError("CODE_GENERATION_FAILED", 500);
 }
 
 export async function getGame(gameId: string): Promise<PublicGame> {
@@ -393,15 +393,15 @@ export async function deleteAllGames(owner: Owner) {
 /** Añade un jugador (en el futuro, lo usará el flujo de "unirse con el móvil"). */
 export async function addPlayer(gameId: string, rawName: string) {
   const name = rawName.trim();
-  if (!name || name.length > 30) throw new AppError("Nombre inválido", 422, "INVALID_NAME");
+  if (!name || name.length > 30) throw new AppError("INVALID_NAME", 422);
   const game = await loadGame(gameId);
-  if (game.status === "FINISHED") throw new AppError("La partida ya terminó", 409, "GAME_FINISHED");
+  if (game.status === "FINISHED") throw new AppError("GAME_FINISHED", 409);
   if (game.format === "teams") {
-    throw new AppError("En una partida por equipos aún no se pueden añadir jugadores sueltos", 409, "TEAMS_GAME");
+    throw new AppError("TEAMS_GAME", 409);
   }
-  if (game.players.length >= MAX_PLAYERS) throw new AppError("La partida ya está completa", 409, "GAME_FULL");
+  if (game.players.length >= MAX_PLAYERS) throw new AppError("GAME_FULL", 409);
   if (game.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
-    throw new AppError("Ya hay un jugador con ese nombre", 409, "DUPLICATE_PLAYER");
+    throw new AppError("DUPLICATE_PLAYER", 409);
   }
   const player = await db.player.create({ data: { gameId, name } });
   emit({ type: "player_joined", gameId, playerId: player.id, name });
@@ -412,7 +412,7 @@ export async function addPlayer(gameId: string, rawName: string) {
 export async function updateFilters(gameId: string, rawFilters: unknown) {
   const filters = gameFiltersSchema.parse(rawFilters);
   const game = await loadGame(gameId);
-  if (game.status === "FINISHED") throw new AppError("La partida ya terminó", 409, "GAME_FINISHED");
+  if (game.status === "FINISHED") throw new AppError("GAME_FINISHED", 409);
   await db.game.update({
     where: { id: gameId },
     data: { filters: JSON.stringify(filters), nextTrack: null, nextTrackFilters: null },
@@ -424,12 +424,12 @@ export async function updateFilters(gameId: string, rawFilters: unknown) {
 /** Abre la siguiente ronda con la canción precargada (o elige una si no la hay). */
 export async function startNextRound(gameId: string) {
   const game = await loadGame(gameId);
-  if (game.status === "FINISHED") throw new AppError("La partida ya terminó", 409, "GAME_FINISHED");
+  if (game.status === "FINISHED") throw new AppError("GAME_FINISHED", 409);
   if (game.rounds.some((r) => r.status === "PLAYING")) {
-    throw new AppError("Hay una ronda en curso: adivínala o revélala antes de seguir", 409, "ROUND_IN_PROGRESS");
+    throw new AppError("ROUND_IN_PROGRESS", 409);
   }
   if (game.currentRound >= game.totalRounds) {
-    throw new AppError("Ya se jugaron todas las rondas", 409, "NO_MORE_ROUNDS");
+    throw new AppError("NO_MORE_ROUNDS", 409);
   }
 
   const { track, startMs, genre, audioUrl } = await takeNextTrack(game);
@@ -465,7 +465,7 @@ export async function startNextRound(gameId: string) {
   } catch (err) {
     // Doble clic en "siguiente ronda": la restricción única (gameId, number) evita duplicarla.
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-      throw new AppError("Esa ronda ya se creó", 409, "ROUND_ALREADY_CREATED");
+      throw new AppError("ROUND_ALREADY_CREATED", 409);
     }
     throw err;
   }
@@ -478,15 +478,15 @@ export async function startNextRound(gameId: string) {
  */
 export async function playRound(gameId: string, roundId: string, deviceId: string | undefined, offsetMs = 0) {
   const round = await loadRound(gameId, roundId);
-  if (round.status !== "PLAYING") throw new AppError("La ronda ya está cerrada", 409, "ROUND_CLOSED");
+  if (round.status !== "PLAYING") throw new AppError("ROUND_CLOSED", 409);
   // Mientras alguien responde, la canción está parada a propósito: no se reanuda por detrás.
-  if (round.buzzParticipantId) throw new AppError("Alguien está respondiendo", 409, "BUZZ_ACTIVE");
+  if (round.buzzParticipantId) throw new AppError("BUZZ_ACTIVE", 409);
   // `offsetMs` > 0 retoma el fragmento a medias (p. ej. tras recargar la página).
   const fragmentMs = round.game.fragmentSeconds * 1000;
   const offset = Math.min(Math.max(0, Math.round(offsetMs)), fragmentMs);
   let usedDeviceId: string | null = null;
   if (round.game.mode !== "open") {
-    if (!deviceId) throw new AppError("Falta el reproductor de Spotify", 422, "DEVICE_REQUIRED");
+    if (!deviceId) throw new AppError("DEVICE_REQUIRED", 422);
     usedDeviceId = await startPlayback(spotifyUserOf(round.game), deviceId, round.trackUri, round.startMs + offset);
   }
   await db.round.updateMany({ where: { id: roundId, playStartedAt: null }, data: { playStartedAt: new Date() } });
@@ -518,8 +518,8 @@ export async function resumeClock(roundId: string) {
 /** Pausa el reloj de la ronda (puntos y pistas). El audio lo pausa el navegador. */
 export async function pauseRound(gameId: string, roundId: string) {
   const round = await loadRound(gameId, roundId);
-  if (round.status !== "PLAYING") throw new AppError("La ronda ya está cerrada", 409, "ROUND_CLOSED");
-  if (!round.playStartedAt) throw new AppError("La canción aún no ha empezado a sonar", 409, "ROUND_NOT_STARTED");
+  if (round.status !== "PLAYING") throw new AppError("ROUND_CLOSED", 409);
+  if (!round.playStartedAt) throw new AppError("ROUND_NOT_STARTED", 409);
   await db.round.updateMany({ where: { id: roundId, pausedAt: null }, data: { pausedAt: new Date() } });
   const updated = await db.round.findUniqueOrThrow({ where: { id: roundId } });
   emit({ type: "round_paused", gameId, roundId });
@@ -529,7 +529,7 @@ export async function pauseRound(gameId: string, roundId: string) {
 /** Reanuda el reloj de la ronda tras una pausa. */
 export async function resumeRound(gameId: string, roundId: string) {
   const round = await loadRound(gameId, roundId);
-  if (round.status !== "PLAYING") throw new AppError("La ronda ya está cerrada", 409, "ROUND_CLOSED");
+  if (round.status !== "PLAYING") throw new AppError("ROUND_CLOSED", 409);
   // Si alguien tenía el turno, seguir es cancelárselo (sin dejarle fuera de la ronda).
   if (round.buzzParticipantId) {
     const cleared = await db.round.updateMany({
@@ -629,11 +629,11 @@ export async function submitGuess(
 ) {
   const title = input.title?.trim() || null;
   const artist = input.artist?.trim() || null;
-  if (!title && !artist) throw new AppError("Escribe el título o el artista", 422, "EMPTY_GUESS");
+  if (!title && !artist) throw new AppError("EMPTY_GUESS", 422);
 
   const round = await loadRound(gameId, roundId);
-  if (round.status !== "PLAYING") throw new AppError("La ronda ya está cerrada", 409, "ROUND_CLOSED");
-  if (!round.playStartedAt) throw new AppError("La canción aún no ha empezado a sonar", 409, "ROUND_NOT_STARTED");
+  if (round.status !== "PLAYING") throw new AppError("ROUND_CLOSED", 409);
+  if (!round.playStartedAt) throw new AppError("ROUND_NOT_STARTED", 409);
   await loadPlayer(gameId, playerId);
 
   const at = new Date();
@@ -671,20 +671,20 @@ export async function overrideGuess(
   guessId: string,
   input: { title?: boolean; artist?: boolean },
 ) {
-  if (!input.title && !input.artist) throw new AppError("Indica si das por bueno el título o el artista", 422, "EMPTY_OVERRIDE");
+  if (!input.title && !input.artist) throw new AppError("EMPTY_OVERRIDE", 422);
   const round = await loadRound(gameId, roundId);
   const guess = await db.guess.findUnique({ where: { id: guessId } });
-  if (!guess || guess.roundId !== roundId) throw new AppError("Intento no encontrado", 404, "GUESS_NOT_FOUND");
+  if (!guess || guess.roundId !== roundId) throw new AppError("GUESS_NOT_FOUND", 404);
 
   if (input.title) {
-    if (!guess.titleText) throw new AppError("Ese intento no tenía título", 422, "NO_TITLE_IN_GUESS");
-    if (round.winnerPlayerId) throw new AppError("Esta ronda ya tiene ganador", 409, "ROUND_ALREADY_WON");
+    if (!guess.titleText) throw new AppError("NO_TITLE_IN_GUESS", 422);
+    if (round.winnerPlayerId) throw new AppError("ROUND_ALREADY_WON", 409);
   }
   if (input.artist) {
-    if (!guess.artistText) throw new AppError("Ese intento no tenía artista", 422, "NO_ARTIST_IN_GUESS");
-    if (round.artistWinnerPlayerId) throw new AppError("El punto de artista ya se lo llevó alguien", 409, "ARTIST_ALREADY_TAKEN");
+    if (!guess.artistText) throw new AppError("NO_ARTIST_IN_GUESS", 422);
+    if (round.artistWinnerPlayerId) throw new AppError("ARTIST_ALREADY_TAKEN", 409);
     if (!artistAvailable(round, guess.createdAt, rulesFor(round.game.mode))) {
-      throw new AppError("Ese intento fue después de la pista del artista", 409, "ARTIST_HINT_SHOWN");
+      throw new AppError("ARTIST_HINT_SHOWN", 409);
     }
   }
 
@@ -707,7 +707,7 @@ export async function overrideGuess(
     }
     return a;
   });
-  if (!result.points) throw new AppError("No se pudo aplicar: alguien se adelantó", 409, "OVERRIDE_NOT_APPLIED");
+  if (!result.points) throw new AppError("OVERRIDE_NOT_APPLIED", 409);
 
   emitAward(gameId, roundId, guess.playerId, result);
   return {
@@ -728,10 +728,10 @@ export async function awardSpoken(
   playerId: string,
   input: { title?: boolean; artist?: boolean },
 ) {
-  if (!input.title && !input.artist) throw new AppError("Indica si acertó la canción o el artista", 422, "EMPTY_AWARD");
+  if (!input.title && !input.artist) throw new AppError("EMPTY_AWARD", 422);
   const round = await loadRound(gameId, roundId);
-  if (round.status !== "PLAYING") throw new AppError("La ronda ya está cerrada", 409, "ROUND_CLOSED");
-  if (!round.playStartedAt) throw new AppError("La canción aún no ha empezado a sonar", 409, "ROUND_NOT_STARTED");
+  if (round.status !== "PLAYING") throw new AppError("ROUND_CLOSED", 409);
+  if (!round.playStartedAt) throw new AppError("ROUND_NOT_STARTED", 409);
   await loadPlayer(gameId, playerId);
 
   const at = new Date();
@@ -753,11 +753,7 @@ export async function awardSpoken(
     return a;
   });
   if (!result.points) {
-    throw new AppError(
-      input.title ? "Esta ronda ya tiene ganador" : "El artista ya no suma o se lo llevó alguien",
-      409,
-      "AWARD_NOT_APPLIED",
-    );
+    throw new AppError("AWARD_NOT_APPLIED", 409, { key: input.title ? "AWARD_NOT_APPLIED" : "AWARD_ARTIST_NOT_APPLIED" });
   }
 
   emitAward(gameId, roundId, playerId, result);

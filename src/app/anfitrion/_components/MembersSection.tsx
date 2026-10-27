@@ -4,15 +4,18 @@ import { useState } from "react";
 import { useConfirm, useToast, type ConfirmOptions } from "@/components/feedback/FeedbackProvider";
 import { RetryNotice } from "@/components/RetryNotice";
 import ui from "@/components/ui.module.css";
-import { api, formatDate } from "@/lib/client/api";
+import { api } from "@/lib/client/api";
+import { formatDate, plural } from "@/i18n/format";
+import { useI18n } from "@/i18n/client";
+import type { Messages } from "@/i18n/messages";
 import type { Member } from "../_lib/types";
 import { errorMessage, useHostData } from "../_lib/useHostData";
 import styles from "../host.module.css";
 import { Section } from "./PanelBits";
 
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-
 export function MembersSection() {
+  const { m: text, locale } = useI18n();
+  const h = text.host;
   const confirm = useConfirm();
   const toast = useToast();
   const { data, error, reload } = useHostData<{ members: Member[] }>("/api/host/members");
@@ -21,16 +24,16 @@ export function MembersSection() {
 
   const resetPassword = async (m: Member) => {
     const ok = await confirm({
-      title: `¿Restablecer la contraseña de @${m.username}?`,
-      body: "Se crea una contraseña temporal y se cierran todas sus sesiones. Al entrar con ella se le pedirá ponerse una suya.",
-      confirmLabel: "Restablecer",
+      title: h.resetTitle(m.username),
+      body: h.resetBody,
+      confirmLabel: h.resetConfirm,
       tone: "danger",
     });
     if (!ok) return;
     try {
       const res = await api<{ password: string; username: string }>(`/api/host/members/${m.id}/password`, { method: "POST" });
       setReset({ id: m.id, ...res });
-      toast({ text: `Contraseña de @${res.username} restablecida.` });
+      toast({ text: h.resetDone(res.username) });
     } catch (err) {
       toast({ text: errorMessage(err), tone: "error" });
     }
@@ -56,9 +59,9 @@ export function MembersSection() {
   const member = (m: Member, init: { method: string; json?: unknown }) => () => api(`/api/host/members/${m.id}`, init);
 
   return (
-    <Section title="Miembros">
-      {error && <RetryNotice on="card" message={`No se pudieron cargar los miembros. ${error}`} onRetry={reload} />}
-      {data?.members.length === 0 && <p className={styles.text}>Aún no hay miembros. Crea una invitación para el primero.</p>}
+    <Section title={h.membersTitle}>
+      {error && <RetryNotice on="card" message={h.cantLoadMembers(error)} onRetry={reload} />}
+      {data?.members.length === 0 && <p className={styles.text}>{h.noMembers}</p>}
       {data && data.members.length > 0 && (
         <ul className={styles.list}>
           {data.members.map((m) => (
@@ -68,11 +71,10 @@ export function MembersSection() {
                   {m.displayName} <span className={styles.itemMeta}>@{m.username}</span>
                 </span>
                 <span className={styles.itemMeta}>
-                  {m.disabled ? "Desactivado · " : ""}
-                  {loginMethod(m)} · {m.spotifyAllowed ? "con invitación" : "cuenta gratis"} ·{" "}
-                  {m.spotify !== null ? `Spotify${m.spotify ? ` (${m.spotify})` : ""}` : "Sin Spotify"} ·{" "}
-                  {plural(m.games, "partida", "partidas")}
-                  {m.lastSeenAt ? ` · visto el ${formatDate(m.lastSeenAt)}` : ""}
+                  {m.disabled ? h.disabledPrefix : ""}
+                  {loginMethod(m, h)} · {m.spotifyAllowed ? h.withInvite : h.freeAccount} ·{" "}
+                  {m.spotify !== null ? h.spotifyOf(m.spotify) : h.noSpotify} · {plural(locale, m.games, h.games)}
+                  {m.lastSeenAt ? h.seenOn(formatDate(locale, m.lastSeenAt)) : ""}
                 </span>
               </span>
               <span className={styles.row}>
@@ -82,19 +84,19 @@ export function MembersSection() {
                   onClick={() =>
                     act(
                       member(m, { method: "PATCH", json: { disabled: !m.disabled } }),
-                      m.disabled ? `@${m.username} puede volver a entrar.` : `@${m.username} ya no puede entrar.`,
+                      m.disabled ? h.canEnterAgain(m.username) : h.cantEnter(m.username),
                       m.disabled
                         ? undefined
                         : {
-                            title: `¿Desactivar a @${m.username}?`,
-                            body: "No podrá entrar hasta que lo reactives. Sus partidas se conservan.",
-                            confirmLabel: "Desactivar",
+                            title: h.disableTitle(m.username),
+                            body: h.disableBody,
+                            confirmLabel: h.disable,
                             tone: "danger",
                           },
                     )
                   }
                 >
-                  {m.disabled ? "Reactivar" : "Desactivar"}
+                  {m.disabled ? h.enable : h.disable}
                 </button>
                 <button
                   type="button"
@@ -103,37 +105,37 @@ export function MembersSection() {
                     act(
                       member(m, { method: "PATCH", json: { spotifyAllowed: !m.spotifyAllowed } }),
                       m.spotifyAllowed
-                        ? `@${m.username} ya no puede usar el modo Spotify.`
-                        : `@${m.username} ya puede usar el modo Spotify.`,
+                        ? h.spotifyRemoved(m.username)
+                        : h.spotifyGranted(m.username),
                       m.spotifyAllowed
                         ? {
-                            title: `¿Quitarle el modo Spotify a @${m.username}?`,
-                            body: "También se desvincula su cuenta de Spotify. Sus partidas se conservan y puede seguir jugando sin cuenta.",
-                            confirmLabel: "Quitar Spotify",
+                            title: h.removeSpotifyTitle(m.username),
+                            body: h.removeSpotifyBody,
+                            confirmLabel: h.removeSpotify,
                             tone: "danger",
                           }
                         : {
-                            title: `¿Darle el modo Spotify a @${m.username}?`,
-                            body: "Podrá vincular su propia cuenta Premium. Recuerda añadirla también en el panel de Spotify.",
-                            confirmLabel: "Permitir Spotify",
+                            title: h.grantSpotifyTitle(m.username),
+                            body: h.grantSpotifyBody,
+                            confirmLabel: h.grantSpotify,
                           },
                     )
                   }
                 >
-                  {m.spotifyAllowed ? "Quitar Spotify" : "Permitir Spotify"}
+                  {m.spotifyAllowed ? h.removeSpotify : h.grantSpotify}
                 </button>
                 <button type="button" className={`${ui.btn} ${ui.onCard} ${styles.small}`} onClick={() => resetPassword(m)}>
-                  {m.hasPassword ? "Restablecer contraseña" : "Crear contraseña"}
+                  {m.hasPassword ? h.resetPassword : h.createPassword}
                 </button>
                 {m.sessions > 0 && (
                   <button
                     type="button"
                     className={`${ui.btn} ${ui.onCard} ${styles.small}`}
                     onClick={() =>
-                      act(member(m, { method: "PATCH", json: { revokeSessions: true } }), `Sesiones de @${m.username} cerradas.`)
+                      act(member(m, { method: "PATCH", json: { revokeSessions: true } }), h.sessionsClosed(m.username))
                     }
                   >
-                    Cerrar sesiones
+                    {h.closeSessions}
                   </button>
                 )}
                 {m.games > 0 && (
@@ -143,47 +145,47 @@ export function MembersSection() {
                     onClick={() =>
                       act(
                         () => api(`/api/host/members/${m.id}/games`, { method: "DELETE" }),
-                        `Historial de @${m.username} borrado.`,
+                        h.historyDeleted(m.username),
                         {
-                          title: `¿Borrar el historial de @${m.username}?`,
+                          title: h.deleteHistoryTitle(m.username),
                           body: (
                             <>
-                              Se borrarán sus <strong>{plural(m.games, "partida", "partidas")}</strong>. Su cuenta y su
-                              Spotify se mantienen. No se puede deshacer.
+                              {h.deleteHistoryBefore} <strong>{plural(locale, m.games, h.games)}</strong>
+                              {h.deleteHistoryAfter}
                             </>
                           ),
-                          confirmLabel: "Borrar historial",
+                          confirmLabel: h.deleteHistory,
                           tone: "danger",
-                          typeToConfirm: "BORRAR",
+                          typeToConfirm: text.home.deleteAllWord,
                         },
                       )
                     }
                   >
-                    Borrar historial
+                    {h.deleteHistory}
                   </button>
                 )}
                 <button
                   type="button"
                   className={`${ui.btn} ${ui.onCard} ${styles.small} ${styles.danger}`}
                   onClick={() =>
-                    act(member(m, { method: "DELETE" }), `@${m.username} borrado.`, {
-                      title: `¿Borrar a @${m.username}?`,
-                      body: "Se borra su cuenta con todas sus partidas y su Spotify vinculado. No se puede deshacer.",
-                      confirmLabel: "Borrar miembro",
+                    act(member(m, { method: "DELETE" }), h.memberDeleted(m.username), {
+                      title: h.deleteMemberTitle(m.username),
+                      body: h.deleteMemberBody,
+                      confirmLabel: h.deleteMember,
                       tone: "danger",
-                      typeToConfirm: "BORRAR",
+                      typeToConfirm: text.home.deleteAllWord,
                     })
                   }
                 >
-                  Borrar
+                  {h.delete}
                 </button>
               </span>
               {reset?.id === m.id && (
                 <div className={`${styles.newCode} ${styles.fullRow}`} role="status">
-                  <span className={styles.statLabel}>Contraseña temporal de @{reset.username}: cópiala ahora</span>
+                  <span className={styles.statLabel}>{h.tempPassword(reset.username)}</span>
                   <span className={styles.codeValue}>{reset.password}</span>
                   <span className={styles.itemMeta}>
-                    Dásela en persona o por un canal privado. Al entrar se le pedirá cambiarla.
+                    {h.tempPasswordHint}
                   </span>
                 </div>
               )}
@@ -196,8 +198,8 @@ export function MembersSection() {
 }
 
 /** Cómo entra cada miembro: con Google, con contraseña o de las dos formas. */
-function loginMethod(m: Member) {
-  if (m.google && m.hasPassword) return `Google (${m.google}) y contraseña`;
-  if (m.google) return `Google (${m.google})`;
-  return "Contraseña";
+function loginMethod(m: Member, h: Messages["host"]) {
+  if (m.google && m.hasPassword) return h.loginGoogleAndPassword(m.google);
+  if (m.google) return h.loginGoogle(m.google);
+  return h.loginPassword;
 }

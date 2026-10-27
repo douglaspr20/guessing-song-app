@@ -10,6 +10,7 @@
  */
 
 import { PLAYER_NAME } from "@/lib/spotify/constants";
+import { currentMessages } from "@/i18n/runtime";
 
 const SDK_URL = "https://sdk.scdn.co/spotify-player.js";
 const READY_TIMEOUT_MS = 10_000;
@@ -52,14 +53,14 @@ function loadSdk(): Promise<void> {
     const script = document.createElement("script");
     script.src = SDK_URL;
     script.async = true;
-    script.onerror = () => reject(new Error("No se pudo cargar el reproductor de Spotify"));
+    script.onerror = () => reject(new Error(currentMessages().game.player.sdkLoadFailed));
     document.body.appendChild(script);
   });
 }
 
 async function fetchToken(): Promise<string> {
   const res = await fetch("/api/spotify/token", { cache: "no-store" });
-  if (!res.ok) throw new Error("No hay sesión de Spotify. Vuelve a conectar tu cuenta.");
+  if (!res.ok) throw new Error(currentMessages().game.player.noSpotifySession);
   const { accessToken } = await res.json();
   return accessToken;
 }
@@ -87,11 +88,11 @@ export function ensurePlayer(): Promise<void> {
       });
       p.addListener("not_ready", () => set({ status: "not_ready" }));
       p.addListener("initialization_error", () =>
-        fail("Este navegador no puede reproducir Spotify. Abre el juego en Chrome o Edge."),
+        fail(currentMessages().game.player.browserUnsupported),
       );
-      p.addListener("authentication_error", () => fail("Spotify rechazó la sesión. Vuelve a conectar tu cuenta."));
-      p.addListener("account_error", () => fail("Hace falta una cuenta Spotify Premium para que suene."));
-      p.addListener("playback_error", () => set({ error: "Spotify no pudo reproducir esta canción." }));
+      p.addListener("authentication_error", () => fail(currentMessages().game.player.authRejected));
+      p.addListener("account_error", () => fail(currentMessages().game.player.premiumRequired));
+      p.addListener("playback_error", () => set({ error: currentMessages().game.player.playbackFailed }));
       player = p;
       return p.connect().then(() => undefined);
     })
@@ -102,11 +103,11 @@ export function ensurePlayer(): Promise<void> {
 /** Vuelve a registrar el dispositivo en Spotify y devuelve el nuevo `device_id`. */
 export async function reconnect(): Promise<string> {
   await ensurePlayer();
-  if (!player) throw new Error("El reproductor de Spotify no está disponible");
+  if (!player) throw new Error(currentMessages().game.player.unavailable);
   set({ status: "loading" });
   const next = new Promise<string>((resolve, reject) => {
     readyWaiters.push(resolve);
-    setTimeout(() => reject(new Error("Spotify tardó demasiado en reconectar el reproductor")), READY_TIMEOUT_MS);
+    setTimeout(() => reject(new Error(currentMessages().game.player.reconnectTimeout)), READY_TIMEOUT_MS);
   });
   player.disconnect();
   await player.connect();

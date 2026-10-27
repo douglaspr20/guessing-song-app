@@ -1,4 +1,5 @@
 import { Crown } from "lucide-react";
+import { useI18n } from "@/i18n/client";
 import { memberLine } from "@/lib/game/teams";
 import { TeamDot } from "./TeamDot";
 import styles from "./Podium.module.css";
@@ -29,15 +30,16 @@ export function Podium({
   /** Sobre la carátula (tinta) o sobre la carcasa (papel). */
   tone?: "card" | "shell";
 }) {
+  const { m } = useI18n();
   const top = entries.slice(0, 3);
   // Sin puntos no hay a quién coronar.
   if (!top.length || top[0].score === 0) {
-    return <p className={`${styles.none} ${styles[size]}`}>Aún sin puntos</p>;
+    return <p className={`${styles.none} ${styles[size]}`}>{m.common.noPoints}</p>;
   }
   return (
     <ol
       className={`${styles.podium} ${styles[size]} ${styles[tone]} ${animate ? styles.rise : ""}`}
-      aria-label="Podio"
+      aria-label={m.common.podium}
     >
       {ORDER.map((i) => {
         const e = top[i];
@@ -51,10 +53,10 @@ export function Podium({
             </span>
             {size === "grand" && !!e.members?.length && <span className={styles.members}>{memberLine(e.members, 4)}</span>}
             <span className={styles.score}>
-              {e.score} <span className="sr-only">puntos</span>
+              {e.score} <span className="sr-only">{m.common.points}</span>
             </span>
-            <span className={styles.step} aria-label={`Puesto ${e.place}`}>
-              {e.place}º
+            <span className={styles.step} aria-label={m.common.place(e.place)}>
+              {m.common.ordinal(e.place)}
             </span>
           </li>
         );

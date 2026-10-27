@@ -57,9 +57,9 @@ describe("titleLetters", () => {
 
 describe("titleWordCount", () => {
   it("cuenta las palabras del título limpio", () => {
-    expect(titleWordCount("De Música Ligera - Remastered 2007")).toBe("3 palabras");
-    expect(titleWordCount("Bailando (feat. Descemer Bueno)")).toBe("1 palabra");
-    expect(titleWordCount("Hey Jude")).toBe("2 palabras");
+    expect(titleWordCount("De Música Ligera - Remastered 2007")).toBe(3);
+    expect(titleWordCount("Bailando (feat. Descemer Bueno)")).toBe(1);
+    expect(titleWordCount("Hey Jude")).toBe(2);
   });
 });
 
@@ -74,7 +74,7 @@ describe("unlockedHints", () => {
     expect(h0.nextHintAt).toEqual(at(20));
 
     const h1 = unlockedHints(round, at(20));
-    expect(h1.hints).toEqual([{ type: "words", value: "3 palabras" }]);
+    expect(h1.hints).toEqual([{ type: "words", value: "3" }]);
     expect(h1.nextHintAt).toEqual(at(40));
 
     const h2 = unlockedHints(round, at(45));

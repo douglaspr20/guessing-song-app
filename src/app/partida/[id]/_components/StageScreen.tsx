@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { BandStatus } from "@/components/band/BandStatus";
@@ -5,6 +7,7 @@ import { ErrorScene } from "@/components/errors/ErrorScene";
 import { LostTapeArt } from "@/components/errors/LostTapeArt";
 import { RetryNotice } from "@/components/RetryNotice";
 import ui from "@/components/ui.module.css";
+import { useI18n } from "@/i18n/client";
 import styles from "../game.module.css";
 
 /** Pantalla de un solo mensaje centrado, con la cabecera de rayas. */
@@ -22,9 +25,10 @@ export function StageScreen({ status, live, children }: { status?: string; live?
 }
 
 export function LoadingScreen() {
+  const { m } = useI18n();
   return (
     <StageScreen>
-      <p className={styles.stageLabel}>Rebobinando…</p>
+      <p className={styles.stageLabel}>{m.common.loading}</p>
     </StageScreen>
   );
 }
@@ -37,32 +41,34 @@ export function LoadErrorScreen({
   error: { missing: boolean; message: string };
   onRetry: () => Promise<unknown>;
 }) {
+  const { m } = useI18n();
+  const g = m.game;
   if (error.missing) {
     return (
       <ErrorScene
-        code="Error 404"
+        code={m.common.errorPage.code404}
         title={
           <>
-            Este casete
+            {g.notFoundTitle}
             <br />
-            <em>no está</em>
+            <em>{g.notFoundTitleEm}</em>
           </>
         }
-        lede="No aparece en tu estantería. Puede que se haya borrado o que sea de otra persona."
+        lede={g.notFoundLede}
         actions={
           <Link href="/" className={`${ui.btn} ${ui.primary} ${ui.big}`}>
-            Volver a la estantería
+            {m.common.backToShelf}
           </Link>
         }
-        art={<LostTapeArt catalog="perdido" />}
+        art={<LostTapeArt catalog={g.lostCatalog} />}
       />
     );
   }
   return (
     <StageScreen>
-      <RetryNotice message={`No se pudo abrir la partida. ${error.message}`} onRetry={onRetry} />
+      <RetryNotice message={g.cantOpen(error.message)} onRetry={onRetry} />
       <Link href="/" className={`${ui.btn} ${ui.onShell}`}>
-        Volver a la estantería
+        {m.common.backToShelf}
       </Link>
     </StageScreen>
   );
@@ -80,15 +86,16 @@ export function IntermissionScreen({
   totalRounds: number;
   secondsLeft: number;
 }) {
+  const { m } = useI18n();
   return (
     <StageScreen status={status} live>
       <p className={styles.stageLabel}>
-        Pista {number} de {totalRounds}
+        {m.game.trackOf(number, totalRounds)}
       </p>
       <p key={secondsLeft} className={`${styles.countdown} ${styles.tick}`}>
         {secondsLeft}
       </p>
-      <p className={styles.stageNote}>Silencio en la sala… la cinta está a punto de sonar.</p>
+      <p className={styles.stageNote}>{m.game.intermissionNote}</p>
     </StageScreen>
   );
 }

@@ -22,7 +22,7 @@ export interface SessionUser {
 }
 
 /** Quien no tiene permiso recibe un 404: así no se sabe ni que la ruta existe. */
-export const notFound = () => new AppError("No encontrado", 404, "NOT_FOUND");
+export const notFound = () => new AppError("NOT_FOUND", 404);
 
 /** Crea la sesión en la base de datos (solo guarda el hash del token) y devuelve el token. */
 export async function openSession(userId: string, userAgent: string | null) {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AlertTriangle, RotateCcw } from "lucide-react";
+import { useI18n } from "@/i18n/client";
 import ui from "./ui.module.css";
 import styles from "./RetryNotice.module.css";
 
@@ -18,6 +19,7 @@ export function RetryNotice({
   onRetry: () => Promise<unknown> | void;
   on?: "shell" | "card";
 }) {
+  const { m } = useI18n();
   const [busy, setBusy] = useState(false);
   const retry = async () => {
     setBusy(true);
@@ -38,7 +40,7 @@ export function RetryNotice({
         disabled={busy}
       >
         <RotateCcw size={20} aria-hidden />
-        {busy ? "Probando…" : "Reintentar"}
+        {busy ? m.common.retrying : m.common.retry}
       </button>
     </div>
   );

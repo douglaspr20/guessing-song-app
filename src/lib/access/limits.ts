@@ -20,11 +20,7 @@ const DAY_MS = 24 * 60 * 60_000;
 export async function assertOpenModeAvailable() {
   const state = await getAppState();
   if (state.openModePaused) {
-    throw new AppError(
-      "El modo sin cuenta está en mantenimiento. Vuelve a probar en un rato.",
-      503,
-      "OPEN_MODE_PAUSED",
-    );
+    throw new AppError("OPEN_MODE_PAUSED", 503);
   }
 }
 
@@ -36,13 +32,13 @@ export async function assertGuestCanCreateGame(guestId: string, now = new Date()
     db.game.count({ where: { guestId: { not: null } } }),
   ]);
   if (today >= GUEST_LIMITS.gamesPerDay) {
-    throw new AppError("Has grabado muchas partidas hoy. Vuelve mañana.", 429, "GUEST_GAME_LIMIT");
+    throw new AppError("GUEST_GAME_LIMIT", 429);
   }
   if (stored >= GUEST_LIMITS.gamesStored) {
-    throw new AppError("Tu estantería está llena: borra alguna partida para grabar otra.", 429, "GUEST_SHELF_FULL");
+    throw new AppError("GUEST_SHELF_FULL", 429);
   }
   if (global >= GUEST_LIMITS.globalGuestGames) {
-    throw new AppError("El modo sin cuenta está lleno ahora mismo. Prueba más tarde.", 503, "GUEST_CAPACITY");
+    throw new AppError("GUEST_CAPACITY", 503);
   }
 }
 
@@ -56,10 +52,10 @@ export async function assertFreeUserCanCreateGame(userId: string, now = new Date
     db.game.count({ where: { userId } }),
   ]);
   if (today >= GUEST_LIMITS.gamesPerDay) {
-    throw new AppError("Has grabado muchas partidas hoy. Vuelve mañana.", 429, "GUEST_GAME_LIMIT");
+    throw new AppError("GUEST_GAME_LIMIT", 429);
   }
   if (stored >= GUEST_LIMITS.gamesStored) {
-    throw new AppError("Tu estantería está llena: borra alguna partida para grabar otra.", 429, "GUEST_SHELF_FULL");
+    throw new AppError("GUEST_SHELF_FULL", 429);
   }
 }
 
@@ -76,7 +72,7 @@ export async function assertOwnerCanStartRound(owner: LimitedOwner, now = new Da
     where: { game: where, createdAt: { gt: new Date(now.getTime() - 60 * 60_000) } },
   });
   if (lastHour >= GUEST_LIMITS.roundsPerHour) {
-    throw new AppError("Demasiadas rondas seguidas. Descansa unos minutos.", 429, "GUEST_ROUND_LIMIT");
+    throw new AppError("GUEST_ROUND_LIMIT", 429);
   }
 }
 
@@ -87,6 +83,6 @@ export async function assertGuestCanStartRound(guestId: string, now = new Date()
     where: { game: { guestId }, createdAt: { gt: new Date(now.getTime() - 60 * 60_000) } },
   });
   if (lastHour >= GUEST_LIMITS.roundsPerHour) {
-    throw new AppError("Demasiadas rondas seguidas. Descansa unos minutos.", 429, "GUEST_ROUND_LIMIT");
+    throw new AppError("GUEST_ROUND_LIMIT", 429);
   }
 }

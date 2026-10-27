@@ -21,7 +21,7 @@ export function googleConfig() {
 
 function requireConfig() {
   const config = googleConfig();
-  if (!config) throw new AppError("El acceso con Google no está configurado", 404, "NOT_FOUND");
+  if (!config) throw new AppError("NOT_FOUND", 404, { key: "GOOGLE_NOT_CONFIGURED" });
   return config;
 }
 
@@ -57,17 +57,17 @@ export async function exchangeGoogleCode(code: string, verifier: string): Promis
     }),
     cache: "no-store",
   });
-  if (!res.ok) throw new AppError(`Google rechazó el código (${res.status})`, 502, "GOOGLE_TOKEN_ERROR");
+  if (!res.ok) throw new AppError("GOOGLE_TOKEN_ERROR", 502, { detail: `código rechazado: ${res.status}` });
   const data = (await res.json()) as { id_token?: string };
-  if (!data.id_token) throw new AppError("Google no devolvió id_token", 502, "GOOGLE_TOKEN_ERROR");
+  if (!data.id_token) throw new AppError("GOOGLE_TOKEN_ERROR", 502);
   return data.id_token;
 }
 
-const inUse = () => new AppError("Esa cuenta de Google ya está vinculada a otro usuario", 409, "GOOGLE_IN_USE");
+const inUse = () => new AppError("GOOGLE_IN_USE", 409);
 // El anfitrión entra siempre con contraseña y código: un Google no puede saltarse el segundo factor.
 const hostOnly = () =>
-  new AppError("La cuenta de anfitrión solo entra con su contraseña y su código", 403, "HOST_GOOGLE_FORBIDDEN");
-const disabled = () => new AppError("Esta cuenta está desactivada", 403, "ACCOUNT_DISABLED");
+  new AppError("HOST_GOOGLE_FORBIDDEN", 403);
+const disabled = () => new AppError("ACCOUNT_DISABLED", 403);
 
 /** Un nombre de usuario libre a partir del correo (con sufijo numérico si ya existe). */
 async function freeUsername(email: string) {
@@ -136,7 +136,7 @@ export async function signInWithGoogle(profile: GoogleProfile, currentUserId: st
 export async function unlinkGoogle(userId: string) {
   const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
   if (!user.passwordHash) {
-    throw new AppError("Tu cuenta solo entra con Google: no se puede desvincular", 409, "GOOGLE_ONLY_LOGIN");
+    throw new AppError("GOOGLE_ONLY_LOGIN", 409);
   }
   await db.googleAccount.deleteMany({ where: { userId } });
 }

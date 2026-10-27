@@ -2,7 +2,8 @@
 
 import { useId, useState, type FormEvent } from "react";
 import { AlertTriangle, KeyRound } from "lucide-react";
-import { api, ApiError } from "@/lib/client/api";
+import { api, errorText } from "@/lib/client/api";
+import { useI18n } from "@/i18n/client";
 import ui from "./ui.module.css";
 import access from "./access.module.css";
 import styles from "./RedeemInvite.module.css";
@@ -22,6 +23,8 @@ export function ChangePassword({
   onDone: () => void;
   onCancel?: () => void;
 }) {
+  const { m } = useI18n();
+  const a = m.access;
   const ids = useId();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -31,25 +34,25 @@ export function ChangePassword({
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (next !== repeat) return setError("Las dos contraseñas nuevas no coinciden.");
+    if (next !== repeat) return setError(a.passwordsDontMatch);
     setBusy(true);
     setError(null);
     try {
       await api("/api/account/password", { json: { current: hasPassword ? current : undefined, next } });
       onDone();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo conectar. Prueba otra vez.");
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }
   };
 
-  const title = forced ? "Pon una contraseña tuya" : hasPassword ? "Cambia tu contraseña" : "Ponle contraseña a tu cuenta";
+  const title = forced ? a.forcedTitle : hasPassword ? a.changeTitle : a.setTitle;
   const lede = forced
-    ? "El anfitrión te dio una contraseña temporal. Cámbiala ahora por una que solo sepas tú."
+    ? a.forcedLede
     : hasPassword
-      ? "Al cambiarla se cierran tus sesiones en otros dispositivos."
-      : "Así podrás entrar también con tu usuario, además de con Google.";
+      ? a.changeLede
+      : a.setLede;
 
   return (
     <section className={`${ui.card} ${styles.card}`} aria-labelledby={`${ids}-title`}>
@@ -64,7 +67,7 @@ export function ChangePassword({
         <div className={`${styles.field} ${styles.fields}`}>
           {hasPassword && (
             <label className={access.field}>
-              <span className={access.label}>{forced ? "Contraseña temporal" : "Contraseña actual"}</span>
+              <span className={access.label}>{forced ? a.temporaryPassword : a.currentPassword}</span>
               <input
                 className={access.input}
                 type="password"
@@ -78,7 +81,7 @@ export function ChangePassword({
             </label>
           )}
           <label className={access.field}>
-            <span className={access.label}>Contraseña nueva</span>
+            <span className={access.label}>{a.newPassword}</span>
             <input
               className={access.input}
               type="password"
@@ -90,10 +93,10 @@ export function ChangePassword({
               required
               autoFocus={!hasPassword}
             />
-            <span className={access.hint}>Al menos 8 caracteres. Mejor una frase que no uses en otro sitio.</span>
+            <span className={access.hint}>{a.passwordHint}</span>
           </label>
           <label className={access.field}>
-            <span className={access.label}>Repítela</span>
+            <span className={access.label}>{a.repeatPassword}</span>
             <input
               className={access.input}
               type="password"
@@ -109,11 +112,11 @@ export function ChangePassword({
         <div className={`${access.actions} ${styles.actions}`}>
           <button type="submit" className={`${ui.btn} ${ui.primary}`} disabled={busy}>
             <KeyRound size={22} aria-hidden />
-            {busy ? "Guardando…" : "Guardar contraseña"}
+            {busy ? a.saving : a.savePassword}
           </button>
           {!forced && onCancel && (
             <button type="button" className={`${ui.btn} ${ui.onCard}`} onClick={onCancel}>
-              Cancelar
+              {m.common.cancel}
             </button>
           )}
         </div>

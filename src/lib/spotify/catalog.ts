@@ -49,18 +49,19 @@ export const GENRES = [
 /**
  * Spotify no expone el idioma de una canción. Lo aproximamos con el mercado (país)
  * de búsqueda y, opcionalmente, palabras clave. Para un filtro de idioma fiable
- * lo mejor es usar playlists propias como fuente.
+ * lo mejor es usar playlists propias como fuente. El nombre de cada idioma lo pone la pantalla
+ * (`m.setup.musicLanguages`), en el idioma de quien la usa.
  */
 export const LANGUAGES = [
-  { id: "es", label: "Español", market: "ES" },
-  { id: "es-latam", label: "Español (Latinoamérica)", market: "MX" },
-  { id: "en", label: "Inglés", market: "US" },
-  { id: "pt", label: "Portugués", market: "BR" },
-  { id: "fr", label: "Francés", market: "FR" },
-  { id: "it", label: "Italiano", market: "IT" },
-  { id: "de", label: "Alemán", market: "DE" },
-  { id: "ko", label: "Coreano", market: "KR" },
-  { id: "ja", label: "Japonés", market: "JP" },
+  { id: "es", market: "ES" },
+  { id: "es-latam", market: "MX" },
+  { id: "en", market: "US" },
+  { id: "pt", market: "BR" },
+  { id: "fr", market: "FR" },
+  { id: "it", market: "IT" },
+  { id: "de", market: "DE" },
+  { id: "ko", market: "KR" },
+  { id: "ja", market: "JP" },
 ] as const;
 
 export type LanguageId = (typeof LANGUAGES)[number]["id"];

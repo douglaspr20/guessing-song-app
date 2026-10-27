@@ -17,6 +17,8 @@ export default defineConfig({
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: `http://localhost:${E2E_PORT}`,
+    // Los tests buscan los textos en español; e2e/i18n.spec.ts prueba el inglés por su cuenta.
+    locale: "es-ES",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     launchOptions: { args: ["--autoplay-policy=no-user-gesture-required"] },

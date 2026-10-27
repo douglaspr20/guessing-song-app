@@ -89,20 +89,23 @@ export function shortcutFor(e: KeyInput, { typing, onControl }: KeyContext): Sho
   return LETTERS[e.key.toLowerCase()] ?? null;
 }
 
-/** Texto de cada atajo, para la ayuda y las marcas de los botones. */
+/**
+ * Cada atajo para la ayuda: las teclas son las mismas en todos los idiomas (V, C, A, N siguen el mando
+ * de colores); el texto de cada fila sale de `m.game.shortcutActions` y `m.game.remoteKeys`.
+ * «space» se muestra con el nombre de la tecla en el idioma de la pantalla.
+ */
 export const SHORTCUT_HELP: {
-  action: string;
+  id: "pause" | "play" | "reveal" | "awardTitle" | "awardArtist" | "next" | "choose" | "leaveField" | "help";
   keys: string[];
-  remote: string;
   color?: "red" | "green" | "yellow" | "blue";
 }[] = [
-  { action: "Pausar o seguir (o reproducir si aún no ha sonado)", keys: ["Espacio", "P"], remote: "Play/Pausa" },
-  { action: "Repetir el fragmento", keys: ["R"], remote: "Rebobinar" },
-  { action: "Revelar la canción", keys: ["V"], remote: "Rojo", color: "red" },
-  { action: "¡Acertó la canción! (al jugador elegido)", keys: ["C"], remote: "Verde", color: "green" },
-  { action: "¡Acertó el artista! (al jugador elegido)", keys: ["A"], remote: "Amarillo", color: "yellow" },
-  { action: "Empezar, siguiente pista o podio", keys: ["N"], remote: "Azul / Avance", color: "blue" },
-  { action: "Elegir jugador", keys: ["1 … 9"], remote: "1 … 9" },
-  { action: "Salir del campo de texto", keys: ["Esc"], remote: "Atrás" },
-  { action: "Ver estos atajos", keys: ["?", "H"], remote: "" },
+  { id: "pause", keys: ["space", "P"] },
+  { id: "play", keys: ["R"] },
+  { id: "reveal", keys: ["V"], color: "red" },
+  { id: "awardTitle", keys: ["C"], color: "green" },
+  { id: "awardArtist", keys: ["A"], color: "yellow" },
+  { id: "next", keys: ["N"], color: "blue" },
+  { id: "choose", keys: ["1 … 9"] },
+  { id: "leaveField", keys: ["Esc"] },
+  { id: "help", keys: ["?", "H"] },
 ];

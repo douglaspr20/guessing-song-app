@@ -1,0 +1,55 @@
+// Textos compartidos por varias pantallas.
+export const common = {
+  brand: "Adivina la canción",
+  metaDescription: "El juego familiar de adivinar canciones con tu Spotify.",
+  language: "Idioma",
+  retry: "Reintentar",
+  retrying: "Probando…",
+  backToShelf: "Volver a la estantería",
+  cancel: "Cancelar",
+  closeNotice: "Cerrar aviso",
+  typeToConfirmBefore: "Escribe",
+  typeToConfirmAfter: "para confirmar",
+  oneMoment: "Un momento…",
+  loading: "Rebobinando…",
+  // Respuestas de la API
+  serverDown: "El servidor no respondió. Prueba otra vez en un momento.",
+  somethingWrong: "Algo salió mal",
+  cantConnect: "No se pudo conectar. Prueba otra vez.",
+  // Marcador y podio
+  scoreboard: "Marcador",
+  podium: "Podio",
+  noPoints: "Aún sin puntos",
+  points: "puntos",
+  pts: "pts",
+  place: (n: number) => `Puesto ${n}`,
+  ordinal: (n: number) => `${n}º`,
+  // Casete del reloj
+  trackCassette: "Casete de la pista",
+  hints: "Pistas",
+  unavailable: "no disponible",
+  // Stepper («Menos rondas» / «Más rondas»)
+  less: (label: string) => `Menos ${label.toLowerCase()}`,
+  more: (label: string) => `Más ${label.toLowerCase()}`,
+  // Páginas de error
+  errorPage: {
+    code500: "Error 500",
+    brokenTitle: "Se enredó",
+    brokenTitleEm: "la cinta",
+    brokenLede:
+      "Algo se trabó al reproducir esta pantalla. Dale unas vueltas con el lápiz y prueba otra vez: casi siempre vuelve a sonar.",
+    rewind: "Rebobinar",
+    digest: (digest: string) => `Código del error: ${digest}`,
+    tangledArt: "Un casete roto con la cinta enredada y un lápiz en la bobina",
+    globalTitle: "Se enredó la cinta · Adivina la canción",
+    code404: "Error 404",
+    lostTitle: "Esta cinta",
+    lostTitleEm: "se perdió",
+    lostLede: "La buscamos por toda la estantería y no aparece. Puede que la hayan borrado o que el enlace esté mal.",
+    wanted: "Se busca",
+    silhouette: "Silueta vacía de un casete",
+    cassette: (catalog: string) => `Casete ${catalog}`,
+    lastSeen: "Visto por última vez en la estantería",
+    reward: "Recompensa: otra partida",
+  },
+};
