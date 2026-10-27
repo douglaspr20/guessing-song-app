@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import { BandProvider } from "@/components/band/BandStatus";
 import { FeedbackProvider } from "@/components/feedback/FeedbackProvider";
+import { SiteAnalytics } from "@/components/SiteAnalytics";
 import { LocaleRoot } from "@/i18n/LocaleRoot";
 import { getMessages } from "@/i18n/server";
 import { fontClasses } from "./fonts";
@@ -41,6 +42,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </FeedbackProvider>
           </LocaleRoot>
         </Suspense>
+        {/* Analítica solo en Vercel (VERCEL=1): en local, CI y e2e no se carga nada. Lee la URL: va en Suspense. */}
+        {process.env.VERCEL === "1" && (
+          <Suspense>
+            <SiteAnalytics />
+          </Suspense>
+        )}
       </body>
     </html>
   );
