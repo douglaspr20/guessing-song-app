@@ -2,12 +2,16 @@
 
 import Link from "next/link";
 import { useId, useState, type FormEvent } from "react";
-import { AlertTriangle, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
+import { Card } from "@/components/Card";
+import { Field } from "@/components/Field";
+import { Notice } from "@/components/Notice";
+import form from "@/components/styles/form.module.css";
+import { useAsyncAction } from "@/hooks/useAsyncAction";
 import access from "@/components/access.module.css";
 import ui from "@/components/ui.module.css";
 import { api } from "@/lib/client/api";
 import { useI18n } from "@/i18n/client";
-import { errorMessage } from "../_lib/useHostData";
 import styles from "../host.module.css";
 
 /** Entrada del anfitrión: contraseña y código de la app de autenticación. */
@@ -17,28 +21,19 @@ export function HostLogin({ onDone }: { onDone: () => void }) {
   const ids = useId();
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { busy, error, run } = useAsyncAction();
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
-      await api("/api/host/login", { json: { password, code } });
-      onDone();
-    } catch (err) {
-      setError(errorMessage(err));
-      setCode("");
-    } finally {
-      setBusy(false);
-    }
+    const ok = await run(() => api("/api/host/login", { json: { password, code } }).then(() => true));
+    // Un código fallido ya no sirve: se vacía para escribir el siguiente.
+    if (ok) onDone();
+    else setCode("");
   };
 
   return (
     <div className={styles.loginWrap}>
-      <section className={`${ui.card} ${access.card}`} aria-labelledby={`${ids}-title`}>
-        <div className={ui.cardStripes} />
+      <Card className={access.card} aria-labelledby={`${ids}-title`}>
         <form className={access.body} onSubmit={submit}>
           <div>
             <h1 className={access.title} id={`${ids}-title`}>
@@ -46,10 +41,9 @@ export function HostLogin({ onDone }: { onDone: () => void }) {
             </h1>
             <p className={access.lede}>{a.hostLede}</p>
           </div>
-          <label className={access.field}>
-            <span className={access.label}>{a.password}</span>
+          <Field label={a.password}>
             <input
-              className={access.input}
+              className={form.input}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -57,11 +51,10 @@ export function HostLogin({ onDone }: { onDone: () => void }) {
               maxLength={200}
               required
             />
-          </label>
-          <label className={access.field}>
-            <span className={access.label}>{a.sixDigitCode}</span>
+          </Field>
+          <Field label={a.sixDigitCode}>
             <input
-              className={`${access.input} ${access.code}`}
+              className={`${form.input} ${form.code}`}
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
               inputMode="numeric"
@@ -70,14 +63,9 @@ export function HostLogin({ onDone }: { onDone: () => void }) {
               placeholder="000000"
               required
             />
-          </label>
-          {error && (
-            <p className={`${ui.notice} ${ui.noticeErrorOnCard}`} role="alert">
-              <AlertTriangle size={20} aria-hidden />
-              {error}
-            </p>
-          )}
-          <div className={access.actions}>
+          </Field>
+          {error && <Notice>{error}</Notice>}
+          <div className={form.actions}>
             <button type="submit" className={`${ui.btn} ${ui.primary}`} disabled={busy}>
               <ShieldCheck size={22} aria-hidden />
               {busy ? a.checking : a.signIn}
@@ -87,7 +75,7 @@ export function HostLogin({ onDone }: { onDone: () => void }) {
             </Link>
           </div>
         </form>
-      </section>
+      </Card>
     </div>
   );
 }

@@ -24,11 +24,7 @@
 }
 
 .title {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(44px, 5vw, 72px);
-  line-height: 0.95;
-  text-transform: uppercase;
+  composes: pageTitle from "../../components/styles/layout.module.css";
   margin-bottom: clamp(20px, 3vw, 36px);
 }
 
@@ -67,8 +63,7 @@
 }
 
 .hint {
-  font-size: 17px;
-  color: var(--card-ink-soft);
+  composes: hint from "../../components/styles/form.module.css";
 }
 
 /* ---------- Jugadores ---------- */
@@ -97,30 +92,7 @@
 }
 
 .handInput {
-  width: 100%;
-  min-height: 56px;
-  background: transparent;
-  border: 0;
-  border-bottom: var(--stroke) solid var(--ink);
-  font-family: var(--font-script);
-  font-weight: 700;
-  font-size: 30px;
-  color: var(--ink);
-  padding: 6px 4px 2px;
-}
-
-/* El placeholder va en la letra de texto: así un hueco vacío no parece un nombre escrito. */
-.handInput::placeholder {
-  color: #6b6a63;
-  font-family: var(--font-text);
-  font-weight: 400;
-  font-size: 20px;
-}
-
-.handInput:focus-visible {
-  outline: none;
-  border-bottom-color: var(--tomato);
-  background: color-mix(in srgb, var(--saffron) 18%, transparent);
+  composes: handInput from "../../components/styles/form.module.css";
 }
 
 .iconBtn {
@@ -159,92 +131,9 @@
   gap: 24px 40px;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.fieldLabel {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 19px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--card-ink-soft);
-}
-
-.segment {
-  display: inline-grid;
-  grid-auto-flow: column;
-  border: var(--stroke) solid var(--ink);
-  border-radius: var(--radius-control);
-  overflow: hidden;
-}
-
-.segment button {
-  min-height: 56px;
-  padding: 0 22px;
-  background: transparent;
-  border: 0;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 21px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink);
-}
-
-.segment button + button {
-  border-left: var(--stroke) solid var(--ink);
-}
-
-.segment button[aria-pressed="true"] {
-  background: var(--ink);
-  color: var(--card);
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  padding: 6px 16px;
-  border-radius: 999px;
-  border: 2px solid var(--ink);
-  background: transparent;
-  color: var(--ink);
-  font-weight: 600;
-  font-size: 17px;
-  transition: background-color 140ms var(--ease-out);
-}
-
-.chip:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--ink) 8%, transparent);
-}
-
-.chip[aria-pressed="true"] {
-  background: var(--ink);
-  color: var(--card);
-}
-
-.chip:disabled {
-  opacity: 0.45;
-}
-
 .owner {
   font-size: 14px;
   opacity: 0.75;
-}
-
-.chip svg {
-  flex: none;
 }
 
 .inline {
@@ -254,48 +143,39 @@
   align-items: flex-end;
 }
 
-.textInput,
-.select {
-  min-height: 56px;
-  border: var(--stroke) solid var(--ink);
-  border-radius: var(--radius-control);
-  background: #fffaf0;
-  color: var(--ink);
-  font-size: 20px;
-  padding: 0 14px;
-}
-
-.textInput {
-  width: 100%;
-}
-
 .year {
   width: 130px;
   font-variant-numeric: tabular-nums;
 }
 
 .select {
+  composes: select from "../../components/styles/form.module.css";
   min-width: 260px;
-  appearance: none;
-  background-image:
-    linear-gradient(45deg, transparent 50%, var(--ink) 50%),
-    linear-gradient(135deg, var(--ink) 50%, transparent 50%);
-  background-position:
-    calc(100% - 22px) 50%,
-    calc(100% - 15px) 50%;
-  background-size: 7px 7px;
-  background-repeat: no-repeat;
-  padding-right: 44px;
 }
 
-.textInput::placeholder {
-  color: #6b6a63;
+/* Separaciones de las explicaciones y de los campos sueltos de la tarjeta de ajustes. */
+.modeHint {
+  margin: 10px 0 18px;
 }
 
-.textInput:focus-visible,
-.select:focus-visible {
-  outline: 3px solid var(--tomato);
-  outline-offset: 2px;
+.phoneHint {
+  margin-bottom: 18px;
+}
+
+.keyword {
+  margin-top: 18px;
+}
+
+.languageHint {
+  margin-top: 10px;
+}
+
+.othersTitle {
+  margin-top: 20px;
+}
+
+.othersHint {
+  margin: 4px 0 10px;
 }
 
 .sample {
@@ -379,28 +259,8 @@
   }
 }
 
-@media (max-width: 900px) {
-  .segment button {
-    padding: 0 14px;
-    font-size: 19px;
-  }
-}
-
-/* Selector de formato: dos mitades iguales; en el móvil ocupa todo el ancho y el texto puede partirse. */
 .formatSwitch {
-  grid-auto-columns: 1fr;
+  composes: segmentFill from "../../components/styles/controls.module.css";
   margin-bottom: 18px;
 }
 
-@media (max-width: 640px) {
-  .formatSwitch {
-    display: grid;
-    width: 100%;
-  }
-  .formatSwitch button {
-    padding: 8px 10px;
-    font-size: 18px;
-    line-height: 1.1;
-    text-wrap: balance;
-  }
-}

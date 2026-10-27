@@ -94,6 +94,7 @@ export const setup = {
   personName: "A person's name",
   addPerson: "Add person",
   shuffle: "Shuffle teams",
+  capacity: (n: number) => `${n} people fit. One team can end up with fewer people than another.`,
   addHint: "They join the team with the fewest people. You can move them afterwards.",
   allFull: "All the teams are full: raise the maximum or add another team.",
   overfull: (team: string, count: number, max: number) => `${team} has ${count} and the maximum is ${max}. Move someone to another team.`,

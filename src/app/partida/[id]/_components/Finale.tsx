@@ -7,6 +7,7 @@ import { TeamDot } from "@/components/TeamDot";
 import { BandStatus } from "@/components/band/BandStatus";
 import ui from "@/components/ui.module.css";
 import { catalogLabel, type Game, type Player } from "@/lib/client/api";
+import { winnerSummary, withPlaces } from "@/lib/game/standings";
 import { formatDate, formatList, plural } from "@/i18n/format";
 import { useI18n } from "@/i18n/client";
 import styles from "../game.module.css";
@@ -16,9 +17,8 @@ export function Finale({ game }: { game: Game }) {
   const { m, locale } = useI18n();
   const g = m.game;
   const players = game.players;
-  const entries = players.map((p) => ({ ...p, place: players.findIndex((q) => q.score === p.score) + 1 }));
-  const top = players[0];
-  const nobody = !top || top.score === 0;
+  const entries = withPlaces(players);
+  const nobody = winnerSummary(players).kind === "none";
   const cat = catalogLabel(game.catalogNumber);
 
   return (
@@ -75,19 +75,18 @@ export function Finale({ game }: { game: Game }) {
 function WinnerTitle({ players }: { players: Player[] }) {
   const { m, locale } = useI18n();
   const g = m.game;
-  const top = players[0];
-  if (!top || top.score === 0) return <>{g.nobodyScored}</>;
-  const tied = players.filter((p) => p.score === top.score);
-  if (tied.length > 1) {
+  const result = winnerSummary(players);
+  if (result.kind === "none") return <>{g.nobodyScored}</>;
+  if (result.kind === "tie") {
     return (
       <>
-        {g.tieBetween} <span className={styles.finaleName}>{formatList(locale, tied.map((p) => p.name))}</span>
+        {g.tieBetween} <span className={styles.finaleName}>{formatList(locale, result.names)}</span>
       </>
     );
   }
   return (
     <>
-      {g.won} <span className={styles.finaleName}>{top.name}</span>
+      {g.won} <span className={styles.finaleName}>{result.name}</span>
     </>
   );
 }

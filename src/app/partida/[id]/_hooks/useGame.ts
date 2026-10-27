@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError, type Game, type GuessRow, errorText } from "@/lib/client/api";
-import { HINT_REFRESH_DELAY_MS } from "./constants";
+import { HINT_REFRESH_DELAY_MS } from "../_lib/constants";
 
 /**
  * Estado de la partida tal como lo ve el servidor: la partida, los intentos de la ronda actual
@@ -64,12 +64,3 @@ export function useGame(gameId: string, onFirstLoad?: (game: Game) => void) {
   return { game, guesses, fetchedAt, loadError, retryLoad: firstLoad, refresh };
 }
 
-/** Reloj de pantalla que avanza cada `intervalMs`. Vale 0 hasta el primer tick (prerender). */
-export function useNow(intervalMs = 250) {
-  const [now, setNow] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), intervalMs);
-    return () => clearInterval(t);
-  }, [intervalMs]);
-  return now;
-}

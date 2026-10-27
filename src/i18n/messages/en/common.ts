@@ -39,6 +39,7 @@ export const common = {
       "Something jammed while playing this screen. Give it a few turns with the pencil and try again: it almost always plays again.",
     rewind: "Rewind",
     digest: (digest: string) => `Error code: ${digest}`,
+    tangledLabel: "Grandma's mix",
     tangledArt: "A broken cassette with tangled tape and a pencil in the reel",
     globalTitle: "The tape got tangled · Adivina la canción",
     code404: "Error 404",

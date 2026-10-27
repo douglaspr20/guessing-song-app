@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import type { Player } from "@/lib/client/api";
 import { useI18n } from "@/i18n/client";
+import { placeOf } from "@/lib/game/standings";
 import { memberLine } from "@/lib/game/teams";
 import { TeamDot } from "./TeamDot";
 import ui from "./ui.module.css";
@@ -65,8 +66,7 @@ export function Scoreboard({
       </div>
       <ol className={styles.list} ref={listRef}>
         {players.map((p) => {
-          const all = rankAmong ?? players;
-          const place = all.findIndex((q) => q.score === p.score) + 1;
+          const place = placeOf(p, rankAmong ?? players);
           const gain = gains[p.id];
           return (
             <li key={p.id} data-id={p.id} className={`${styles.row} ${gain ? styles.bump : ""}`}>

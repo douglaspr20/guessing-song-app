@@ -1,0 +1,108 @@
+/* Librería de formularios sobre la cartulina: campo, etiqueta, pista, inputs y el campo manuscrito. */
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+/* La etiqueta condensada suave de DESIGN.md: 19px, mayúsculas, .1em. */
+.label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--card-ink-soft);
+}
+
+.hint {
+  font-size: 17px;
+  color: var(--card-ink-soft);
+}
+
+/* Campo de texto y select: fondo de campo, trazo de 3px en tinta, esquinas de control. */
+.input,
+.select {
+  min-height: var(--control-h);
+  border: var(--stroke) solid var(--ink);
+  border-radius: var(--radius-control);
+  background-color: var(--field);
+  color: var(--ink);
+  font-size: 20px;
+  padding: 0 14px;
+}
+
+.input {
+  width: 100%;
+}
+
+/* El select dibuja su flecha con dos degradados. */
+.select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink) 50%),
+    linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+  background-position:
+    calc(100% - 22px) 50%,
+    calc(100% - 15px) 50%;
+  background-size: 7px 7px;
+  background-repeat: no-repeat;
+  padding-right: 44px;
+}
+
+.input::placeholder {
+  color: var(--placeholder);
+}
+
+/* Sobre la cartulina el foco va en tomate hondo. */
+.input:focus-visible,
+.select:focus-visible {
+  outline: var(--stroke) solid var(--tomato-deep);
+  outline-offset: 2px;
+}
+
+/* Código en grande (invitación, partida, código del anfitrión). */
+.code {
+  font-family: var(--font-display);
+  font-size: 30px;
+  letter-spacing: 0.3em;
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Campo manuscrito (nombres, respuestas): solo subrayado, texto en Kalam. Al foco el subrayado pasa a
+ * tomate y el fondo toma un lavado de azafrán. El placeholder va en letra de texto («Two Hands Rule»).
+ */
+.handInput {
+  width: 100%;
+  min-height: var(--control-h);
+  background: transparent;
+  border: 0;
+  border-bottom: var(--stroke) solid var(--ink);
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: 30px;
+  color: var(--ink);
+  padding: 6px 4px 2px;
+}
+
+.handInput::placeholder {
+  color: var(--placeholder);
+  font-family: var(--font-text);
+  font-weight: 400;
+  font-size: 20px;
+}
+
+.handInput:focus-visible {
+  outline: none;
+  border-bottom-color: var(--tomato);
+  background: color-mix(in srgb, var(--saffron) 18%, transparent);
+}
+
+/* Fila de botones de un formulario. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}

@@ -3,10 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { RetryNotice } from "@/components/RetryNotice";
 import { BandStatus } from "@/components/band/BandStatus";
-import { api, type AccessStatus } from "@/lib/client/api";
+import { api, errorText, type AccessStatus } from "@/lib/client/api";
 import { HostLogin } from "./_components/HostLogin";
 import { Panel } from "./_components/Panel";
-import { errorMessage } from "./_lib/useHostData";
 import { useI18n } from "@/i18n/client";
 import styles from "./host.module.css";
 
@@ -21,7 +20,7 @@ export function HostClient() {
     try {
       setLoad({ state: "ready", status: await api<AccessStatus>("/api/access/status") });
     } catch (err) {
-      setLoad({ state: "error", message: errorMessage(err) });
+      setLoad({ state: "error", message: errorText(err) });
     }
   }, []);
   useEffect(() => {

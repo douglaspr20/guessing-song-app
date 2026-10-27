@@ -1,9 +1,14 @@
 "use client";
 
 import { useId, useState, type FormEvent } from "react";
-import { AlertTriangle, KeyRound } from "lucide-react";
-import { api, errorText } from "@/lib/client/api";
+import { KeyRound } from "lucide-react";
+import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useI18n } from "@/i18n/client";
+import { api } from "@/lib/client/api";
+import { Card } from "./Card";
+import { Field } from "./Field";
+import { Notice } from "./Notice";
+import form from "./styles/form.module.css";
 import ui from "./ui.module.css";
 import access from "./access.module.css";
 import styles from "./RedeemInvite.module.css";
@@ -29,34 +34,22 @@ export function ChangePassword({
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [repeat, setRepeat] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { busy, error, setError, run } = useAsyncAction();
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (next !== repeat) return setError(a.passwordsDontMatch);
-    setBusy(true);
-    setError(null);
-    try {
-      await api("/api/account/password", { json: { current: hasPassword ? current : undefined, next } });
-      onDone();
-    } catch (err) {
-      setError(errorText(err));
-    } finally {
-      setBusy(false);
-    }
+    const ok = await run(() =>
+      api("/api/account/password", { json: { current: hasPassword ? current : undefined, next } }).then(() => true),
+    );
+    if (ok) onDone();
   };
 
   const title = forced ? a.forcedTitle : hasPassword ? a.changeTitle : a.setTitle;
-  const lede = forced
-    ? a.forcedLede
-    : hasPassword
-      ? a.changeLede
-      : a.setLede;
+  const lede = forced ? a.forcedLede : hasPassword ? a.changeLede : a.setLede;
 
   return (
-    <section className={`${ui.card} ${styles.card}`} aria-labelledby={`${ids}-title`}>
-      <div className={ui.cardStripes} />
+    <Card className={styles.card} aria-labelledby={`${ids}-title`}>
       <form className={styles.body} onSubmit={submit}>
         <div className={styles.copy}>
           <h2 className={access.title} id={`${ids}-title`}>
@@ -66,10 +59,9 @@ export function ChangePassword({
         </div>
         <div className={`${styles.field} ${styles.fields}`}>
           {hasPassword && (
-            <label className={access.field}>
-              <span className={access.label}>{forced ? a.temporaryPassword : a.currentPassword}</span>
+            <Field label={forced ? a.temporaryPassword : a.currentPassword}>
               <input
-                className={access.input}
+                className={form.input}
                 type="password"
                 value={current}
                 onChange={(e) => setCurrent(e.target.value)}
@@ -78,12 +70,11 @@ export function ChangePassword({
                 required
                 autoFocus
               />
-            </label>
+            </Field>
           )}
-          <label className={access.field}>
-            <span className={access.label}>{a.newPassword}</span>
+          <Field label={a.newPassword} hint={a.passwordHint}>
             <input
-              className={access.input}
+              className={form.input}
               type="password"
               value={next}
               onChange={(e) => setNext(e.target.value)}
@@ -93,12 +84,10 @@ export function ChangePassword({
               required
               autoFocus={!hasPassword}
             />
-            <span className={access.hint}>{a.passwordHint}</span>
-          </label>
-          <label className={access.field}>
-            <span className={access.label}>{a.repeatPassword}</span>
+          </Field>
+          <Field label={a.repeatPassword}>
             <input
-              className={access.input}
+              className={form.input}
               type="password"
               value={repeat}
               onChange={(e) => setRepeat(e.target.value)}
@@ -107,9 +96,9 @@ export function ChangePassword({
               maxLength={200}
               required
             />
-          </label>
+          </Field>
         </div>
-        <div className={`${access.actions} ${styles.actions}`}>
+        <div className={`${form.actions} ${styles.actions}`}>
           <button type="submit" className={`${ui.btn} ${ui.primary}`} disabled={busy}>
             <KeyRound size={22} aria-hidden />
             {busy ? a.saving : a.savePassword}
@@ -120,13 +109,8 @@ export function ChangePassword({
             </button>
           )}
         </div>
-        {error && (
-          <p className={`${ui.notice} ${ui.noticeErrorOnCard} ${styles.error}`} role="alert">
-            <AlertTriangle size={20} aria-hidden />
-            {error}
-          </p>
-        )}
+        {error && <Notice className={styles.error}>{error}</Notice>}
       </form>
-    </section>
+    </Card>
   );
 }

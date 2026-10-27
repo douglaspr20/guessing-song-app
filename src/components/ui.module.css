@@ -54,7 +54,7 @@
 .primary {
   background: var(--tomato);
   border-color: var(--tomato);
-  color: #fff;
+  color: var(--on-tomato);
 }
 .primary:hover:not(:disabled) {
   background: var(--tomato-deep);
@@ -76,12 +76,7 @@
 }
 .cardStripes {
   height: 36px;
-  background: linear-gradient(
-    to bottom,
-    var(--saffron) 0 33.4%,
-    var(--tomato) 33.4% 66.7%,
-    var(--sky) 66.7% 100%
-  );
+  background: var(--tape-stripes);
 }
 .cardTitle {
   font-family: var(--font-display);
@@ -107,12 +102,12 @@
   margin-top: 2px;
 }
 .noticeError {
-  color: #ffd6cf;
-  background: #4a1d24;
+  color: var(--notice-error-ink);
+  background: var(--notice-error-bg);
 }
 .noticeErrorOnCard {
   color: var(--bad);
-  background: #fbe3df;
+  background: var(--notice-error-card-bg);
 }
 
 /* Sobre la cartulina el azafrán no contrasta: el anillo de foco pasa a tomate oscuro. */

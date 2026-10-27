@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { shortcutFor, type ShortcutAction } from "./shortcuts";
+import { shortcutFor, type ShortcutAction } from "../_lib/shortcuts";
 import type { GameController } from "./useGameController";
 
 /**

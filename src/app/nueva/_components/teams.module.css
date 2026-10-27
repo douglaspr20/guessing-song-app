@@ -120,26 +120,13 @@
   padding: 0 6px;
 }
 
-.move:focus-visible,
-.removeBtn:focus-visible {
-  outline: 3px solid var(--tomato-deep);
+.move:focus-visible {
+  outline: var(--stroke) solid var(--tomato-deep);
   outline-offset: 2px;
 }
 
 .removeBtn {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border: 2px solid var(--ink);
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: var(--ink);
-}
-
-.removeBtn:hover {
-  background: var(--ink);
-  color: var(--card);
+  composes: iconBtn from "../../../components/styles/controls.module.css";
 }
 
 /* Móvil: un equipo por fila y cada persona en una sola línea (nombre, equipo, quitar). */

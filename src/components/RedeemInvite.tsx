@@ -1,9 +1,14 @@
 "use client";
 
 import { useId, useState, type FormEvent } from "react";
-import { AlertTriangle, Ticket } from "lucide-react";
-import { api, errorText } from "@/lib/client/api";
+import { Ticket } from "lucide-react";
+import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useI18n } from "@/i18n/client";
+import { api } from "@/lib/client/api";
+import { Card } from "./Card";
+import { Field } from "./Field";
+import { Notice } from "./Notice";
+import form from "./styles/form.module.css";
 import ui from "./ui.module.css";
 import access from "./access.module.css";
 import styles from "./RedeemInvite.module.css";
@@ -14,26 +19,16 @@ export function RedeemInvite({ onDone, onCancel }: { onDone: () => void; onCance
   const a = m.access;
   const ids = useId();
   const [code, setCode] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { busy, error, run } = useAsyncAction();
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
-      await api("/api/account/invite", { json: { invite: code } });
-      onDone();
-    } catch (err) {
-      setError(errorText(err));
-    } finally {
-      setBusy(false);
-    }
+    const ok = await run(() => api("/api/account/invite", { json: { invite: code } }).then(() => true));
+    if (ok) onDone();
   };
 
   return (
-    <section className={`${ui.card} ${styles.card}`} aria-labelledby={`${ids}-title`}>
-      <div className={ui.cardStripes} />
+    <Card className={styles.card} aria-labelledby={`${ids}-title`}>
       <form className={styles.body} onSubmit={submit}>
         <div className={styles.copy}>
           <h2 className={access.title} id={`${ids}-title`}>
@@ -41,10 +36,9 @@ export function RedeemInvite({ onDone, onCancel }: { onDone: () => void; onCance
           </h2>
           <p className={access.lede}>{a.redeemLede}</p>
         </div>
-        <label className={`${access.field} ${styles.field}`}>
-          <span className={access.label}>{a.inviteCode}</span>
+        <Field label={a.inviteCode} className={styles.field}>
           <input
-            className={`${access.input} ${access.code}`}
+            className={`${form.input} ${form.code}`}
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="ABCD-EFGH-JKMN"
@@ -54,8 +48,8 @@ export function RedeemInvite({ onDone, onCancel }: { onDone: () => void; onCance
             required
             autoFocus
           />
-        </label>
-        <div className={`${access.actions} ${styles.actions}`}>
+        </Field>
+        <div className={`${form.actions} ${styles.actions}`}>
           <button type="submit" className={`${ui.btn} ${ui.primary}`} disabled={busy}>
             <Ticket size={22} aria-hidden />
             {busy ? a.checking : a.redeem}
@@ -64,13 +58,8 @@ export function RedeemInvite({ onDone, onCancel }: { onDone: () => void; onCance
             {m.common.cancel}
           </button>
         </div>
-        {error && (
-          <p className={`${ui.notice} ${ui.noticeErrorOnCard} ${styles.error}`} role="alert">
-            <AlertTriangle size={20} aria-hidden />
-            {error}
-          </p>
-        )}
+        {error && <Notice className={styles.error}>{error}</Notice>}
       </form>
-    </section>
+    </Card>
   );
 }

@@ -7,12 +7,7 @@
   min-height: 92px;
   padding: 14px var(--gutter);
   /* Las tres rayas de la cinta, de borde a borde. */
-  background: linear-gradient(
-    to bottom,
-    var(--saffron) 0 33.4%,
-    var(--tomato) 33.4% 66.7%,
-    var(--sky) 66.7% 100%
-  );
+  background: var(--tape-stripes);
 }
 
 .tag {

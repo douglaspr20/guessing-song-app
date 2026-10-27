@@ -250,6 +250,8 @@ Esquinas de objeto físico: la carcasa a 28px, la carátula a 16px, los controle
 
 ## Components
 
+**En el código.** Los tokens viven en `:root` (`src/app/globals.css`), incluidas las rayas (`--tape-stripes`), los colores de campo y aviso, las alturas de control (`--control-h`, `--control-h-sm`, `--hit-min`) y los radios. Los estilos que se repiten están en una librería de CSS Modules (`src/components/styles/`): `layout` (página, titulares, pie), `form` (campo, etiqueta, input, campo manuscrito) y `controls` (segmentado, chips, botón de icono, botón pequeño). Cada pantalla los reutiliza con `composes:` o con los componentes `Card`, `Notice`, `Field`, `Segmented` y `Chip`. Un patrón nuevo se añade a la librería, no se copia en el módulo de la pantalla.
+
 ### Buttons
 Etiquetas de cinta que se pulsan: condensada mayúscula, trazo de 3px, sin relleno salvo la acción principal.
 - **Shape:** esquinas de control (12px), alto mínimo 56px, icono SVG a la izquierda con 10px de separación.

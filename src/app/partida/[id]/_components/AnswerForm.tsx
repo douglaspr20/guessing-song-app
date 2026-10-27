@@ -7,7 +7,7 @@ import ui from "@/components/ui.module.css";
 import type { Player } from "@/lib/client/api";
 import type { Feedback } from "../_lib/feedback";
 import type { RoundClockView } from "../_lib/roundClock";
-import type { GameController, GuessInput } from "../_lib/useGameController";
+import type { GameController, GuessInput } from "../_hooks/useGameController";
 import { FeedbackLine } from "./FeedbackLine";
 import { Hint } from "./Hint";
 import { useI18n } from "@/i18n/client";

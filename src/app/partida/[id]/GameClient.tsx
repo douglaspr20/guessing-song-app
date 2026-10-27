@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { AlertTriangle, Keyboard, WifiOff } from "lucide-react";
+import { Keyboard } from "lucide-react";
+import { Notice, OfflineNotice } from "@/components/Notice";
 import { Scoreboard } from "@/components/Scoreboard";
 import { BandStatus } from "@/components/band/BandStatus";
 import ui from "@/components/ui.module.css";
 import { catalogLabel } from "@/lib/client/api";
-import { plural } from "@/i18n/format";
+import { trackStatus } from "@/lib/client/status";
 import { useI18n } from "@/i18n/client";
 import { AnswerForm } from "./_components/AnswerForm";
 import { AttemptsList } from "./_components/AttemptsList";
@@ -21,8 +22,8 @@ import { RevealCard } from "./_components/RevealCard";
 import { RoundCassette } from "./_components/RoundCassette";
 import { ShortcutsHelp } from "./_components/ShortcutsHelp";
 import { IntermissionScreen, LoadErrorScreen, LoadingScreen } from "./_components/StageScreen";
-import { useGameController } from "./_lib/useGameController";
-import { useGameShortcuts } from "./_lib/useGameShortcuts";
+import { useGameController } from "./_hooks/useGameController";
+import { useGameShortcuts } from "./_hooks/useGameShortcuts";
 import styles from "./game.module.css";
 
 /** Pantalla de juego del anfitrión: elige qué estado mostrar y compone sus piezas. */
@@ -42,9 +43,8 @@ export function GameClient() {
   if (ctl.showFinale) return <Finale game={game} />;
 
   const cat = catalogLabel(game.catalogNumber);
-  const status = round
-    ? `${cat} · ${g.trackOf(round.number, game.totalRounds)}`
-    : `${cat} · ${plural(locale, game.totalRounds, g.tracks)}`;
+  const status = trackStatus(cat, round?.number ?? null, game.totalRounds, g, locale);
+  const buzzer = ctl.buzz ? game.players.find((p) => p.id === ctl.buzz?.playerId) : undefined;
 
   if (ctl.intermission) {
     const secondsLeft = ctl.now ? Math.min(3, Math.max(1, Math.ceil((ctl.intermission.endsAt - ctl.now) / 1000))) : 3;
@@ -62,13 +62,12 @@ export function GameClient() {
     <>
       <BandStatus text={status} />
       <main className={styles.main}>
-        {player.status === "error" && player.error && <ErrorNotice className={styles.playerError} message={player.error} />}
-        {ctl.liveStatus === "offline" && (
-          <p className={`${ui.notice} ${ui.noticeError} ${styles.playerError}`} role="status">
-            <WifiOff size={20} aria-hidden />
-            {g.realtimeLost}
-          </p>
+        {player.status === "error" && player.error && (
+          <Notice on="shell" className={styles.playerError}>
+            {player.error}
+          </Notice>
         )}
+        {ctl.liveStatus === "offline" && <OfflineNotice className={styles.playerError}>{g.realtimeLost}</OfflineNotice>}
 
         <div className={styles.layout}>
           <div className={styles.deck}>
@@ -76,8 +75,8 @@ export function GameClient() {
               <BuzzBanner
                 buzz={ctl.buzz}
                 leftMs={ctl.buzzLeftMs}
-                color={game.players.find((p) => p.id === ctl.buzz?.playerId)?.color ?? null}
-                teamName={game.format === "teams" ? (game.players.find((p) => p.id === ctl.buzz?.playerId)?.name ?? null) : null}
+                color={buzzer?.color ?? null}
+                teamName={game.format === "teams" ? (buzzer?.name ?? null) : null}
                 busy={ctl.busy}
                 onAward={actions.awardBuzzer}
                 onFail={() => actions.resolveBuzz("fail")}
@@ -116,7 +115,7 @@ export function GameClient() {
               </>
             )}
 
-            {ctl.actionError && <ErrorNotice message={ctl.actionError} />}
+            {ctl.actionError && <Notice on="shell">{ctl.actionError}</Notice>}
 
             {(!round || !clock.open) && (
               <NextActions
@@ -157,14 +156,5 @@ export function GameClient() {
       </main>
       {helpOpen && <ShortcutsHelp onClose={() => setHelpOpen(false)} />}
     </>
-  );
-}
-
-function ErrorNotice({ message, className = "" }: { message: string; className?: string }) {
-  return (
-    <p className={`${ui.notice} ${ui.noticeError} ${className}`} role="alert">
-      <AlertTriangle size={20} aria-hidden />
-      {message}
-    </p>
   );
 }
