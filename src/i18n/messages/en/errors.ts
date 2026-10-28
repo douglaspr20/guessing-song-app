@@ -41,6 +41,7 @@ export const errors = {
   GUEST_SHELF_FULL: "Your shelf is full: delete a game to record another one.",
   GUEST_CAPACITY: "No-account mode is full right now. Try again later.",
   GUEST_ROUND_LIMIT: "Too many rounds in a row. Take a few minutes' break.",
+  FILTER_TEST_LIMIT: "You've tried a lot of filters this hour. Record the game and try them while playing.",
 
   GAME_NOT_FOUND: "Game not found",
   ROUND_NOT_FOUND: "Round not found",
@@ -100,6 +101,6 @@ export const errors = {
   SPOTIFY_RATE_LIMITED: "Spotify is limiting requests, try again in a moment",
   SPOTIFY_API_ERROR: "Spotify didn't respond properly",
   SPOTIFY_NOT_ALLOWED: "This Spotify account isn't authorized in the app",
-  ITUNES_RATE_LIMITED: "iTunes is limiting searches, wait a moment",
+  ITUNES_RATE_LIMITED: "Lots of people are playing and iTunes asked for a break. Wait a minute and try again.",
   ITUNES_ERROR: "iTunes didn't respond properly",
 } satisfies typeof es;

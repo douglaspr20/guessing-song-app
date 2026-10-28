@@ -1,3 +1,4 @@
+import { AppError } from "@/lib/errors";
 import type { OpenTrackSource } from "@/lib/game/open-picker";
 import type { Track } from "@/lib/spotify/types";
 
@@ -45,4 +46,15 @@ export const FAKE_TRACKS: Track[] = SONGS.map(([name, artist], i) => ({
   releaseYear: 2000 + i,
 }));
 
-export const fakeItunesSource: OpenTrackSource = { search: async () => FAKE_TRACKS };
+/**
+ * Palabra clave que hace que el iTunes falso responda como si nos estuviera limitando (429): así las e2e
+ * comprueban qué ve la familia cuando pasa, sin provocarlo de verdad contra Apple.
+ */
+export const FAKE_RATE_LIMIT_KEYWORD = "e2e-itunes-limitado";
+
+export const fakeItunesSource: OpenTrackSource = {
+  search: async ({ term }) => {
+    if (term.includes(FAKE_RATE_LIMIT_KEYWORD)) throw new AppError("ITUNES_RATE_LIMITED", 429);
+    return FAKE_TRACKS;
+  },
+};

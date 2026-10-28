@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { withPlaces } from "./standings";
 import { fakeItunesSource } from "@/lib/itunes/fake";
-import { searchSongs } from "@/lib/itunes/search";
+import { cachedSearch } from "@/lib/itunes/cache";
 import { startPlayback } from "@/lib/spotify/playback";
 import {
   getPlaylistTracks,
@@ -43,9 +43,9 @@ export function spotifySourceFor(userId: string): TrackSource {
   };
 }
 
-// Las pruebas e2e usan canciones inventadas (E2E_FAKE_ITUNES=1, nunca definida en Vercel).
+// Las pruebas e2e usan canciones inventadas (E2E_FAKE_ITUNES=1, nunca definida en Vercel); la real pasa por la caché.
 export const itunesSource: OpenTrackSource =
-  process.env.E2E_FAKE_ITUNES === "1" ? fakeItunesSource : { search: (p) => searchSongs(p) };
+  process.env.E2E_FAKE_ITUNES === "1" ? fakeItunesSource : { search: (p) => cachedSearch(p) };
 
 // ---------- Vistas públicas (lo que devuelve la API) ----------
 

@@ -35,7 +35,12 @@ La gente llega desde el post sin conocer el juego: lo primero que ve es la tarje
 
 ### Capacidad
 
-- [ ] **Revisar el aguante del modo abierto ante un pico (S).** La búsqueda de iTunes se llama desde el servidor, así que todas las visitas comparten las IP de Vercel y su límite (responde 403/429, que ya se traduce a `ITUNES_RATE_LIMITED`). Comprobar qué ve el jugador en ese caso, si conviene cachear búsquedas repetidas y si el tope global de 3000 partidas de invitados (`GUEST_LIMITS`) y el plan gratis de Neon bastan. Tener a mano el interruptor «pausar modo abierto» del panel.
+- [x] **Aguante del modo abierto ante un pico (S).**
+  - **Caché de búsquedas de iTunes en Postgres** (`ItunesSearch`): 6 h de frescura y, si iTunes falla, se juega con lo último guardado.
+  - **Tope en «Probar filtros»:** 20 por hora sin invitación.
+  - **Aviso de iTunes limitado más claro**, con su e2e simulada.
+  - **Prueba de carga local** (`scripts/load-open-mode.mjs`, iTunes falso): 100 invitados jugando a la vez completaron 100/100 partidas, con p95 por debajo de 0,8 s en un solo proceso local.
+- [x] **Tope de invitados por IP subido de 10 a 30 al día.** En la prueba de carga, de 15 personas detrás de una misma IP (una oficina o una universidad) se quedaban fuera 7.
 
 ### El post (sin código)
 

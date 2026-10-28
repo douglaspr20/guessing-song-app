@@ -5,12 +5,15 @@ import { getAppState } from "./state";
 
 /** Topes del modo invitado: contienen abusos y protegen la cuota de iTunes y el espacio de la base de datos. */
 export const GUEST_LIMITS = {
-  guestsPerIpPerDay: 10,
+  /** Alto a propósito: una oficina, una universidad o una casa con mucha gente salen por la misma IP. */
+  guestsPerIpPerDay: 30,
   gamesPerDay: 20,
   gamesStored: 50,
   /** Total de partidas de invitados (0,5 GB del plan gratis de Neon). */
   globalGuestGames: 3000,
   roundsPerHour: 60,
+  /** «Probar filtros» en el modo abierto: cada prueba puede llamar a iTunes. */
+  filterTestsPerHour: 20,
   /** La limpieza borra a los invitados sin actividad en este tiempo. */
   inactiveDays: 60,
 };
@@ -76,7 +79,23 @@ export async function assertOwnerCanStartRound(owner: LimitedOwner, now = new Da
   }
 }
 
-type LimitedOwner = { kind: "user"; userId: string; spotifyAllowed: boolean } | { kind: "guest"; guestId: string };
+/**
+ * «Probar filtros» en el modo abierto: tope por hora para quien no tiene invitación (cada prueba puede
+ * llamar a iTunes, y su límite es de todos). Si puede, deja la prueba anotada.
+ */
+export async function recordOwnerFilterTest(owner: LimitedOwner, now = new Date()) {
+  if (owner.kind === "user" && owner.spotifyAllowed) return;
+  const ownerKey = owner.kind === "guest" ? `guest:${owner.guestId}` : `user:${owner.userId}`;
+  const lastHour = await db.filterTest.count({
+    where: { ownerKey, createdAt: { gt: new Date(now.getTime() - 60 * 60_000) } },
+  });
+  if (lastHour >= GUEST_LIMITS.filterTestsPerHour) {
+    throw new AppError("FILTER_TEST_LIMIT", 429);
+  }
+  await db.filterTest.create({ data: { ownerKey, createdAt: now } });
+}
+
+type LimitedOwner ={ kind: "user"; userId: string; spotifyAllowed: boolean } | { kind: "guest"; guestId: string };
 
 export async function assertGuestCanStartRound(guestId: string, now = new Date()) {
   const lastHour = await db.round.count({

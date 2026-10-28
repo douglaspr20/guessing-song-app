@@ -181,7 +181,25 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
 
 `.github/workflows/vercel-deploy.yml` listens for the commit status that Vercel reports to GitHub (context `Vercel`) and publishes it on the same commit as the **Despliegue en Vercel** check (green when Vercel deployed, red when it failed).
 
-The e2e tests run without Ably, Spotify, Google or iTunes: the server picks invented songs when `E2E_FAKE_ITUNES=1` (`src/lib/itunes/fake.ts`; never set it in production) and the browser gets silence instead of Apple's previews. In a failed CI run the Playwright report is attached as an artifact.
+The e2e tests run without Ably, Spotify, Google or iTunes: the server picks invented songs when `E2E_FAKE_ITUNES=1` (`src/lib/itunes/fake.ts`; never set it in production) and the browser gets silence instead of Apple's previews. The keyword `e2e-itunes-limitado` makes that fake answer like a rate-limited iTunes, so the tests check what families see without hammering Apple. In a failed CI run the Playwright report is attached as an artifact.
+
+## Handling a traffic spike (open mode)
+
+Everyone in open mode searches iTunes from Vercel's IPs, and iTunes rate-limits per IP. So:
+
+- **Searches are cached in Postgres** (`ItunesSearch`, `src/lib/itunes/cache.ts`), keyed by term and store. They stay fresh for 6 h. If iTunes fails, the game uses the last saved results, even old ones. Only a search never seen before can reach the player as "iTunes asked for a break". The daily cleanup drops entries older than 30 days.
+- **Limits for people without an invitation** (`GUEST_LIMITS` in `src/lib/access/limits.ts`):
+  - 30 new guests per IP per day (high on purpose: a whole office or campus can share one IP);
+  - 20 games per day;
+  - 60 rounds per hour;
+  - 20 "Probar filtros" per hour;
+  - 3000 guest games in total.
+- **Load test, local only:** run `node scripts/load-open-mode.mjs http://127.0.0.1:3100 100 5` against `next start` with `E2E_FAKE_ITUNES=1` and the Docker database. Never point it at production or real iTunes.
+  - **Last run:** 100 simultaneous guests finished 100/100 games, with p95 under 0.8 s on a single local process.
+- **If it goes wrong:**
+  - the host panel (`/anfitrion`) can pause open mode or new guests at once;
+  - in the Vercel logs, look for `ITUNES_RATE_LIMITED` and `iTunes falló … se usa la búsqueda guardada`;
+  - Ably's free plan caps concurrent connections (about 200). Past that, phones fall back to polling every 3 s on their own.
 
 ## Analytics
 
