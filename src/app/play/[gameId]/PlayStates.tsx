@@ -4,6 +4,7 @@ import Link from "next/link";
 import { BandStatus } from "@/components/band/BandStatus";
 import { Card } from "@/components/Card";
 import { Podium } from "@/components/Podium";
+import { ShareResult } from "@/components/ShareResult";
 import ui from "@/components/ui.module.css";
 import { useI18n } from "@/i18n/client";
 import { formatList } from "@/i18n/format";
@@ -77,11 +78,13 @@ export function PlayReveal({ round, players, myPlayerId, teams }: { round: Round
 
 /** Fin de la partida: cómo acabó para ti y el podio. */
 export function PlayFinale({
+  gameId,
   players,
   myPlayerId,
   teams,
   next,
 }: {
+  gameId: string;
   players: Players;
   myPlayerId: string;
   teams: boolean;
@@ -106,6 +109,7 @@ export function PlayFinale({
       <h1 className={styles.headline}>{t.endOfTape}</h1>
       <p className={styles.lede}>{line}</p>
       <Podium entries={withPlaces(players)} size="grand" tone="card" />
+      <ShareResult gameId={gameId} who="player" />
       {next && (
         <div role="status">
           <p className={styles.lede}>

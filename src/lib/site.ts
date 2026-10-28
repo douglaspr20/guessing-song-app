@@ -4,3 +4,6 @@ export const AUTHOR = {
   linkedin: "https://www.linkedin.com/in/douglas-perez-software-developer/",
   repo: "https://github.com/douglaspr20/guessing-song-app",
 } as const;
+
+/** Dónde vive el juego: se escribe al pie de las tarjetas de resultado. */
+export const SITE_DOMAIN = "guessing-song-app.vercel.app";

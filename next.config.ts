@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
   // La imagen al compartir y el icono del iPhone leen archivos del disco al generarse: que viajen con la función en Vercel.
   outputFileTracingIncludes: {
     '/og/[locale]': ['./src/app/og/_fonts/*.ttf'],
+    '/r/[token]/image': ['./src/app/og/_fonts/*.ttf'],
     '/apple-icon': ['./src/app/icon.svg'],
   },
   // Las rutas eran en español hasta octubre de 2026: los enlaces y QR viejos siguen funcionando (308).

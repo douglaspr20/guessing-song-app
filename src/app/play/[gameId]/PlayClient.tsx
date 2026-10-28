@@ -113,6 +113,7 @@ export function PlayClient() {
 
             {finished ? (
               <PlayFinale
+                gameId={gameId}
                 players={game.players}
                 myPlayerId={me.playerId}
                 teams={teams}

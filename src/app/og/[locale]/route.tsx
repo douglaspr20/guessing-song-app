@@ -1,8 +1,7 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { isLocale, LOCALES } from "@/i18n/locales";
 import { MESSAGES } from "@/i18n/messages";
+import { loadOgFonts, OG_COLORS } from "@/lib/og/theme";
 
 /**
  * Imagen al compartir el enlace (Open Graph y X), una por idioma: la banda de rayas con la marca, el titular de la
@@ -14,28 +13,13 @@ export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
 }
 
-// Los colores de `globals.css`: ImageResponse no lee variables CSS.
-const C = {
-  ink: "#1D2747",
-  shell: "#26335C",
-  shellHi: "#314172",
-  window: "#0F1630",
-  card: "#F4EEDF",
-  saffron: "#F2B632",
-  tomato: "#E5482E",
-  tomatoDeep: "#C23A22",
-  sky: "#6FB7E0",
-  onShellSoft: "#B9C3E3",
-  tapeBrown: "#5B3A1E",
-};
-
-const font = (file: string) => readFile(join(process.cwd(), "src/app/og/_fonts", file));
+const C = OG_COLORS;
 
 export async function GET(_req: Request, ctx: RouteContext<"/og/[locale]">) {
   const { locale } = await ctx.params;
   if (!isLocale(locale)) return new Response(null, { status: 404 });
   const m = MESSAGES[locale];
-  const [cond, hand] = await Promise.all([font("BarlowCondensed-ExtraBold.ttf"), font("Kalam-Bold.ttf")]);
+  const fonts = await loadOgFonts();
 
   return new ImageResponse(
     (
@@ -125,10 +109,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/og/[locale]">) {
       ...OG_SIZE,
       // Solo cambia con un despliegue (que vacía la caché de Vercel): la CDN la guarda y no se dibuja en cada visita.
       headers: { "Cache-Control": "public, max-age=3600, s-maxage=31536000" },
-      fonts: [
-        { name: "Barlow Condensed", data: cond, weight: 800, style: "normal" },
-        { name: "Kalam", data: hand, weight: 700, style: "normal" },
-      ],
+      fonts,
     },
   );
 }

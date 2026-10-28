@@ -122,7 +122,7 @@ export type PublicRound = ReturnType<typeof toPublicRound>;
 type PlayerWithMembers = Player & { members: TeamMember[] };
 
 /** Jugadores (o equipos) de más a menos puntos. En equipos llevan su color y sus miembros. */
-function toPublicPlayers(players: PlayerWithMembers[]) {
+export function toPublicPlayers(players: PlayerWithMembers[]) {
   return [...players]
     .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
     .map((p) => ({
@@ -196,7 +196,7 @@ function sameOwner(game: Pick<Game, "userId" | "guestId">) {
   return game.userId ? { userId: game.userId } : { guestId: game.guestId };
 }
 
-async function catalogNumberOf(game: Game) {
+export async function catalogNumberOf(game: Game) {
   return db.game.count({ where: { ...sameOwner(game), createdAt: { lte: game.createdAt } } });
 }
 

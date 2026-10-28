@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { RotateCcw } from "lucide-react";
 import { MadeBy } from "@/components/MadeBy";
 import { Notice } from "@/components/Notice";
+import { ShareResult } from "@/components/ShareResult";
 import { Podium } from "@/components/Podium";
 import { TapeConfetti } from "@/components/TapeConfetti";
 import { TeamDot } from "@/components/TeamDot";
@@ -78,6 +79,7 @@ export function Finale({ game }: { game: Game }) {
                   <Link href="/" className={`${ui.btn} ${ui.onCard}`}>
                     {m.common.backToShelf}
                   </Link>
+                  <ShareResult gameId={game.id} who="host" />
                 </div>
                 {replay.error && (
                   <Notice on="card" className={styles.finaleCredit}>

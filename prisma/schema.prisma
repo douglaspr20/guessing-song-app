@@ -167,6 +167,11 @@ model Game {
   nextTrackFilters String?
   // Partida creada con «Otra igual» desde esta (cuando termina): los móviles unidos la siguen solos.
   nextGameId       String?
+  // Código secreto del enlace público del resultado (/r/<código>); solo existe tras pulsar «Compartir».
+  // Quitarlo («Dejar de compartir») mata el enlace y la imagen.
+  shareToken       String?  @unique
+  // Idioma de quien compartió: la tarjeta y su vista previa salen en él.
+  shareLocale      String?
   createdAt        DateTime @default(now())
 
   user          User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -341,7 +346,7 @@ model FilterTest {
 // Sin clave foránea a Game: los eventos sobreviven cuando se borra una partida o la limpieza se lleva a un invitado.
 model GameEvent {
   id        String   @id @default(cuid())
-  // guest_started | game_created | game_started | game_finished | phone_joined | phone_followed
+  // guest_started | game_created | game_started | game_finished | phone_joined | phone_followed | result_shared
   type      String
   // Id de la partida (aleatorio, no identifica a nadie) para enlazar creada → empezada → terminada.
   gameId    String?
