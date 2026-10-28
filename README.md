@@ -164,6 +164,9 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
 | GET / POST                  | `/api/games`                                                           | Recent games with podium / create a game                                               |
 | GET · PATCH · DELETE        | `/api/games/:id`                                                       | Game state / change filters / delete                                                   |
 | POST                        | `/api/games/:id/players`                                               | Add a player `{ name }`                                                                |
+| POST                        | `/api/games/:id/replay`                                                | "Same again": a new game with the same settings and people (once the game is over)     |
+| POST                        | `/api/play/:id/follow`                                                 | A phone moves to the replayed game with its same name and seat                         |
+| GET                         | `/api/host/stats?window=24h|7d|30d`                                  | Funnel and daily activity for the host panel                                           |
 | POST                        | `/api/games/:id/rounds`                                                | Start the next round                                                                   |
 | POST                        | `/api/games/:id/rounds/:rid/{play,pause,resume,reveal}`                | Playback and round control (`play` takes `{ deviceId, offsetMs? }` to resume mid-clip) |
 | GET / POST                  | `/api/games/:id/rounds/:rid/guesses`                                   | List / submit `{ playerId, title?, artist? }`                                          |
@@ -206,6 +209,16 @@ Everyone in open mode searches iTunes from Vercel's IPs, and iTunes rate-limits 
 On Vercel the app loads **Vercel Web Analytics** (page views, no cookies) and **Speed Insights** (real Core Web Vitals) from `src/components/SiteAnalytics.tsx`. They are only mounted when `VERCEL=1`, so nothing is loaded locally, in CI or in the e2e tests.
 
 What is sent is cleaned first (`src/lib/client/analytics.ts`): game ids and join codes become the generic route (`/game/[id]`, `/play/[gameId]`, `/join/[code]`), query strings are dropped, and the host dashboard (`/host`) is never measured. To see the data, enable *Analytics* and *Speed Insights* in the Vercel project (both have a free allowance on Hobby).
+
+### Game analytics (own, no personal data)
+
+Vercel's custom events are not on the free Hobby plan, so the funnel is counted in our own database (`GameEvent`, `src/lib/analytics/events.ts`). Each row is a step — `guest_started`, `game_created`, `game_started`, `game_finished`, `phone_joined`, `phone_followed` — with the game id (random), mode, format and *kind* of owner (guest, free, member, host). **Never** names, IPs or account ids. Writing an event can never break a game: a failure only logs a warning. The daily cleanup drops events older than 400 days.
+
+The host panel shows it under **Cómo se usa** (`/host`): new guests → games created → started → finished, abandoned games (created over a day ago, never finished), the breakdown by mode and format, "same again" replays, phones joined or that followed, and the last 14 days. Page views stay in Vercel Analytics.
+
+### "Same again"
+
+On the final screen, **Otra igual** records a new game with the same mode, rounds, filters, answer time, lockout and people (solo players, or teams with colors and members, including those who joined from a phone). The old game keeps a link to the new one (`nextGameId`), so a double click returns the same game instead of creating two. Phones that were in the old game move to the new one on their own with the same name and seat (`next_game` event, then `POST /api/play/:id/follow`); if that fails they get a button to retry. It respects the same limits as creating a game.
 
 ## Languages
 

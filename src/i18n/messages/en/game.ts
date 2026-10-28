@@ -99,6 +99,8 @@ export const game = {
   endOfTape: "End of the tape",
   restOfScoreboard: "Rest of the scoreboard",
   recordAnother: "Record another game",
+  sameAgain: "Same again",
+  sameAgainBusy: "Recording…",
   nobodyScored: "Nobody scored",
   tieBetween: "Tie between",
   won: "Winner:",

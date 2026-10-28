@@ -1,13 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { RotateCcw } from "lucide-react";
 import { MadeBy } from "@/components/MadeBy";
+import { Notice } from "@/components/Notice";
 import { Podium } from "@/components/Podium";
 import { TapeConfetti } from "@/components/TapeConfetti";
 import { TeamDot } from "@/components/TeamDot";
 import { BandStatus } from "@/components/band/BandStatus";
 import ui from "@/components/ui.module.css";
-import { catalogLabel, type Game, type Player } from "@/lib/client/api";
+import { useAsyncAction } from "@/hooks/useAsyncAction";
+import { api, catalogLabel, type Game, type Player } from "@/lib/client/api";
 import { winnerSummary, withPlaces } from "@/lib/game/standings";
 import { formatDate, formatList, plural } from "@/i18n/format";
 import { useI18n } from "@/i18n/client";
@@ -21,6 +25,13 @@ export function Finale({ game }: { game: Game }) {
   const entries = withPlaces(players);
   const nobody = winnerSummary(players).kind === "none";
   const cat = catalogLabel(game.catalogNumber);
+  const router = useRouter();
+  const replay = useAsyncAction();
+  /** «Otra igual»: la misma partida con las mismas personas; los móviles unidos pasan a ella solos. */
+  const repeat = async () => {
+    const next = await replay.run(() => api<Game>(`/api/games/${game.id}/replay`, { method: "POST" }));
+    if (next) router.push(`/game/${next.id}`);
+  };
 
   return (
     <>
@@ -57,13 +68,22 @@ export function Finale({ game }: { game: Game }) {
                   </ol>
                 )}
                 <div className={styles.finaleActions}>
-                  <Link href="/new" className={`${ui.btn} ${ui.primary} ${ui.big}`}>
+                  <button type="button" className={`${ui.btn} ${ui.primary} ${ui.big}`} onClick={repeat} disabled={replay.busy}>
+                    <RotateCcw size={26} aria-hidden />
+                    {replay.busy ? g.sameAgainBusy : g.sameAgain}
+                  </button>
+                  <Link href="/new" className={`${ui.btn} ${ui.onCard}`}>
                     {g.recordAnother}
                   </Link>
                   <Link href="/" className={`${ui.btn} ${ui.onCard}`}>
                     {m.common.backToShelf}
                   </Link>
                 </div>
+                {replay.error && (
+                  <Notice on="card" className={styles.finaleCredit}>
+                    {replay.error}
+                  </Notice>
+                )}
                 <MadeBy on="card" className={styles.finaleCredit} />
               </div>
             </div>

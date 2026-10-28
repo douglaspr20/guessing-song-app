@@ -194,7 +194,7 @@ export async function answer(
     return a;
   });
 
-  emitAward(gameId, roundId, seat.playerId, result);
+  await emitAward(gameId, roundId, seat.playerId, result);
   emit({
     type: "buzz_resolved",
     gameId,

@@ -1,4 +1,5 @@
 import "server-only";
+import { deleteStaleEvents } from "@/lib/analytics/events";
 import { db } from "@/lib/db";
 import { deleteStaleItunesSearches } from "@/lib/itunes/cache";
 import { AppError } from "@/lib/errors";
@@ -131,7 +132,7 @@ export async function unblockIp(ipHash: string) {
 // ---------- Limpieza diaria ----------
 
 export async function runCleanup(now = new Date()) {
-  const [guests, attempts, sessions, invites, participants, itunesSearches, filterTests] = await Promise.all([
+  const [guests, attempts, sessions, invites, participants, itunesSearches, filterTests, events] = await Promise.all([
     deleteInactiveGuests(GUEST_LIMITS.inactiveDays, now),
     db.loginAttempt.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - DAY_MS) } } }),
     db.session.deleteMany({ where: { expiresAt: { lt: now } } }),
@@ -140,6 +141,7 @@ export async function runCleanup(now = new Date()) {
     db.participant.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - 7 * DAY_MS) } } }),
     deleteStaleItunesSearches(now),
     db.filterTest.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - DAY_MS) } } }),
+    deleteStaleEvents(now),
   ]);
   return {
     guests,
@@ -149,5 +151,6 @@ export async function runCleanup(now = new Date()) {
     participants: participants.count,
     itunesSearches: itunesSearches.count,
     filterTests: filterTests.count,
+    events: events.count,
   };
 }

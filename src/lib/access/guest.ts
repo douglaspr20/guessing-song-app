@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { recordEvent } from "@/lib/analytics/events";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { randomToken, sha256 } from "./hash";
@@ -28,6 +29,7 @@ export async function registerGuest(ipHash: string, now = new Date()) {
   }
   const token = randomToken();
   const guest = await db.guest.create({ data: { id: sha256(token), ipHash } });
+  await recordEvent({ type: "guest_started", ownerKind: "guest" });
   return { token, guest };
 }
 

@@ -54,6 +54,8 @@ export const errors = {
   GUESS_NOT_FOUND: "Intento no encontrado",
   INVALID_NAME: "Escribe un nombre (hasta 30 letras)",
   GAME_FINISHED: "La partida ya terminó",
+  GAME_NOT_FINISHED: "La partida todavía no terminó: repetirla solo se puede al final.",
+  NO_NEXT_GAME: "El anfitrión todavía no grabó otra partida.",
   TEAMS_GAME: "En una partida por equipos aún no se pueden añadir jugadores sueltos",
   GAME_FULL: "La partida está completa",
   DUPLICATE_PLAYER: "Ya hay un jugador con ese nombre",

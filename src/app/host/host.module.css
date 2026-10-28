@@ -1,27 +1,27 @@
 .page {
-  composes: page from "../../components/styles/layout.module.css";
+  composes: page from '../../components/styles/layout.module.css';
 }
 
 .main {
-  composes: main from "../../components/styles/layout.module.css";
+  composes: main from '../../components/styles/layout.module.css';
 }
 
 .loginWrap {
   display: grid;
   place-items: center;
-  composes: stage from "../../components/styles/layout.module.css";
+  composes: stage from '../../components/styles/layout.module.css';
 }
 
 .head {
-  composes: pageHead from "../../components/styles/layout.module.css";
+  composes: pageHead from '../../components/styles/layout.module.css';
 }
 
 .title {
-  composes: pageTitle from "../../components/styles/layout.module.css";
+  composes: pageTitle from '../../components/styles/layout.module.css';
 }
 
 .sub {
-  composes: pageSub from "../../components/styles/layout.module.css";
+  composes: pageSub from '../../components/styles/layout.module.css';
 }
 
 .grid {
@@ -129,6 +129,12 @@
   border-color: var(--bad);
 }
 
+.danger:hover {
+  color: var(--bad);
+  border-color: var(--bad);
+  background: var(--bad) !important;
+}
+
 .newCode {
   display: grid;
   gap: 4px;
@@ -162,14 +168,83 @@
 }
 
 .foot {
-  composes: foot from "../../components/styles/layout.module.css";
+  composes: foot from '../../components/styles/layout.module.css';
 }
 
 .linkBtn {
-  composes: linkBtn from "../../components/styles/layout.module.css";
+  composes: linkBtn from '../../components/styles/layout.module.css';
 }
 
 /* La contraseña temporal ocupa toda la fila del miembro, debajo de sus botones. */
 .fullRow {
   flex-basis: 100%;
+}
+
+/* ---------- Cómo se usa ---------- */
+
+.rates {
+  display: grid;
+  gap: 4px;
+  font-size: 17px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-size: 17px;
+}
+
+.table caption {
+  text-align: left;
+  padding-bottom: 6px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--card-ink-soft);
+}
+
+.table th,
+.table td {
+  padding: 6px 10px 6px 0;
+  text-align: right;
+  border-top: 2px solid var(--card-rule);
+}
+
+.table th:first-child,
+.table td:first-child {
+  text-align: left;
+}
+
+.table thead th {
+  font-weight: 600;
+  color: var(--card-ink-soft);
+}
+
+/* En el móvil las tablas caben sin desplazarse: la primera columna cede ancho y la letra baja un poco. */
+@media (max-width: 640px) {
+  .table {
+    table-layout: fixed;
+    font-size: 15px;
+  }
+
+  .table th,
+  .table td {
+    padding-right: 6px;
+  }
+
+  .table th:first-child,
+  .table td:first-child {
+    width: 34%;
+  }
+
+  .table thead th {
+    font-size: 13px;
+  }
 }

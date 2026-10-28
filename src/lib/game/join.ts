@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { recordGameEvent } from "@/lib/analytics/events";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { randomToken, sha256 } from "@/lib/access/hash";
@@ -117,7 +118,7 @@ export interface JoinContext {
 
 const cleanName = (raw: string | undefined) => (raw ?? "").trim().replace(/\s+/g, " ");
 
-export async function joinGame(input: JoinInput, ctx: JoinContext) {
+export async function joinGame(input: JoinInput, ctx: JoinContext, opts: { followed?: boolean } = {}) {
   const game = await findJoinableGame(input.code, ctx.ipHash);
   if (!game.joinOpen) throw new AppError("JOIN_CLOSED", 403);
 
@@ -194,7 +195,20 @@ export async function joinGame(input: JoinInput, ctx: JoinContext) {
 
   (await cookies()).set(participantCookie(game.id), token, cookieOptions(PARTICIPANT_TTL_SECONDS));
   emit({ type: "participant_joined", gameId: game.id, participantId: participant.id, name: participant.name });
+  await recordGameEvent(opts.followed ? "phone_followed" : "phone_joined", game.id);
   return { gameId: game.id, participantId: participant.id, playerId: participant.playerId, name: participant.name };
+}
+
+/**
+ * El móvil de quien jugó la partida anterior pasa a la que el anfitrión grabó con «Otra igual»: mismo nombre y
+ * mismo sitio (jugador o equipo), porque la nueva se copió con ellos. Quien fue expulsado no tiene cookie válida
+ * y no sigue.
+ */
+export async function followNextGame(gameId: string, ctx: JoinContext) {
+  const me = await requireParticipant(gameId);
+  const old = await db.game.findUnique({ where: { id: gameId }, select: { nextGame: { select: { code: true } } } });
+  if (!old?.nextGame) throw new AppError("NO_NEXT_GAME", 404);
+  return joinGame({ code: old.nextGame.code, name: me.name }, ctx, { followed: true });
 }
 
 // ---------- Quién soy ----------

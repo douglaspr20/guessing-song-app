@@ -49,6 +49,8 @@ export const errors = {
   GUESS_NOT_FOUND: "Attempt not found",
   INVALID_NAME: "Type a name (up to 30 letters)",
   GAME_FINISHED: "The game is already over",
+  GAME_NOT_FINISHED: "The game isn't over yet: you can only replay it at the end.",
+  NO_NEXT_GAME: "The host hasn't recorded another game yet.",
   TEAMS_GAME: "Single players can't be added to a team game yet",
   GAME_FULL: "The game is full",
   DUPLICATE_PLAYER: "There's already a player with that name",

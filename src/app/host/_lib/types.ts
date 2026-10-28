@@ -6,3 +6,4 @@ export type Invite = Awaited<ReturnType<typeof listInvites>>[number];
 export type NewInvite = Awaited<ReturnType<typeof createInvite>>;
 export type Member = Awaited<ReturnType<typeof listMembers>>[number];
 export type GuestOverview = Awaited<ReturnType<typeof guestOverview>>;
+export type { Stats } from "@/lib/analytics/stats";
