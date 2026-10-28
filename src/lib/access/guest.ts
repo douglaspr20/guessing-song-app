@@ -7,7 +7,7 @@ import { GUEST_LIMITS } from "./limits";
 import { clientInfo, cookieName, cookieOptions } from "./request";
 import { getAppState } from "./state";
 
-const GUEST_COOKIE = () => cookieName("invitado");
+const GUEST_COOKIE = () => cookieName("guest");
 const GUEST_TTL_SECONDS = 365 * 24 * 60 * 60;
 const TOUCH_EVERY_MS = 60 * 60_000;
 

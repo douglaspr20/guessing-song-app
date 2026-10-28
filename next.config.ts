@@ -13,6 +13,17 @@ const nextConfig: NextConfig = {
     '/og/[locale]': ['./src/app/og/_fonts/*.ttf'],
     '/apple-icon': ['./src/app/icon.svg'],
   },
+  // Las rutas eran en español hasta octubre de 2026: los enlaces y QR viejos siguen funcionando (308).
+  async redirects() {
+    return [
+      { source: '/nueva', destination: '/new', permanent: true },
+      { source: '/partida/:id', destination: '/game/:id', permanent: true },
+      { source: '/jugar/:gameId', destination: '/play/:gameId', permanent: true },
+      { source: '/unirse', destination: '/join', permanent: true },
+      { source: '/unirse/:code', destination: '/join/:code', permanent: true },
+      { source: '/anfitrion', destination: '/host', permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

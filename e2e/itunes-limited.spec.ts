@@ -15,7 +15,7 @@ test("si iTunes nos limita, se avisa con claridad al probar filtros y al empezar
   await expect(page.getByText(LIMITED).first()).toBeVisible();
 
   await page.getByRole("button", { name: "Grabar y empezar" }).click();
-  await page.waitForURL("**/partida/*");
+  await page.waitForURL("**/game/*");
   await page.getByRole("button", { name: /^Empezar/ }).click();
   await expect(page.getByText(LIMITED).first()).toBeVisible();
   // Sin pantalla de error: la partida sigue esperando y se puede volver a intentar.

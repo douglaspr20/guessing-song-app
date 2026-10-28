@@ -115,7 +115,7 @@ export default function Home() {
           <Shelf
             {...shelfProps}
             premium={access.spotify?.premium ?? null}
-            newGameHref={access.spotify ? "/nueva" : "/nueva?modo=abierto"}
+            newGameHref={access.spotify ? "/new" : "/new?mode=open"}
             notice={loginError}
             aside={
               passwordForm ??
@@ -145,11 +145,11 @@ export default function Home() {
           <Shelf
             {...shelfProps}
             premium={null}
-            newGameHref="/nueva?modo=abierto"
+            newGameHref="/new?mode=open"
             notice={access?.openModePaused ? t.paused : null}
             footer={
               <>
-                <Link href="/unirse" className={styles.linkBtn}>
+                <Link href="/join" className={styles.linkBtn}>
                   {t.joinGame}
                 </Link>
                 <button type="button" className={styles.linkBtn} onClick={quietly("/api/guest", "DELETE")}>

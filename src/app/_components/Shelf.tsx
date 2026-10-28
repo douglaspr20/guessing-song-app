@@ -166,7 +166,7 @@ function ShelfSpine({ game: g, onDelete }: { game: GameSummary; onDelete: () => 
           ) : (
             <>
               <span className={styles.badge}>{t.unfinished}</span>
-              <Link href={`/partida/${g.id}`} className={`${ui.btn} ${ui.onCard} ${styles.resume}`}>
+              <Link href={`/game/${g.id}`} className={`${ui.btn} ${ui.onCard} ${styles.resume}`}>
                 <Play size={20} aria-hidden />
                 {t.keepPlaying}
               </Link>

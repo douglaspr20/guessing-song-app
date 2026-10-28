@@ -5,7 +5,7 @@ import { AppError } from "@/lib/errors";
 import { randomToken, sha256 } from "./hash";
 import { cookieName, cookieOptions } from "./request";
 
-const SESSION_COOKIE = () => cookieName("sesion");
+const SESSION_COOKIE = () => cookieName("session");
 export const SESSION_TTL_MS = 7 * 24 * 60 * 60_000;
 /** Cada cuánto se actualiza `lastSeenAt` (evita escribir en cada petición). */
 const TOUCH_EVERY_MS = 60 * 60_000;

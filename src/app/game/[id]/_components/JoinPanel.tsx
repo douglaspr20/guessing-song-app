@@ -44,7 +44,7 @@ export function JoinPanel({
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    const link = `${window.location.origin}/unirse/${game.code}`;
+    const link = `${window.location.origin}/join/${game.code}`;
     // El enlace depende del origen del navegador: se calcula tras montar.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setUrl(link);
@@ -113,7 +113,7 @@ export function JoinPanel({
         <div className={styles.joinTop}>
           <div>
             <p className={styles.joinHint}>
-              {g.joinGoTo} <strong>{url ? new URL(url).host : "…"}/unirse</strong> {g.joinAndType}
+              {g.joinGoTo} <strong>{url ? new URL(url).host : "…"}/join</strong> {g.joinAndType}
             </p>
             <p className={styles.joinCode} aria-label={g.codeLabel(game.code.split("").join(" "))}>
               {game.code}

@@ -57,7 +57,7 @@ export function Finale({ game }: { game: Game }) {
                   </ol>
                 )}
                 <div className={styles.finaleActions}>
-                  <Link href="/nueva" className={`${ui.btn} ${ui.primary} ${ui.big}`}>
+                  <Link href="/new" className={`${ui.btn} ${ui.primary} ${ui.big}`}>
                     {g.recordAnother}
                   </Link>
                   <Link href="/" className={`${ui.btn} ${ui.onCard}`}>

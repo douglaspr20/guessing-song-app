@@ -14,12 +14,12 @@ const clean = (raw: string) => raw.toUpperCase().replace(/[^A-Z0-9]/g, "").slice
 
 /**
  * Unirse a una partida con su código de 6 caracteres: primero el código, después el nombre (o el de
- * la cuenta, si hay sesión) y, por equipos, el equipo. Se abre desde /unirse o con el enlace /unirse/CÓDIGO.
+ * la cuenta, si hay sesión) y, por equipos, el equipo. Se abre desde /join o con el enlace /join/CÓDIGO.
  */
 export function JoinFlow() {
   const router = useRouter();
   const { m } = useI18n();
-  // En /unirse/ABC123 el código viene en la dirección; en /unirse se escribe a mano.
+  // En /join/ABC123 el código viene en la dirección; en /join se escribe a mano.
   const initialCode = useParams<{ code?: string }>().code ?? "";
   const titleId = useId();
   const [code, setCode] = useState(clean(initialCode));
@@ -56,7 +56,7 @@ export function JoinFlow() {
     }
   };
 
-  // Con el enlace /unirse/ABC123 se comprueba el código sin que haya que pulsar nada.
+  // Con el enlace /join/ABC123 se comprueba el código sin que haya que pulsar nada.
   useEffect(() => {
     if (autoLooked.current || clean(initialCode).length !== 6) return;
     autoLooked.current = true;
@@ -84,7 +84,7 @@ export function JoinFlow() {
       const r = await api<{ gameId: string }>("/api/join", {
         json: { code: found.code, name: user ? undefined : finalName, teamId: needsTeam ? teamId : undefined },
       });
-      router.push(`/jugar/${r.gameId}`);
+      router.push(`/play/${r.gameId}`);
     } catch (err) {
       // Solo se libera el botón si falló: al entrar, la página cambia.
       setError(errorText(err));

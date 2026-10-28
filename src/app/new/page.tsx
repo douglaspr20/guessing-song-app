@@ -17,7 +17,7 @@ import { PlaylistPicker, SearchFilters } from "./_components/SongFilters";
 import { useEditPrefill, useSetupData, useSetupForm } from "./_hooks/useSetup";
 import styles from "./setup.module.css";
 
-// useSearchParams (?editar=) necesita un límite de Suspense.
+// useSearchParams (?edit=) necesita un límite de Suspense.
 export default function NewGamePage() {
   return (
     <Suspense>
@@ -26,15 +26,15 @@ export default function NewGamePage() {
   );
 }
 
-/** Grabar una partida nueva (o cambiar los ajustes de una aún sin empezar, con ?editar=). */
+/** Grabar una partida nueva (o cambiar los ajustes de una aún sin empezar, con ?edit=). */
 function NewGame() {
   const router = useRouter();
   const { m } = useI18n();
   const t = m.setup;
   const searchParams = useSearchParams();
   /** Partida aún sin empezar que se está editando (desde «Editar ajustes» del juego). */
-  const editId = searchParams.get("editar");
-  const { form, update } = useSetupForm(searchParams.get("modo") === "abierto" ? "open" : "spotify", t);
+  const editId = searchParams.get("edit");
+  const { form, update } = useSetupForm(searchParams.get("mode") === "open" ? "open" : "spotify", t);
   const { catalog, playlists, connected, canLink } = useSetupData(() => update({ mode: "open" }));
   useEditPrefill(editId, update);
   const { busy, error, run } = useAsyncAction();
@@ -57,7 +57,7 @@ function NewGame() {
     });
     // Next conserva esta página al navegar: sin borrar la muestra se vería al volver.
     setSample(null);
-    if (game) router.push(`/partida/${game.id}`);
+    if (game) router.push(`/game/${game.id}`);
   };
 
   const tryFilters = async () => {

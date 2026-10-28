@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { describeGuess, spokenFeedback } from "@/app/partida/[id]/_lib/feedback";
+import { describeGuess, spokenFeedback } from "@/app/game/[id]/_lib/feedback";
 import { errorMessage, isErrorKey } from "@/i18n/errors";
 import { formatList, plural } from "@/i18n/format";
 import { fromAcceptLanguage, localeFromRequest, readCookie, resolveLocale } from "@/i18n/locales";
@@ -33,8 +33,8 @@ describe("elegir el idioma", () => {
   });
 
   it("lee la cookie de una petición a la API", () => {
-    expect(readCookie("a=1; idioma=en; b=2", "idioma")).toBe("en");
-    const req = new Request("http://x/api", { headers: { cookie: "idioma=en", "accept-language": "es" } });
+    expect(readCookie("a=1; locale=en; b=2", "locale")).toBe("en");
+    const req = new Request("http://x/api", { headers: { cookie: "locale=en", "accept-language": "es" } });
     expect(localeFromRequest(req)).toBe("en");
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { shortcutFor, type KeyContext } from "@/app/partida/[id]/_lib/shortcuts";
+import { shortcutFor, type KeyContext } from "@/app/game/[id]/_lib/shortcuts";
 
 const idle: KeyContext = { typing: false, onControl: false };
 const typing: KeyContext = { typing: true, onControl: false };
