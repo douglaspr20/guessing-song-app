@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { recordOwnerFilterTest } from "@/lib/access/limits";
 import { requireOwner } from "@/lib/access/owner";
 import { requireUser } from "@/lib/access/session";
 import { handle } from "@/lib/errors";
@@ -21,7 +22,7 @@ const bodySchema = z.object({
 export const POST = handle(async (req: Request) => {
   const { mode, filters, fragmentSeconds } = bodySchema.parse(await req.json());
   if (mode === "open") {
-    await requireOwner();
+    await recordOwnerFilterTest(await requireOwner());
     return Response.json(await pickOpenTrack({ filters, usedTrackIds: new Set(), source: itunesSource }));
   }
   const user = await requireUser();

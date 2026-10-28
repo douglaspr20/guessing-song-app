@@ -304,3 +304,30 @@ model RoundLockout {
   @@unique([roundId, participantId])
   @@unique([roundId, playerId])
 }
+
+// Caché de búsquedas en iTunes (modo abierto): por término y tienda, los resultados ya normalizados a Track.
+// Protege el límite de iTunes (todas las visitas salen por las IP de Vercel) y, si iTunes falla, se juega
+// con lo último guardado. La limpieza diaria borra lo de más de 30 días.
+model ItunesSearch {
+  // En minúsculas y con los espacios normalizados.
+  term      String
+  country   String
+  // Track[] (JSON).
+  tracks    Json
+  fetchedAt DateTime @default(now())
+
+  @@id([term, country])
+  @@index([fetchedAt])
+}
+
+// Cada «Probar filtros» del modo abierto (invitados y cuentas sin invitación): cuenta para su tope por hora,
+// porque cada prueba puede llamar a iTunes. La limpieza diaria borra las de más de un día.
+model FilterTest {
+  id        String   @id @default(cuid())
+  // "guest:<id>" o "user:<id>".
+  ownerKey  String
+  createdAt DateTime @default(now())
+
+  @@index([ownerKey, createdAt])
+  @@index([createdAt])
+}

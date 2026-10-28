@@ -45,6 +45,7 @@ export const errors = {
   GUEST_SHELF_FULL: "Tu estantería está llena: borra alguna partida para grabar otra.",
   GUEST_CAPACITY: "El modo sin cuenta está lleno ahora mismo. Prueba más tarde.",
   GUEST_ROUND_LIMIT: "Demasiadas rondas seguidas. Descansa unos minutos.",
+  FILTER_TEST_LIMIT: "Ya probaste muchos filtros esta hora. Graba la partida y prueba jugando.",
 
   // Partidas y rondas
   GAME_NOT_FOUND: "Partida no encontrada",
@@ -107,6 +108,6 @@ export const errors = {
   SPOTIFY_RATE_LIMITED: "Spotify está limitando las peticiones, prueba en un momento",
   SPOTIFY_API_ERROR: "Spotify no respondió bien",
   SPOTIFY_NOT_ALLOWED: "Esta cuenta de Spotify no está autorizada en la app",
-  ITUNES_RATE_LIMITED: "iTunes está limitando las búsquedas, espera un momento",
+  ITUNES_RATE_LIMITED: "Hay mucha gente jugando y iTunes pidió una pausa. Espera un minuto y vuelve a intentarlo.",
   ITUNES_ERROR: "iTunes no respondió bien",
 };

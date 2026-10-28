@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { deleteStaleItunesSearches } from "@/lib/itunes/cache";
 import { AppError } from "@/lib/errors";
 import { GUEST_LIMITS } from "./limits";
 import { revokeSessions } from "./session";
@@ -130,13 +131,15 @@ export async function unblockIp(ipHash: string) {
 // ---------- Limpieza diaria ----------
 
 export async function runCleanup(now = new Date()) {
-  const [guests, attempts, sessions, invites, participants] = await Promise.all([
+  const [guests, attempts, sessions, invites, participants, itunesSearches, filterTests] = await Promise.all([
     deleteInactiveGuests(GUEST_LIMITS.inactiveDays, now),
     db.loginAttempt.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - DAY_MS) } } }),
     db.session.deleteMany({ where: { expiresAt: { lt: now } } }),
     db.invite.deleteMany({ where: { usedAt: null, expiresAt: { lt: now } } }),
     // Quien se unió desde el móvil: pasados 7 días su cookie ya caducó hace mucho y el token no sirve.
     db.participant.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - 7 * DAY_MS) } } }),
+    deleteStaleItunesSearches(now),
+    db.filterTest.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - DAY_MS) } } }),
   ]);
   return {
     guests,
@@ -144,5 +147,7 @@ export async function runCleanup(now = new Date()) {
     sessions: sessions.count,
     invites: invites.count,
     participants: participants.count,
+    itunesSearches: itunesSearches.count,
+    filterTests: filterTests.count,
   };
 }

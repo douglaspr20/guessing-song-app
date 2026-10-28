@@ -11,6 +11,7 @@ import {
   assertGuestCanStartRound,
   assertOwnerCanCreateGame,
   GUEST_LIMITS,
+  recordOwnerFilterTest,
 } from "@/lib/access/limits";
 import { assertOwnsGame, type Owner } from "@/lib/access/owner";
 import { hashPassword } from "@/lib/access/password";
@@ -453,6 +454,20 @@ describe("respaldo contra abusos de invitados", () => {
       })),
     });
     expect(await fails(assertGuestCanStartRound(guestId))).toMatchObject({ code: "GUEST_ROUND_LIMIT" });
+  });
+
+  it("«Probar filtros» sin invitación tiene tope por hora; con invitación, no", async () => {
+    const { owner } = await newGuest();
+    const now = new Date();
+    for (let i = 0; i < GUEST_LIMITS.filterTestsPerHour; i++) await recordOwnerFilterTest(owner, now);
+    expect(await fails(recordOwnerFilterTest(owner, now))).toMatchObject({ code: "FILTER_TEST_LIMIT" });
+    // Pasada la hora vuelve a poder, y la limpieza diaria borra las pruebas de ayer.
+    await recordOwnerFilterTest(owner, new Date(now.getTime() + 61 * 60_000));
+    expect((await runCleanup(new Date(now.getTime() + 26 * 60 * 60_000))).filterTests).toBe(GUEST_LIMITS.filterTestsPerHour + 1);
+
+    const member = await newMember();
+    for (let i = 0; i <= GUEST_LIMITS.filterTestsPerHour; i++) await recordOwnerFilterTest(member.owner, now);
+    expect(await db.filterTest.count()).toBe(0);
   });
 
   it("la limpieza borra a los invitados inactivos con sus partidas; el botón del pánico, a todos", async () => {
