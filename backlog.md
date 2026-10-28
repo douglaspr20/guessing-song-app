@@ -27,15 +27,11 @@ Estado al 27-10-2026. Marcas: `[x]` hecho, `[ ]` pendiente. Tamaño: S (horas), 
 - [x] En GitHub (_Settings → Branches_), proteger `master`: exigir pull request y el check `ci-ok`
 - [x] Tras fusionar `fix/vercel-status-check`, comprobar que en el siguiente despliegue aparece el check «Despliegue en Vercel» en el commit (Vercel informa con un estado de commit, no con «deployments»; el workflow anterior no se activaba nunca).
 - [x] En Vercel, activar _Analytics_ y _Speed Insights_ en el proyecto (pestañas del mismo nombre) para que empiecen a recoger datos.
-
+- [x] **Comprobar la tarjeta en LinkedIn (sin código).** Tras desplegar `feat/share-preview`, pegar la URL en el [Post Inspector](https://www.linkedin.com/post-inspector/) para ver la tarjeta real y refrescar su caché.
 
 ## P0 · Antes de publicarlo en LinkedIn
 
 La gente llega desde el post sin conocer el juego: lo primero que ve es la tarjeta del enlace y la portada, y si muchos entran a la vez el modo abierto tiene que aguantar.
-
-### Presentación
-
-- [ ] **Comprobar la tarjeta en LinkedIn (sin código).** Tras desplegar `feat/share-preview`, pegar la URL en el [Post Inspector](https://www.linkedin.com/post-inspector/) para ver la tarjeta real y refrescar su caché.
 
 ### Capacidad
 
