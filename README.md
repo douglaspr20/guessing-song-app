@@ -5,13 +5,23 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
+**▶ Play it: [guessing-song-app.vercel.app](https://guessing-song-app.vercel.app)** (no account needed) · Made by [Douglas Pérez](https://www.linkedin.com/in/douglas-perez-software-developer/)
+
 A "guess the song" party game for family get-togethers. A clip of at least 60 seconds plays from the host's Spotify; whoever recognizes it shouts the title (and the artist), the host types it in, and the faster you answer the more points you get.
 
 The interface is designed around a **home-recorded cassette**: every game is a numbered tape (`C-014`) on a shelf, the round timer is the tape running from one reel to the other, and the scoreboard is hand-written on the J-card.
 
 ![A full game: 3-second countdown, the cassette timer, hints, answers with points, the reveal and the final podium](docs/demo.gif)
 
-> The UI is in Spanish: the game was built for Spanish-speaking families.
+> The UI is in **Spanish and English**: it follows the browser's language, with an ES · EN switch in the top band (see [Languages](#languages)). The screenshots are in Spanish, the language the game was built for.
+
+| Your shelf of recorded games | Your playlists as cassettes |
+| --- | --- |
+| ![The shelf: numbered cassettes C-001 and C-002, one unfinished with "Seguir jugando", the other with its podium](docs/shelf.png) | ![Playlists drawn as cassettes with hand-written names and reels; two are selected with a saffron border](docs/playlists.png) |
+
+Sharing a link shows this card (generated per language with `ImageResponse`, see `src/app/og/[locale]/route.tsx`):
+
+![Share card: the three tape stripes with the brand, the headline "Suena la cinta. ¿Quién la canta?" and a cassette with the timer at 00:30](docs/og.png)
 
 ## Two ways to play
 
@@ -211,9 +221,7 @@ Design decisions are documented in [`DESIGN.md`](DESIGN.md) and product context 
 
 ## Roadmap
 
-- Join from your phone with the game code (real-time answers via SSE).
-- Teams, cross-game stats and no repeated songs between games.
-- delete previopus games
+The prioritized backlog (in Spanish) lives in [`backlog.md`](backlog.md). Next up: privacy-friendly game analytics, "play the same again" in one click, a shareable podium image and phone reconnection with a short PIN; later, no repeated songs between games, better search and cross-game stats.
 
 ## Known issues
 

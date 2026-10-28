@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { CassetteTape } from "lucide-react";
 import { useI18n } from "@/i18n/client";
 import { LocaleSwitch } from "./LocaleSwitch";
 import styles from "./TopBar.module.css";
@@ -13,7 +12,9 @@ export function TopBar({ status }: { status?: ReactNode }) {
   return (
     <header className={styles.bar}>
       <Link href="/" className={`${styles.tag} ${styles.brand}`}>
-        <CassetteTape size={26} strokeWidth={2.5} aria-hidden />
+        {/* El mismo casete que el favicon (src/app/icon.svg): un SVG fijo y pequeño, no necesita next/image. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/icon.svg" alt="" className={styles.brandIcon} />
         {m.common.brand}
       </Link>
       <div className={styles.end}>

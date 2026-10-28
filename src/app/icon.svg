@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- El casete de la app, simplificado para 16 px: carcasa, etiqueta con las tres rayas, ventana con bobinas y boca. -->
+  <defs>
+    <clipPath id="label">
+      <rect x="7" y="12" width="50" height="30" rx="4" />
+    </clipPath>
+  </defs>
+  <rect x="2" y="7" width="60" height="50" rx="8" fill="#26335C" />
+  <g clip-path="url(#label)">
+    <rect x="7" y="12" width="50" height="30" fill="#F4EEDF" />
+    <rect x="7" y="12" width="50" height="4" fill="#F2B632" />
+    <rect x="7" y="16" width="50" height="4" fill="#E5482E" />
+    <rect x="7" y="20" width="50" height="4" fill="#6FB7E0" />
+  </g>
+  <rect x="14" y="27" width="36" height="12" rx="6" fill="#0F1630" />
+  <circle cx="22" cy="33" r="4.5" fill="#5B3A1E" />
+  <circle cx="42" cy="33" r="4.5" fill="#5B3A1E" />
+  <circle cx="22" cy="33" r="1.8" fill="#F4EEDF" />
+  <circle cx="42" cy="33" r="1.8" fill="#F4EEDF" />
+  <path d="M17 57 L21 47 H43 L47 57 Z" fill="#0F1630" />
+</svg>

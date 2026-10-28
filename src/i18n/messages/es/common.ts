@@ -2,6 +2,7 @@
 export const common = {
   brand: "Adivina la canción",
   metaDescription: "El juego familiar de adivinar canciones con tu Spotify.",
+  ogAlt: "Adivina la canción: «Suena la cinta. ¿Quién la canta?» junto a un casete con el reloj de la ronda en 00:30.",
   language: "Idioma",
   retry: "Reintentar",
   retrying: "Probando…",

@@ -308,7 +308,7 @@ Etiquetas de cinta que se pulsan: condensada mayúscula, trazo de 3px, sin relle
 - **Stepper:** tres celdas (− valor +) de 56px dentro de un trazo de 3px, valor en condensada 800 a 38px tabular.
 
 ### Navigation
-- **Banda superior:** banda de rayas de borde a borde, 92px; a la izquierda la marca y a la derecha el estado («C-014 · Lado A · Pista 3 de 10») como etiquetas de cartulina con esquinas de 4px en condensada 800 mayúscula.
+- **Banda superior:** banda de rayas de borde a borde, 92px; a la izquierda la marca (el casete de `src/app/icon.svg`, el mismo del favicon, a 1.1em) y a la derecha el estado («C-014 · Lado A · Pista 3 de 10») como etiquetas de cartulina con esquinas de 4px en condensada 800 mayúscula.
 
 ### Idioma
 El selector **ES · EN** vive en la banda superior, a la derecha de la etiqueta de estado: dos teclas de condensada 800 en mayúscula sobre una etiqueta de cartulina, la activa en tinta sobre cartulina invertida. Cada idioma se nombra en sí mismo (`aria-label` «Español» / «English»). Al cambiar se recarga la página: el servidor pinta todo de nuevo en ese idioma.

@@ -8,9 +8,31 @@ import { getMessages } from "@/i18n/server";
 import { fontClasses } from "./fonts";
 import "./globals.css";
 
+// En Vercel, el dominio de producción (también en las previews, para que las URL de las imágenes sean estables).
+const SITE_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : "http://127.0.0.1:3000";
+
 export async function generateMetadata(): Promise<Metadata> {
-  const { m } = await getMessages();
-  return { title: m.common.brand, description: m.common.metaDescription };
+  const { locale, m } = await getMessages();
+  const title = m.common.brand;
+  const description = m.common.metaDescription;
+  // La imagen al compartir va en el idioma de la página (los rastreadores sin idioma reciben el español).
+  const image = { url: `/og/${locale}`, width: 1200, height: 630, alt: m.common.ogAlt };
+  return {
+    metadataBase: new URL(SITE_URL),
+    title,
+    description,
+    openGraph: {
+      type: "website",
+      siteName: title,
+      title,
+      description,
+      locale: locale === "es" ? "es_ES" : "en_US",
+      images: [image],
+    },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
+  };
 }
 
 export const viewport: Viewport = {

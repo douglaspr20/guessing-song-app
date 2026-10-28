@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
   // "localhost": sin esto la página no llega a cargar su JavaScript.
   // El móvil prueba la partida entrando por la IP del PC en la red local (192.168.x.x).
   allowedDevOrigins: ['127.0.0.1'],
+  // La imagen al compartir y el icono del iPhone leen archivos del disco al generarse: que viajen con la función en Vercel.
+  outputFileTracingIncludes: {
+    '/og/[locale]': ['./src/app/og/_fonts/*.ttf'],
+    '/apple-icon': ['./src/app/icon.svg'],
+  },
   async headers() {
     return [
       {

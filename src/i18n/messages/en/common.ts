@@ -6,6 +6,7 @@ const ORDINAL_SUFFIX: Record<string, string> = { one: "st", two: "nd", few: "rd"
 export const common = {
   brand: "Adivina la canción",
   metaDescription: "The family game of guessing songs with your Spotify.",
+  ogAlt: "Adivina la canción: “The tape is rolling. Who sings it?” next to a cassette with the round timer at 00:30.",
   language: "Language",
   retry: "Try again",
   retrying: "Trying…",
