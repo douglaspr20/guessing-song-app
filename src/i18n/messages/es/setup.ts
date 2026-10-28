@@ -1,4 +1,4 @@
-// Grabar una partida nueva (/nueva): quién juega, equipos, ajustes y de dónde salen las canciones.
+// Grabar una partida nueva (/new): quién juega, equipos, ajustes y de dónde salen las canciones.
 export const setup = {
   bandEditing: "Editando casete",
   bandNew: "Casete nuevo · Lado A",

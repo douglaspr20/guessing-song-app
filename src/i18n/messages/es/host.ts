@@ -1,4 +1,4 @@
-// Panel del anfitrión (/anfitrion): Spotify, invitaciones, miembros y modo sin cuenta.
+// Panel del anfitrión (/host): Spotify, invitaciones, miembros y modo sin cuenta.
 export const host = {
   pageTitle: "Anfitrión · Adivina la canción",
   band: "Anfitrión",

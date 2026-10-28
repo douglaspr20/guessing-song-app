@@ -4,7 +4,7 @@ import { HOST_PASSWORD } from "./support/env";
 import { hostCode } from "./support/host";
 
 async function fillLogin(page: Page, password: string, code: string) {
-  await page.goto("/anfitrion");
+  await page.goto("/host");
   await page.getByLabel("Contraseña").fill(password);
   await page.getByLabel("Código de 6 dígitos").fill(code);
   await page.getByRole("button", { name: "Entrar", exact: true }).click();

@@ -4,7 +4,7 @@ export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "es";
 
 /** Cookie con el idioma elegido en el selector (la lee el servidor y el navegador). */
-export const LOCALE_COOKIE = "idioma";
+export const LOCALE_COOKIE = "locale";
 export const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 /** Nombre de cada idioma en su propio idioma (para el selector). */

@@ -11,7 +11,7 @@ test("alguien se une desde el móvil con el código, pulsa «¡Lo sé!» y acier
   // En el móvil: código, nombre y dentro.
   const phone = await phoneContext(browser, baseURL);
   const mobile = await phone.newPage();
-  await mobile.goto("/unirse");
+  await mobile.goto("/join");
   await mobile.getByLabel("Código de la partida").fill(code);
   await mobile.getByRole("button", { name: "Continuar" }).click();
   await mobile.getByLabel("Tu nombre").fill("Pablo");

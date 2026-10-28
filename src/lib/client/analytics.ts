@@ -1,12 +1,12 @@
 /**
  * Qué URL llega a Vercel Analytics y Speed Insights. Se quitan los datos que identifican algo concreto:
  * ids de partida y códigos de unión pasan a ser la ruta genérica, y se borran los parámetros
- * (`?editar=<id>`, `?error=…`). El panel del anfitrión no se mide nunca.
+ * (`?edit=<id>`, `?error=…`). El panel del anfitrión no se mide nunca.
  */
 const ROUTES: [RegExp, string][] = [
-  [/^\/partida\/[^/]+/, "/partida/[id]"],
-  [/^\/jugar\/[^/]+/, "/jugar/[gameId]"],
-  [/^\/unirse\/[^/]+/, "/unirse/[code]"],
+  [/^\/game\/[^/]+/, "/game/[id]"],
+  [/^\/play\/[^/]+/, "/play/[gameId]"],
+  [/^\/join\/[^/]+/, "/join/[code]"],
 ];
 
 /** La URL sin datos personales, o null si esa página no se mide. */
@@ -17,7 +17,7 @@ export function anonymizeUrl(raw: string): string | null {
   } catch {
     return null;
   }
-  if (url.pathname === "/anfitrion" || url.pathname.startsWith("/anfitrion/")) return null;
+  if (url.pathname === "/host" || url.pathname.startsWith("/host/")) return null;
   let path = url.pathname;
   for (const [pattern, route] of ROUTES) path = path.replace(pattern, route);
   return `${url.origin}${path}`;

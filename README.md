@@ -158,7 +158,7 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
 | POST                        | `/api/join/lookup`, `/api/join`                                        | Check a game code / join it from a phone (name, team)                                  |
 | GET                         | `/api/play/[gameId]`                                                   | State seen by a joined player                                                          |
 | GET                         | `/api/realtime/token?game=`                                            | Read-only Ably token for that game's channel                                           |
-| GET                         | `/api/cron/limpieza`                                                   | Daily cleanup (needs `Authorization: Bearer $CRON_SECRET`)                             |
+| GET                         | `/api/cron/cleanup`                                                    | Daily cleanup (needs `Authorization: Bearer $CRON_SECRET`)                             |
 | GET                         | `/api/spotify/playlists` · `/api/spotify/genres`                       | Filter options                                                                         |
 | POST                        | `/api/spotify/sample`                                                  | Preview which song a set of filters would pick                                         |
 | GET / POST                  | `/api/games`                                                           | Recent games with podium / create a game                                               |
@@ -197,7 +197,7 @@ Everyone in open mode searches iTunes from Vercel's IPs, and iTunes rate-limits 
 - **Load test, local only:** run `node scripts/load-open-mode.mjs http://127.0.0.1:3100 100 5` against `next start` with `E2E_FAKE_ITUNES=1` and the Docker database. Never point it at production or real iTunes.
   - **Last run:** 100 simultaneous guests finished 100/100 games, with p95 under 0.8 s on a single local process.
 - **If it goes wrong:**
-  - the host panel (`/anfitrion`) can pause open mode or new guests at once;
+  - the host panel (`/host`) can pause open mode or new guests at once;
   - in the Vercel logs, look for `ITUNES_RATE_LIMITED` and `iTunes falló … se usa la búsqueda guardada`;
   - Ably's free plan caps concurrent connections (about 200). Past that, phones fall back to polling every 3 s on their own.
 
@@ -205,14 +205,14 @@ Everyone in open mode searches iTunes from Vercel's IPs, and iTunes rate-limits 
 
 On Vercel the app loads **Vercel Web Analytics** (page views, no cookies) and **Speed Insights** (real Core Web Vitals) from `src/components/SiteAnalytics.tsx`. They are only mounted when `VERCEL=1`, so nothing is loaded locally, in CI or in the e2e tests.
 
-What is sent is cleaned first (`src/lib/client/analytics.ts`): game ids and join codes become the generic route (`/partida/[id]`, `/jugar/[gameId]`, `/unirse/[code]`), query strings are dropped, and the host dashboard (`/anfitrion`) is never measured. To see the data, enable *Analytics* and *Speed Insights* in the Vercel project (both have a free allowance on Hobby).
+What is sent is cleaned first (`src/lib/client/analytics.ts`): game ids and join codes become the generic route (`/game/[id]`, `/play/[gameId]`, `/join/[code]`), query strings are dropped, and the host dashboard (`/host`) is never measured. To see the data, enable *Analytics* and *Speed Insights* in the Vercel project (both have a free allowance on Hobby).
 
 ## Languages
 
 All interface text lives in typed dictionaries under `src/i18n/messages/` (one file per area: `home`, `access`, `setup`, `game`, `play`, `host`, `common`, plus `errors` for the API). Spanish is the source; every other language is declared with `satisfies typeof es…`, so TypeScript refuses to compile if a key is missing or a function takes different data, and `tests/i18n.test.ts` checks keys, `{variables}` and that every `AppError` thrown has a message.
 
 - **Components:** `const { m, locale } = useI18n()` and `m.home.title`; texts with data are functions (`m.game.trackOf(2, 10)`); plurals are `{ one, other }` objects resolved with `plural(locale, n, forms)` from `src/i18n/format.ts` (dates and name lists live there too).
-- **Server:** `getLocale()` / `getMessages()` in server components; route handlers translate errors through `handle()`, which reads the `idioma` cookie or `Accept-Language`.
+- **Server:** `getLocale()` / `getMessages()` in server components; route handlers translate errors through `handle()`, which reads the `locale` cookie or `Accept-Language`.
 - **Errors:** `new AppError("CODE", status)` takes its text from `messages/*/errors.ts`; a code with several wordings passes `{ key }`, data goes in `{ params }` and technical details for the logs in `{ detail }`.
 
 **Adding a language:** add its code to `LOCALES` and `LOCALE_NAMES` in `src/i18n/locales.ts`, copy `src/i18n/messages/en/` to the new folder and translate it, and register it in `src/i18n/messages/index.ts`.

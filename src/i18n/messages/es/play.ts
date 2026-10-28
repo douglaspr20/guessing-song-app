@@ -1,4 +1,4 @@
-// Unirse con el código (/unirse) y el mando del jugador en el móvil (/jugar).
+// Unirse con el código (/join) y el mando del jugador en el móvil (/play).
 export const join = {
   band: "Unirse",
   title: "Unirme a una partida",

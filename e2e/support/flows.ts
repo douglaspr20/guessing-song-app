@@ -8,7 +8,7 @@ export async function guestToNewGame(page: Page) {
     .getByRole("link", { name: /Grabar partida nueva|Nueva partida/i })
     .first()
     .click();
-  await page.waitForURL("**/nueva*");
+  await page.waitForURL("**/new*");
   await expect(page.getByRole("heading", { name: "Grabar partida nueva" })).toBeVisible();
 }
 
@@ -24,6 +24,6 @@ export async function createSoloGame(page: Page, players: string[], rounds: numb
   await roundsField.fill(String(rounds));
   await roundsField.press("Enter");
   await page.getByRole("button", { name: "Grabar y empezar" }).click();
-  await page.waitForURL("**/partida/*");
+  await page.waitForURL("**/game/*");
   await expect(page.getByRole("button", { name: /^Empezar/ })).toBeVisible();
 }

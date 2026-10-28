@@ -46,7 +46,7 @@ export function Connect({
           <button type="button" className={`${ui.btn} ${ui.onShell} ${ui.big}`} onClick={() => setAccount("login")}>
             {t.signIn}
           </button>
-          <Link href="/unirse" className={`${ui.btn} ${ui.onShell} ${ui.big}`}>
+          <Link href="/join" className={`${ui.btn} ${ui.onShell} ${ui.big}`}>
             {t.joinWithCode}
           </Link>
         </div>

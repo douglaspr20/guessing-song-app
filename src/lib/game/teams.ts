@@ -1,7 +1,7 @@
 import { setup as esSetup } from "@/i18n/messages/es/setup";
 /**
  * Partidas por equipos: paleta, límites y reparto de personas. Todo puro (sin base de datos)
- * para poder usarlo igual en el servidor, en el editor de /nueva y en los tests.
+ * para poder usarlo igual en el servidor, en el editor de /new y en los tests.
  */
 
 export const GAME_FORMATS = ["solo", "teams"] as const;

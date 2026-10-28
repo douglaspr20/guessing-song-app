@@ -20,7 +20,7 @@ test.describe("con el navegador en inglés", () => {
   });
 
   test("los errores de la API llegan en inglés", async ({ page }) => {
-    await page.goto("/unirse");
+    await page.goto("/join");
     await page.getByLabel("Game code").fill("ZZZZZZ");
     await page.getByRole("button", { name: "Continue" }).click();
     await expect(page.getByText("There's no game with that code")).toBeVisible();
@@ -33,7 +33,7 @@ test("la tele en español y un móvil en inglés juegan la misma partida", async
 
   const phone = await phoneContext(browser, baseURL, "en-US");
   const mobile = await phone.newPage();
-  await mobile.goto(`/unirse/${code}`);
+  await mobile.goto(`/join/${code}`);
   await mobile.getByRole("textbox", { name: "Your name" }).fill("Pablo");
   await mobile.getByRole("button", { name: "Join", exact: true }).click();
   await expect(mobile.getByRole("heading", { name: "Waiting for it to start" })).toBeVisible();

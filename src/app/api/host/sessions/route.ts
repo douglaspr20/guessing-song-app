@@ -7,6 +7,6 @@ import { handle } from "@/lib/errors";
 export const DELETE = handle(async () => {
   const host = await requireHost();
   const count = await revokeSessions(host.id);
-  (await cookies()).delete(cookieName("sesion"));
+  (await cookies()).delete(cookieName("session"));
   return Response.json({ revoked: count });
 });

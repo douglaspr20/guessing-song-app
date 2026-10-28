@@ -34,11 +34,11 @@ export function AccountFooter({
   const t = m.home;
   return (
     <>
-      <Link href="/unirse" className={styles.linkBtn}>
+      <Link href="/join" className={styles.linkBtn}>
         {t.joinGame}
       </Link>
       {user.role === "host" && (
-        <Link href="/anfitrion" className={styles.linkBtn}>
+        <Link href="/host" className={styles.linkBtn}>
           {t.hostPanel}
         </Link>
       )}

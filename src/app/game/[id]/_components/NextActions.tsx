@@ -40,7 +40,7 @@ export function NextActions({
     <div className={styles.nextRow}>
       {!hasRound && (
         // Antes de la primera pista todavía se pueden cambiar jugadores, rondas y filtros.
-        <Link href={`/nueva?editar=${gameId}`} className={`${ui.btn} ${ui.onShell} ${ui.big}`}>
+        <Link href={`/new?edit=${gameId}`} className={`${ui.btn} ${ui.onShell} ${ui.big}`}>
           <Settings2 size={26} aria-hidden />
           {g.editSettings}
         </Link>

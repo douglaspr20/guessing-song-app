@@ -25,7 +25,7 @@ export function OutOfGame() {
           <div className={styles.body}>
             <h1 className={styles.headline}>{t.outTitle}</h1>
             <p className={styles.lede}>{t.outLede}</p>
-            <Link href="/unirse" className={`${ui.btn} ${ui.primary} ${ui.big}`}>
+            <Link href="/join" className={`${ui.btn} ${ui.primary} ${ui.big}`}>
               {t.joinWithCode}
             </Link>
           </div>

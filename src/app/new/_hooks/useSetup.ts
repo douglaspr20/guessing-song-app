@@ -64,7 +64,7 @@ export function useEditPrefill(editId: string | null, update: (patch: Partial<Se
     if (!editId) return;
     api<Game>(`/api/games/${editId}`).then(
       (g) => {
-        if (g.currentRound > 0) return router.replace(`/partida/${g.id}`); // ya empezó: no se edita
+        if (g.currentRound > 0) return router.replace(`/game/${g.id}`); // ya empezó: no se edita
         const who: Partial<SetupForm> =
           g.format === "teams"
             ? {
@@ -92,7 +92,7 @@ export function useEditPrefill(editId: string | null, update: (patch: Partial<Se
           playlistIds: g.filters.playlistIds ?? [],
         });
       },
-      () => router.replace("/nueva"),
+      () => router.replace("/new"),
     );
   }, [editId, router, update]);
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { describeGuess } from "@/app/partida/[id]/_lib/feedback";
-import { deriveRoundClock, type RoundClockInput } from "@/app/partida/[id]/_lib/roundClock";
+import { describeGuess } from "@/app/game/[id]/_lib/feedback";
+import { deriveRoundClock, type RoundClockInput } from "@/app/game/[id]/_lib/roundClock";
 import type { GuessResult, Round } from "@/lib/client/api";
 import { OPEN_RULES, SPOTIFY_RULES } from "@/lib/game/scoring";
 
