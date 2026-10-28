@@ -108,6 +108,8 @@ export const game = {
   endOfTape: "Fin de la cinta",
   restOfScoreboard: "Resto del marcador",
   recordAnother: "Grabar otra partida",
+  sameAgain: "Otra igual",
+  sameAgainBusy: "Grabando…",
   nobodyScored: "Nadie sumó puntos",
   tieBetween: "Empate entre",
   won: "Ganó",

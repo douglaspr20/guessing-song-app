@@ -165,13 +165,18 @@ model Game {
   // Siguiente canción ya elegida en segundo plano (JSON de PickedTrack) y filtros con que se eligió.
   nextTrack        String?
   nextTrackFilters String?
+  // Partida creada con «Otra igual» desde esta (cuando termina): los móviles unidos la siguen solos.
+  nextGameId       String?
   createdAt        DateTime @default(now())
 
-  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  guest        Guest?        @relation(fields: [guestId], references: [id], onDelete: Cascade)
-  players      Player[]
-  rounds       Round[]
-  participants Participant[]
+  user          User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guest         Guest?        @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  players       Player[]
+  rounds        Round[]
+  participants  Participant[]
+  // Si se borra la nueva (p. ej. al editar sus ajustes antes de empezar), el enlace se suelta solo.
+  nextGame      Game?         @relation("Replay", fields: [nextGameId], references: [id], onDelete: SetNull)
+  previousGames Game[]        @relation("Replay")
 
   @@index([userId, createdAt])
   @@index([guestId, createdAt])
@@ -329,5 +334,27 @@ model FilterTest {
   createdAt DateTime @default(now())
 
   @@index([ownerKey, createdAt])
+  @@index([createdAt])
+}
+
+// Analítica propia, sin datos personales: qué pasos da la gente (sin nombres, IP ni cuentas).
+// Sin clave foránea a Game: los eventos sobreviven cuando se borra una partida o la limpieza se lleva a un invitado.
+model GameEvent {
+  id        String   @id @default(cuid())
+  // guest_started | game_created | game_started | game_finished | phone_joined | phone_followed
+  type      String
+  // Id de la partida (aleatorio, no identifica a nadie) para enlazar creada → empezada → terminada.
+  gameId    String?
+  // "open" | "spotify"
+  mode      String?
+  // "solo" | "teams"
+  format    String?
+  // Quién la grabó: "guest" | "free" | "member" | "host" (el tipo, nunca el id).
+  ownerKind String?
+  // Partida creada con «Otra igual».
+  replay    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([type, createdAt])
   @@index([createdAt])
 }

@@ -10,6 +10,7 @@ import { GuestsSection } from "./GuestsSection";
 import { InvitesSection } from "./InvitesSection";
 import { MembersSection } from "./MembersSection";
 import { SpotifySection } from "./SpotifySection";
+import { StatsSection } from "./StatsSection";
 
 /** Panel del anfitrión: Spotify, invitaciones, miembros y modo sin cuenta. */
 export function Panel({ status, onSignedOut }: { status: AccessStatus; onSignedOut: () => void }) {
@@ -47,6 +48,7 @@ export function Panel({ status, onSignedOut }: { status: AccessStatus; onSignedO
         <InvitesSection />
         <MembersSection />
         <GuestsSection />
+        <StatsSection />
       </div>
 
       <div className={styles.foot}>

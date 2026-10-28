@@ -1,7 +1,7 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BandStatus } from "@/components/band/BandStatus";
 import { Card } from "@/components/Card";
 import { OfflineNotice } from "@/components/Notice";
@@ -32,6 +32,9 @@ export function PlayClient() {
   /** Cuándo se leyó el estado: el tiempo que le queda a quien responde se mide desde ahí. */
   const [fetchedAt, setFetchedAt] = useState(0);
   const [error, setError] = useState<{ missing: boolean; message: string } | null>(null);
+  const router = useRouter();
+  /** Si no se pudo pasar solo a la partida siguiente («Otra igual» del anfitrión): por qué, para reintentar a mano. */
+  const [followError, setFollowError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -49,6 +52,26 @@ export function PlayClient() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh();
   }, [refresh]);
+
+  /** Pasa a la partida que el anfitrión grabó con «Otra igual»: mismo nombre y mismo sitio. */
+  const follow = useCallback(async () => {
+    setFollowError(null);
+    try {
+      const next = await api<{ gameId: string }>(`/api/play/${gameId}/follow`, { method: "POST" });
+      router.replace(`/play/${next.gameId}`);
+    } catch (e) {
+      setFollowError(errorText(e));
+    }
+  }, [gameId, router]);
+
+  // En cuanto hay partida siguiente, el móvil se pasa solo (una vez por partida, aunque el estado se relea).
+  const nextGameId = state?.game.nextGameId ?? null;
+  const followedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!nextGameId || followedFor.current === nextGameId) return;
+    followedFor.current = nextGameId;
+    void follow();
+  }, [nextGameId, follow]);
 
   // Cualquier aviso de la partida (alguien pulsa, suena otra pista, termina) vuelve a leer el estado.
   const live = useLiveGame(gameId, () => void refresh(), !error?.missing);
@@ -89,7 +112,12 @@ export function PlayClient() {
             </div>
 
             {finished ? (
-              <PlayFinale players={game.players} myPlayerId={me.playerId} teams={teams} />
+              <PlayFinale
+                players={game.players}
+                myPlayerId={me.playerId}
+                teams={teams}
+                next={game.nextGameId ? { error: followError, onFollow: follow } : null}
+              />
             ) : !round ? (
               <PlayWaiting />
             ) : round.status === "PLAYING" ? (

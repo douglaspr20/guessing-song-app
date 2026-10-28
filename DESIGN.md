@@ -315,6 +315,12 @@ El selector **ES · EN** vive en la banda superior, a la derecha de la etiqueta 
 
 **Voz en inglés.** El mismo tono cercano y de casete: frases cortas, segunda persona, sin jerga técnica («Rewinding…», «The tape got tangled», «Record a new game»). Los términos del juego se traducen siempre igual: casete → *cassette*, pista → *track*, estantería → *shelf*, «¡Lo sé!» → *I know it!*, anfitrión → *host*. La marca «Adivina la canción» no se traduce. Las teclas de los atajos son las mismas en los dos idiomas (V, C, A, N siguen los colores del mando).
 
+### «Otra igual» (pantalla final)
+Es el botón principal del podio: **Otra igual**, con el icono de rebobinar (`RotateCcw`), en tomate y a tamaño grande. Debajo, «Grabar otra partida» y «Volver a la estantería» como secundarios sobre la cartulina. Mientras graba dice «Grabando…» y queda apagado; un fallo sale como aviso en línea. En el móvil, quien estaba unido ve «El anfitrión grabó otra igual» y «Pasando a la nueva partida…» bajo el podio y entra solo; si no puede, aparece «Unirme a la siguiente».
+
+### Cómo se usa (panel del anfitrión)
+Una carátula más del panel (`/host`): selector de periodo (24 h, 7 días, 30 días), ocho cifras grandes (invitados nuevos, creadas, empezadas, terminadas, abandonadas, «Otra igual», móviles unidos y que siguieron), los porcentajes en una línea cada uno y dos tablas sencillas: por modo y formato, y los últimos 14 días. Sin gráficas: con este volumen una tabla se lee mejor. No lleva ningún dato personal.
+
 ### Crédito «Hecho por»
 Una línea pequeña (16px, texto suave): «Hecho por **Douglas Pérez** · Código en GitHub». El nombre lleva a LinkedIn y el segundo enlace al repositorio; los dos se abren en otra pestaña (con aviso para lectores de pantalla) y tienen la altura de un control pequeño. Solo aparece en la portada, a la izquierda del pie de la estantería y debajo de los botones de la pantalla final (en tinta suave de cartulina). **Nunca durante el juego**, ni en `/new`, `/join` o el panel del anfitrión. Los datos viven en `src/lib/site.ts`.
 

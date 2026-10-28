@@ -3,6 +3,7 @@ import { randomInt } from "node:crypto";
 import { after } from "next/server";
 import { Prisma, type Game, type Participant, type Player, type Round, type TeamMember } from "@/generated/prisma/client";
 import { ownerData, ownerWhere, type Owner } from "@/lib/access/owner";
+import { ownerKindOf, recordEvent, recordGameEvent } from "@/lib/analytics/events";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { withPlaces } from "./standings";
@@ -17,7 +18,7 @@ import {
   PLAYLIST_PAGE_SIZE,
 } from "@/lib/spotify/sources";
 import { emit } from "./events";
-import { createGameSchema, gameFiltersSchema, type CreateGameInput, type GameFilters, type GameMode } from "./filters";
+import { createGameSchema, gameFiltersSchema, type CreateGameInput, type GameFilters, type GameMode, type TeamInput } from "./filters";
 import { isCorrectArtist, isCorrectGuess } from "./matcher";
 import { pickOpenTrack, type OpenTrackSource } from "./open-picker";
 import type { GameFormat } from "./teams";
@@ -164,6 +165,8 @@ function toPublicGame(
     /** Al fallar queda fuera "person" (solo quien falló) o "team" (todo su equipo). */
     lockout: game.lockout as "person" | "team",
     filters: JSON.parse(game.filters) as GameFilters,
+    /** La partida creada con «Otra igual» al terminar esta (los móviles unidos pasan a ella solos). */
+    nextGameId: game.nextGameId,
     /** Si la siguiente canción ya está elegida (la próxima ronda empezará sin espera). */
     nextTrackReady: !!game.nextTrack && game.nextTrackFilters === game.filters,
     players: toPublicPlayers(game.players),
@@ -223,6 +226,12 @@ async function loadPlayer(gameId: string, playerId: string) {
   const player = await db.player.findUnique({ where: { id: playerId } });
   if (!player || player.gameId !== gameId) throw new AppError("PLAYER_NOT_FOUND", 404);
   return player;
+}
+
+/** La partida acaba de terminar: avisa a las pantallas y la cuenta en la analítica. */
+async function announceFinished(gameId: string) {
+  emit({ type: "game_finished", gameId });
+  await recordGameEvent("game_finished", gameId);
 }
 
 /** Si la ronda que se acaba de cerrar era la última, termina la partida. */
@@ -288,7 +297,12 @@ async function takeNextTrack(game: Game & { rounds: Round[] }): Promise<Prepared
 
 // ---------- Casos de uso ----------
 
-export async function createGame(input: CreateGameInput, owner: Owner): Promise<PublicGame> {
+export async function createGame(
+  input: CreateGameInput,
+  owner: Owner,
+  /** `replay`: viene de «Otra igual». `record: false`: quien llama anota el evento (por si deshace la creación). */
+  opts: { replay?: boolean; record?: boolean } = {},
+): Promise<PublicGame> {
   const data = createGameSchema.parse(input);
   if (data.mode === "spotify") {
     // Un invitado no tiene Spotify: para él el modo ni existe.
@@ -327,6 +341,16 @@ export async function createGame(input: CreateGameInput, owner: Owner): Promise<
         include: { players: { include: { members: true } }, rounds: true },
       });
       emit({ type: "game_created", gameId: game.id });
+      if (opts.record !== false) {
+        await recordEvent({
+          type: "game_created",
+          gameId: game.id,
+          mode: data.mode,
+          format: data.format,
+          ownerKind: ownerKindOf(owner),
+          replay: !!opts.replay,
+        });
+      }
       schedulePreload(game.id);
       return toPublicGame(game, await catalogNumberOf(game));
     } catch (err) {
@@ -336,6 +360,62 @@ export async function createGame(input: CreateGameInput, owner: Owner): Promise<
     }
   }
   throw new AppError("CODE_GENERATION_FAILED", 500);
+}
+
+/** Lo necesario para grabar otra partida igual: ajustes, filtros y quién juega (jugadores, o equipos con sus miembros). */
+function replayInput(game: Game & { players: PlayerWithMembers[] }): CreateGameInput {
+  const base = {
+    mode: game.mode as GameMode,
+    format: game.format as GameFormat,
+    rounds: game.totalRounds,
+    fragmentSeconds: game.fragmentSeconds,
+    answerSeconds: game.answerSeconds,
+    lockout: game.lockout as "person" | "team",
+    filters: gameFiltersSchema.parse(JSON.parse(game.filters)),
+  };
+  if (game.format === "teams") {
+    return {
+      ...base,
+      maxTeamSize: game.maxTeamSize ?? undefined,
+      teams: game.players.map((p) => ({
+        name: p.name,
+        color: p.color as TeamInput["color"],
+        members: p.members.map((m) => m.name),
+      })),
+    };
+  }
+  return { ...base, players: game.players.map((p) => p.name) };
+}
+
+/**
+ * «Otra igual»: graba una partida nueva con los mismos ajustes y las mismas personas que una ya terminada.
+ * Los móviles que estaban unidos pasan a la nueva solos (aviso `next_game`). Si ya se grabó una, devuelve esa:
+ * un doble clic (o dos pestañas) no crea dos.
+ */
+export async function replayGame(gameId: string, owner: Owner): Promise<PublicGame> {
+  const old = await loadGame(gameId);
+  if (old.status !== "FINISHED") throw new AppError("GAME_NOT_FINISHED", 409);
+  if (old.nextGameId) return getGame(old.nextGameId);
+
+  const created = await createGame(replayInput(old), owner, { replay: true, record: false });
+  // Quien llegue primero se queda con el enlace; la otra copia (doble clic simultáneo) se tira.
+  const claimed = await db.game.updateMany({ where: { id: gameId, nextGameId: null }, data: { nextGameId: created.id } });
+  if (!claimed.count) {
+    await db.game.delete({ where: { id: created.id } });
+    const winner = await db.game.findUniqueOrThrow({ where: { id: gameId }, select: { nextGameId: true } });
+    if (!winner.nextGameId) throw new AppError("GAME_NOT_FOUND", 404);
+    return getGame(winner.nextGameId);
+  }
+  await recordEvent({
+    type: "game_created",
+    gameId: created.id,
+    mode: created.mode,
+    format: created.format,
+    ownerKind: ownerKindOf(owner),
+    replay: true,
+  });
+  emit({ type: "next_game", gameId, nextGameId: created.id });
+  return created;
 }
 
 export async function getGame(gameId: string): Promise<PublicGame> {
@@ -461,6 +541,7 @@ export async function startNextRound(gameId: string) {
       return created;
     });
     emit({ type: "round_started", gameId, roundId: round.id, number });
+    if (number === 1) await recordGameEvent("game_started", gameId);
     if (number < game.totalRounds) schedulePreload(gameId);
     return toPublicRound(round, game);
   } catch (err) {
@@ -605,10 +686,10 @@ export async function award(
   return result;
 }
 
-export function emitAward(gameId: string, roundId: string, playerId: string, a: Award) {
+export async function emitAward(gameId: string, roundId: string, playerId: string, a: Award) {
   if (a.artistAwarded) emit({ type: "artist_guessed", gameId, roundId, playerId });
   if (a.titleAwarded) emit({ type: "round_won", gameId, roundId, playerId });
-  if (a.gameFinished) emit({ type: "game_finished", gameId });
+  if (a.gameFinished) await announceFinished(gameId);
 }
 
 export async function guessResult(gameId: string, roundId: string) {
@@ -650,7 +731,7 @@ export async function submitGuess(
   });
 
   emit({ type: "guess_submitted", gameId, roundId, playerId, correct: titleCorrect || artistCorrect });
-  emitAward(gameId, roundId, playerId, result);
+  await emitAward(gameId, roundId, playerId, result);
 
   return {
     titleCorrect,
@@ -710,7 +791,7 @@ export async function overrideGuess(
   });
   if (!result.points) throw new AppError("OVERRIDE_NOT_APPLIED", 409);
 
-  emitAward(gameId, roundId, guess.playerId, result);
+  await emitAward(gameId, roundId, guess.playerId, result);
   return {
     titleAwarded: result.titleAwarded,
     artistAwarded: result.artistAwarded,
@@ -757,7 +838,7 @@ export async function awardSpoken(
     throw new AppError("AWARD_NOT_APPLIED", 409, { key: input.title ? "AWARD_NOT_APPLIED" : "AWARD_ARTIST_NOT_APPLIED" });
   }
 
-  emitAward(gameId, roundId, playerId, result);
+  await emitAward(gameId, roundId, playerId, result);
   return {
     titleAwarded: result.titleAwarded,
     artistAwarded: result.artistAwarded,
@@ -778,7 +859,7 @@ export async function revealRound(gameId: string, roundId: string) {
       return updated.count > 0 && (await finishIfLastRound(tx, round.game, round.number));
     });
     emit({ type: "round_revealed", gameId, roundId });
-    if (finished) emit({ type: "game_finished", gameId });
+    if (finished) await announceFinished(gameId);
   }
   const game = await getGame(gameId);
   return {

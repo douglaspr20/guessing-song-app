@@ -76,7 +76,18 @@ export function PlayReveal({ round, players, myPlayerId, teams }: { round: Round
 }
 
 /** Fin de la partida: cómo acabó para ti y el podio. */
-export function PlayFinale({ players, myPlayerId, teams }: { players: Players; myPlayerId: string; teams: boolean }) {
+export function PlayFinale({
+  players,
+  myPlayerId,
+  teams,
+  next,
+}: {
+  players: Players;
+  myPlayerId: string;
+  teams: boolean;
+  /** El anfitrión grabó «Otra igual»: el móvil se pasa solo; si no pudo, `error` dice por qué y `onFollow` reintenta. */
+  next: { error: string | null; onFollow: () => void } | null;
+}) {
   const { m, locale } = useI18n();
   const t = m.play;
   const result = winnerSummary(players);
@@ -95,6 +106,18 @@ export function PlayFinale({ players, myPlayerId, teams }: { players: Players; m
       <h1 className={styles.headline}>{t.endOfTape}</h1>
       <p className={styles.lede}>{line}</p>
       <Podium entries={withPlaces(players)} size="grand" tone="card" />
+      {next && (
+        <div role="status">
+          <p className={styles.lede}>
+            <strong>{t.nextGameTitle}.</strong> {next.error ?? t.followingNext}
+          </p>
+          {next.error && (
+            <button type="button" className={`${ui.btn} ${ui.primary} ${ui.big}`} onClick={next.onFollow}>
+              {t.joinNext}
+            </button>
+          )}
+        </div>
+      )}
       <Link href="/" className={`${ui.btn} ${ui.onCard}`}>
         {t.backHome}
       </Link>

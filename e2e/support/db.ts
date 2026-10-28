@@ -7,7 +7,7 @@ export const pool = new Pool({ connectionString: E2E_DATABASE_URL, max: 2 });
 /** Deja la base como recién migrada (las mismas tablas que vacían los tests de integración). */
 export async function resetDb() {
   await pool.query(
-    `TRUNCATE "Game", "Guest", "User", "Invite", "LoginAttempt", "BlockedIp", "AppState", "Session", "SpotifyAccount", "GoogleAccount" CASCADE`,
+    `TRUNCATE "Game", "Guest", "User", "Invite", "LoginAttempt", "BlockedIp", "AppState", "Session", "SpotifyAccount", "GoogleAccount", "ItunesSearch", "FilterTest", "GameEvent" CASCADE`,
   );
 }
 

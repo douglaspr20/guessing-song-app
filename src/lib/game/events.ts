@@ -18,6 +18,8 @@ export type GameEvent =
   | { type: "round_paused"; gameId: string; roundId: string }
   | { type: "round_resumed"; gameId: string; roundId: string }
   | { type: "game_finished"; gameId: string }
+  /** El anfitrión grabó «Otra igual»: los móviles unidos a esta partida pasan a la nueva. */
+  | { type: "next_game"; gameId: string; nextGameId: string }
   | { type: "participant_joined"; gameId: string; participantId: string; name: string }
   | { type: "participant_left"; gameId: string; participantId: string }
   | { type: "join_toggled"; gameId: string; open: boolean }
