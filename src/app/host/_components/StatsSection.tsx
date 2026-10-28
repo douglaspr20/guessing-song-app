@@ -45,6 +45,7 @@ export function StatsSection() {
             <Stat value={data.replays} label={h.statsReplays} />
             <Stat value={data.phones.joined} label={h.statsPhones} />
             <Stat value={data.phones.followed} label={h.statsFollowed} />
+            <Stat value={data.shared} label={h.statsShared} />
           </div>
 
           <div className={styles.rates}>

@@ -166,6 +166,9 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
 | POST                        | `/api/games/:id/players`                                               | Add a player `{ name }`                                                                |
 | POST                        | `/api/games/:id/replay`                                                | "Same again": a new game with the same settings and people (once the game is over)     |
 | POST                        | `/api/play/:id/follow`                                                 | A phone moves to the replayed game with its same name and seat                         |
+| POST · DELETE               | `/api/games/:id/share`                                                 | Create (or get) the public link of a finished game's result / stop sharing it         |
+| POST                        | `/api/play/:id/share`                                                  | A joined phone shares the same link                                                    |
+| GET                         | `/r/:token` · `/r/:token/image?v=wide|tall`                            | Public result page and its card as a PNG (404 once it stops being shared)              |
 | GET                         | `/api/host/stats?window=24h|7d|30d`                                  | Funnel and daily activity for the host panel                                           |
 | POST                        | `/api/games/:id/rounds`                                                | Start the next round                                                                   |
 | POST                        | `/api/games/:id/rounds/:rid/{play,pause,resume,reveal}`                | Playback and round control (`play` takes `{ deviceId, offsetMs? }` to resume mid-clip) |
@@ -219,6 +222,15 @@ The host panel shows it under **Cómo se usa** (`/host`): new guests → games c
 ### "Same again"
 
 On the final screen, **Otra igual** records a new game with the same mode, rounds, filters, answer time, lockout and people (solo players, or teams with colors and members, including those who joined from a phone). The old game keeps a link to the new one (`nextGameId`), so a double click returns the same game instead of creating two. Phones that were in the old game move to the new one on their own with the same name and seat (`next_game` event, then `POST /api/play/:id/follow`); if that fails they get a button to retry. It respects the same limits as creating a game.
+
+### Sharing a result
+
+On the final screen (the TV and every joined phone) **Compartir resultado** creates a public link for that game's podium and opens a modal (a `<dialog>`: it closes with Esc, the cross or a click outside, and scrolls inside on short screens) with the card preview, the link, the phone's native share sheet, the image as a file and two downloads (landscape 1200×630 and portrait 1080×1350 for statuses and stories). The host can also **stop sharing**, which kills the link and the images.
+
+- **What it is:** `Game.shareToken` (96 random bits, created only when someone presses the button) plus `shareLocale`, the language of whoever shared first. The link is `/r/<token>`; its images are `/r/<token>/image?v=wide|tall`, drawn with `ImageResponse` and the same fonts and colors as the app.
+- **What anyone with the link sees:** names, team members, points, cassette number, date and number of tracks. Never songs, filters, the join code or internal ids (`getSharedResult` in `src/lib/game/share.ts` reads only that, and tests check it).
+- **Preview cards:** the page sets `og:image` and `twitter:card` in the language of whoever shared, and `noindex`. WhatsApp, LinkedIn, X, Slack and Discord crawlers are in Next's list of bots that get the metadata already in the `<head>`.
+- **Privacy details:** the token never reaches Vercel Analytics (`/r/[token]`), images are cached for one hour so *stop sharing* takes effect quickly, and a replayed game ("Otra igual") starts without a link.
 
 ## Languages
 

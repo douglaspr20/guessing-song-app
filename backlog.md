@@ -16,6 +16,7 @@ Estado al 27-10-2026. Marcas: `[x]` hecho, `[ ]` pendiente. Tamaño: S (horas), 
 - [x] Probar el teclado en un iPhone real.
 - [x] Probar el pulsador con varios móviles a la vez.
 - [x] Poner `ABLY_API_KEY` en Vercel (marcada como Sensitive).
+- [x] Compartir el resultado: botón en la tele y en cada móvil que crea un enlace público (`/r/<código>`, sin canciones ni datos internos) con vista previa en WhatsApp, LinkedIn y X, y la tarjeta como imagen apaisada o vertical para descargar o compartir; el anfitrión puede dejar de compartir.
 - [x] Analítica mínima propia (`GameEvent`, sin datos personales): invitados nuevos, partidas creadas, empezadas, terminadas y abandonadas, desglose por modo y formato, móviles y los últimos 14 días, en «Cómo se usa» del panel del anfitrión. Los eventos personalizados de Vercel no están en el plan Hobby.
 - [x] «Otra igual» en la pantalla final: la misma partida (ajustes, filtros y personas) con un clic, y los móviles unidos pasan solos a la nueva.
 - [x] Vista previa al compartir: imagen Open Graph por idioma (`/og/es`, `/og/en`, generada con `ImageResponse` y las tipografías de la app), metadatos `openGraph` y `twitter`, e icono propio del casete (`icon.svg` y `apple-icon`). Fuera el favicon de Next y los SVG de plantilla. README con el enlace a la app y capturas nuevas.
@@ -56,7 +57,6 @@ La gente llega desde el post sin conocer el juego: lo primero que ve es la tarje
 
 ### Juego
 
-- [ ] **Compartir el resultado (M).** Imagen del podio para enviar al grupo de la familia (reutiliza la generación de imágenes de la vista previa). Es la forma natural de que el juego se difunda solo.
 - [ ] **Reconexión del móvil (M).** Si un jugador pierde la cookie o cambia de dispositivo, reclamar su nombre con un PIN corto de la partida en vez de depender de que el anfitrión lo eche.
 
 ## P2 · Después: mejora la experiencia de quien ya juega

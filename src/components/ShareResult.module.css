@@ -1,0 +1,5 @@
+/* El aviso de error del botón ocupa toda la fila de los botones de la pantalla final. */
+.full {
+  flex-basis: 100%;
+  width: 100%;
+}

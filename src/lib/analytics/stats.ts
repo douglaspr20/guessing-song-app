@@ -77,6 +77,7 @@ export async function getStats(window: StatWindow = "7d", now = new Date()) {
     byFormat: { solo: funnelOf((g) => g.format === "solo"), teams: funnelOf((g) => g.format === "teams") },
     replays: total("game_created", (g) => g.replay),
     phones: { joined: total("phone_joined"), followed: total("phone_followed") },
+    shared: total("result_shared"),
     daily: days,
   };
 }

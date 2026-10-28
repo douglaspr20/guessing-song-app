@@ -1,0 +1,136 @@
+/* El modal de «Compartir resultado»: la misma carátula que las confirmaciones, con el contenido desplazable. */
+.dialog {
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--card);
+  color: var(--ink);
+  overflow: hidden;
+  animation: rise 420ms var(--ease-out);
+}
+
+/* Abierto es una columna: tapa de rayas y cabecera fijas, y el contenido se desplaza si no cabe. */
+.dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sobre cartulina el azafrán no contrasta: todo el foco del modal va en tomate hondo. */
+.dialog :focus-visible {
+  outline: var(--stroke) solid var(--tomato-deep);
+  outline-offset: 2px;
+}
+
+.dialog::backdrop {
+  background: rgb(15 22 48 / 0.76);
+}
+
+.head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px clamp(16px, 3vw, 28px) 10px;
+  /* La raya separa la cabecera fija del contenido que se desplaza por debajo. */
+  border-bottom: var(--stroke-thin) dashed var(--card-rule);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(24px, 4.4vw, 30px);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-right: -8px;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-control);
+  color: var(--ink);
+}
+
+.scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px clamp(16px, 3vw, 28px) clamp(18px, 3vw, 26px);
+}
+
+/* La tarjeta entera, pero sin pasar de media pantalla de alto (móvil apaisado): sobra fondo de su mismo color. */
+.preview {
+  width: 100%;
+  height: auto;
+  max-height: 42dvh;
+  object-fit: contain;
+  aspect-ratio: 1200 / 630;
+  border-radius: 8px;
+  border: var(--stroke-thin) solid var(--ink);
+  background: var(--ink);
+}
+
+.linkRow,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.link {
+  flex: 1 1 220px;
+  min-width: 0;
+  min-height: var(--control-h-sm);
+  padding: 0 12px;
+  font-size: 17px;
+  color: var(--ink);
+  background: var(--field);
+  border: var(--stroke-thin) solid var(--ink);
+  border-radius: var(--radius-control);
+}
+
+.privacy {
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--card-ink-soft);
+}
+
+.stop {
+  justify-self: start;
+  color: var(--bad);
+  border-color: var(--bad);
+}
+
+/* En un móvil estrecho cada botón ocupa su fila: más fácil de pulsar y nada se corta. */
+@media (max-width: 480px) {
+  .actions > *,
+  .linkRow > button {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .stop {
+    justify-self: stretch;
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(14px);
+  }
+}

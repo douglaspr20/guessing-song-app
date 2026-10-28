@@ -8,6 +8,7 @@ describe("URLs que llegan a la analítica", () => {
     expect(anonymizeUrl(`${site}/game/cmvpsnwia000044rzsx8az7yv`)).toBe(`${site}/game/[id]`);
     expect(anonymizeUrl(`${site}/play/abc123`)).toBe(`${site}/play/[gameId]`);
     expect(anonymizeUrl(`${site}/join/BA4WCG`)).toBe(`${site}/join/[code]`);
+    expect(anonymizeUrl(`${site}/r/Xk3vT9q-ZpL2mQ_8`)).toBe(`${site}/r/[token]`);
   });
 
   it("deja igual las rutas sin datos y quita los parámetros", () => {
