@@ -237,6 +237,16 @@
   display: none;
 }
 
+/* Con el teclado, las pistas se quedan pero en pequeño: lo que importa es su valor. */
+.answerForm[data-typing="true"] .answerHints li {
+  font-size: 12px;
+  padding-top: 4px;
+}
+
+.answerForm[data-typing="true"] .answerHints strong {
+  font-size: 18px;
+}
+
 .sendBtn {
   font-size: 24px;
   white-space: nowrap;

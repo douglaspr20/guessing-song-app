@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Hand } from "lucide-react";
 import { Notice } from "@/components/Notice";
 import { api, errorText, type Round } from "@/lib/client/api";
@@ -17,13 +17,15 @@ interface Props {
   /** Cuándo se leyó el estado (ms): el tiempo que queda se mide desde ahí. */
   fetchedAt: number;
   onChanged: () => Promise<unknown> | void;
+  /** Las pistas ya desbloqueadas: arriba del botón, o bajo el reloj al responder. */
+  hints?: ReactNode;
 }
 
 /**
  * El mando durante una pista: el botón «¡Lo sé!» y, si te toca, los campos para responder con su
  * cuenta atrás. El servidor decide quién tiene el turno; aquí solo se explica por qué no se puede pulsar.
  */
-export function BuzzerPad({ gameId, round, me, fetchedAt, onChanged }: Props) {
+export function BuzzerPad({ gameId, round, me, fetchedAt, onChanged, hints }: Props) {
   const { m } = useI18n();
   const t = m.play;
   const [busy, setBusy] = useState(false);
@@ -56,6 +58,7 @@ export function BuzzerPad({ gameId, round, me, fetchedAt, onChanged }: Props) {
         fetchedAt={fetchedAt}
         onVerdict={(v) => setVerdict({ roundId: round.id, ...v })}
         onChanged={onChanged}
+        hints={hints}
       />
     );
   }
@@ -77,6 +80,7 @@ export function BuzzerPad({ gameId, round, me, fetchedAt, onChanged }: Props) {
 
   return (
     <div className={styles.pad}>
+      {hints}
       {mineVerdict && !mineVerdict.titleAwarded && (
         <Notice role="status">
           {mineVerdict.artistAwarded ? t.artistRight(mineVerdict.points) : ""}

@@ -60,9 +60,7 @@ La gente llega desde el post sin conocer el juego: lo primero que ve es la tarje
 
 Salen de la primera partida real (familia, con Spotify y desde un móvil como anfitrión).
 
-- [ ] **Las pistas también en los móviles (S).** Hoy las pistas (palabras, artista, letras) solo se ven en la pantalla del anfitrión; quien juega desde su móvil no las ve.
-  - El servidor ya las manda: `toPublicRound` incluye `hints` y `nextHintAt`, y `/api/play/:id` las devuelve. Falta pintarlas en el mando (`src/app/play/[gameId]/`) con el mismo estilo de las marcas del casete.
-  - Las pistas se desbloquean por tiempo, sin evento: el móvil tiene que volver a leer el estado en `nextHintAt` (o calcularlo con el reloj de la ronda, como hace la tele), respetando las pausas y el turno de «¡Lo sé!».
+- [x] **Las pistas también en los móviles (S).** El mando enseña las tres marcas de pista (`HintMarks compact`) en cuanto suena la pista, también al responder, y vuelve a leer el estado en `nextHintAt` (`useRefreshAt`, compartido con la tele).
 - [ ] **Canciones que no son del género elegido (M).** Con salsa, merengue y vallenato a veces sonaban canciones de un grupo llamado Tennessee: ronda perdida.
   - Sospecha: cuando `genre:"vallenato"` (o el que sea) no devuelve nada en Spotify, el buscador lo repite como palabra suelta (`genresAsText` en `src/lib/game/track-picker.ts`) y esa búsqueda de texto trae cualquier canción o artista que contenga la palabra, sea del género que sea.
   - Antes de arreglar: registrar qué búsqueda produjo cada canción (la query y si fue `genre:` o texto) para confirmar el origen.

@@ -1,0 +1,107 @@
+.marks {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  list-style: none;
+}
+
+.mark {
+  border-top: 6px solid var(--shell-hi);
+  padding-top: 8px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition:
+    border-color 400ms var(--ease-out),
+    color 400ms var(--ease-out);
+}
+
+.mark strong {
+  display: block;
+  font-family: var(--font-script);
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.markOn {
+  border-color: var(--saffron);
+}
+
+.markOn strong {
+  animation: write 600ms var(--ease-out) both;
+}
+
+/* La pista aparece con un pequeño deslizamiento, como al escribirla. */
+@keyframes write {
+  from {
+    transform: translateX(-10px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markOn strong {
+    animation: none;
+  }
+}
+
+/* ---------- En el casete de la tele, sobre la carcasa oscura ---------- */
+
+.onShell {
+  margin: clamp(10px, 1.2vw, 16px) 4% 0;
+}
+
+.onShell .mark {
+  font-size: clamp(15px, 1.5vw, 22px);
+  color: var(--on-shell-soft);
+}
+
+.onShell .mark strong {
+  font-size: clamp(20px, 2.1vw, 30px);
+  color: var(--card);
+}
+
+.onShell .markOn {
+  color: var(--saffron);
+}
+
+@media (max-width: 640px) {
+  .onShell {
+    margin: 14px 0 0;
+    gap: 8px;
+  }
+}
+
+/* ---------- En el móvil, sobre la tarjeta clara ---------- */
+
+.compact {
+  gap: 10px;
+}
+
+.compact .mark {
+  border-top-width: 5px;
+  border-top-color: var(--card-rule);
+  padding-top: 6px;
+  font-size: 14px;
+  color: var(--card-ink-soft);
+}
+
+.compact .mark strong {
+  font-size: 22px;
+  color: color-mix(in srgb, var(--ink) 35%, transparent);
+}
+
+.compact .markOn {
+  border-top-color: var(--saffron);
+  color: var(--ink);
+}
+
+.compact .markOn strong {
+  color: var(--ink);
+}

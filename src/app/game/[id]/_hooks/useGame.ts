@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRefreshAt } from "@/hooks/useRefreshAt";
 import { api, ApiError, type Game, type GuessRow, errorText } from "@/lib/client/api";
-import { HINT_REFRESH_DELAY_MS } from "../_lib/constants";
+import { HINT_REFRESH_DELAY_MS } from "@/lib/client/hints";
 
 /**
  * Estado de la partida tal como lo ve el servidor: la partida, los intentos de la ronda actual
@@ -53,13 +54,7 @@ export function useGame(gameId: string, onFirstLoad?: (game: Game) => void) {
   }, [firstLoad]);
 
   // La siguiente pista la desbloquea el servidor: se le pregunta justo cuando toca.
-  const nextHintAt = game?.round?.nextHintAt;
-  useEffect(() => {
-    if (!nextHintAt) return;
-    const wait = Math.max(0, new Date(nextHintAt).getTime() - Date.now()) + HINT_REFRESH_DELAY_MS;
-    const t = setTimeout(() => void refresh().catch(() => {}), wait);
-    return () => clearTimeout(t);
-  }, [nextHintAt, refresh]);
+  useRefreshAt(game?.round?.nextHintAt, refresh, HINT_REFRESH_DELAY_MS);
 
   return { game, guesses, fetchedAt, loadError, retryLoad: firstLoad, refresh };
 }

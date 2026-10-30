@@ -4,13 +4,17 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BandStatus } from "@/components/band/BandStatus";
 import { Card } from "@/components/Card";
+import { HintMarks } from "@/components/HintMarks";
+import { useRefreshAt } from "@/hooks/useRefreshAt";
 import { OfflineNotice } from "@/components/Notice";
 import { PlayerName } from "@/components/PlayerName";
 import { RetryNotice } from "@/components/RetryNotice";
 import { Scoreboard } from "@/components/Scoreboard";
 import { useI18n } from "@/i18n/client";
 import { api, ApiError, catalogLabel, errorText, type Game } from "@/lib/client/api";
+import { HINT_REFRESH_DELAY_MS, hintMarks } from "@/lib/client/hints";
 import { useLiveGame } from "@/lib/client/live";
+import { rulesFor } from "@/lib/game/scoring";
 import { trackStatus } from "@/lib/client/status";
 import { BuzzerPad } from "./BuzzerPad";
 import { OutOfGame, PlayFinale, PlayReveal, PlayWaiting } from "./PlayStates";
@@ -75,6 +79,8 @@ export function PlayClient() {
 
   // Cualquier aviso de la partida (alguien pulsa, suena otra pista, termina) vuelve a leer el estado.
   const live = useLiveGame(gameId, () => void refresh(), !error?.missing);
+  // La siguiente pista la desbloquea el servidor sin avisar: se le pregunta justo cuando toca.
+  useRefreshAt(state?.game.round?.nextHintAt, refresh, HINT_REFRESH_DELAY_MS);
 
   if (error?.missing) return <OutOfGame />;
 
@@ -98,6 +104,11 @@ export function PlayClient() {
   const status = finished
     ? `${cat} · ${t.endOfTape}`
     : trackStatus(cat, round?.number ?? null, game.totalRounds, t, locale);
+  // Las mismas pistas que la tele, en cuanto la pista empieza a sonar.
+  const hints =
+    round?.status === "PLAYING" && round.playStartedAt ? (
+      <HintMarks compact hints={hintMarks(round, rulesFor(game.mode), m.game, locale)} />
+    ) : null;
 
   return (
     <>
@@ -124,7 +135,7 @@ export function PlayClient() {
             ) : round.status === "PLAYING" ? (
               <>
                 <h1 className={styles.headline}>{round.buzz?.participantId === me.id ? t.yourTurn : t.track(round.number)}</h1>
-                <BuzzerPad gameId={gameId} round={round} me={me} fetchedAt={fetchedAt} onChanged={refresh} />
+                <BuzzerPad gameId={gameId} round={round} me={me} fetchedAt={fetchedAt} onChanged={refresh} hints={hints} />
               </>
             ) : (
               <PlayReveal round={round} players={game.players} myPlayerId={me.playerId} teams={teams} />

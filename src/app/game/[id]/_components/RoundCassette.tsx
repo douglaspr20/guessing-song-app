@@ -1,11 +1,10 @@
 "use client";
 
-import { Cassette, type HintMark } from "@/components/Cassette";
+import { Cassette } from "@/components/Cassette";
 import type { Round } from "@/lib/client/api";
+import { hintMarks } from "@/lib/client/hints";
 import type { RoundRules } from "@/lib/game/scoring";
-import { plural } from "@/i18n/format";
 import { useI18n } from "@/i18n/client";
-import { hintSlots } from "../_lib/constants";
 import type { RoundClockView } from "../_lib/roundClock";
 
 /** El casete de la ronda abierta: lo que vale, el contador-cinta y las pistas desbloqueadas. */
@@ -22,12 +21,7 @@ export function RoundCassette({
 }) {
   const { m, locale } = useI18n();
   const g = m.game;
-  const hints: HintMark[] = hintSlots(rules, g.hintLabels).map((slot) => {
-    const got = round.hints.find((h) => h.type === slot.key);
-    // La pista de palabras llega como número: se redacta aquí, en el idioma de la pantalla.
-    const value = got?.type === "words" && got.value ? plural(locale, Number(got.value), g.wordCount) : (got?.value ?? null);
-    return { ...slot, value, unlocked: !!got };
-  });
+  const hints = hintMarks(round, rules, g, locale);
 
   return (
     <Cassette

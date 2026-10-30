@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type FocusEvent, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FocusEvent, type FormEvent, type ReactNode } from "react";
 import { Send } from "lucide-react";
 import { Notice } from "@/components/Notice";
 import ui from "@/components/ui.module.css";
@@ -28,6 +28,7 @@ export function BuzzAnswerForm({
   fetchedAt,
   onVerdict,
   onChanged,
+  hints,
 }: {
   gameId: string;
   roundId: string;
@@ -35,6 +36,8 @@ export function BuzzAnswerForm({
   fetchedAt: number;
   onVerdict: (v: Omit<Verdict, "roundId">) => void;
   onChanged: () => Promise<unknown> | void;
+  /** Las pistas ya desbloqueadas, bajo el reloj: la de letras ayuda justo al escribir. */
+  hints?: ReactNode;
 }) {
   const { m } = useI18n();
   const t = m.play;
@@ -105,6 +108,7 @@ export function BuzzAnswerForm({
         <span>{seconds}</span>
         <small> s</small>
       </div>
+      {hints && <div className={styles.answerHints}>{hints}</div>}
       <p className={`${styles.padNote} ${styles.answerNote}`}>{t.turnNote}</p>
       <label className={styles.answerField}>
         <span>{t.song}</span>
