@@ -85,6 +85,7 @@ export const errors = {
   TEAM_REQUIRED: "Pick a team",
   TEAM_FULL: ({ team }: { team: string }) => `${team} is full`,
   PARTICIPANT_NOT_FOUND: "Participant not found",
+  CLAIM_NOT_FOUND: "That request no longer exists: another one may have replaced it, or it expired.",
   LOCKED_OUT: "You already missed this track: wait for the next one",
   FRAGMENT_ENDED: "The clip is over: ask the host to replay it",
   PAUSED: "The host paused the song",

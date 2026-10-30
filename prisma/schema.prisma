@@ -291,6 +291,10 @@ model Participant {
   userId    String?
   name      String
   tokenHash String    @unique
+  // Otro navegador pide quedarse con este sitio (perdió su sesión): SHA-256 de su token y cuándo lo pidió.
+  // Solo vale si el anfitrión lo acepta (entonces pasa a ser el `tokenHash`); caduca a los 5 minutos.
+  claimHash String?
+  claimAt   DateTime?
   kickedAt  DateTime?
   createdAt DateTime  @default(now())
 
@@ -346,7 +350,7 @@ model FilterTest {
 // Sin clave foránea a Game: los eventos sobreviven cuando se borra una partida o la limpieza se lleva a un invitado.
 model GameEvent {
   id        String   @id @default(cuid())
-  // guest_started | game_created | game_started | game_finished | phone_joined | phone_followed | result_shared
+  // guest_started | game_created | game_started | game_finished | phone_joined | phone_followed | result_shared | seat_reclaimed
   type      String
   // Id de la partida (aleatorio, no identifica a nadie) para enlazar creada → empezada → terminada.
   gameId    String?

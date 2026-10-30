@@ -211,6 +211,109 @@ export async function followNextGame(gameId: string, ctx: JoinContext) {
   return joinGame({ code: old.nextGame.code, name: me.name }, ctx, { followed: true });
 }
 
+// ---------- Recuperar el sitio ----------
+
+/** La petición de otro navegador para quedarse con un sitio caduca pasado este tiempo. */
+export const CLAIM_TTL_MS = 5 * 60_000;
+/** Peticiones de sitio por conexión: pedir entrar es poco habitual, así que el tope es bajo. */
+export const CLAIM_LIMITS = { perIp: 5, windowMs: 10 * 60_000 };
+
+/** Cookie (aparte de `p_`) con el token del navegador que espera a que el anfitrión lo deje entrar. */
+const claimCookie = (gameId: string) => cookieName(`c_${gameId}`);
+const claimAttemptKey = (ipHash: string) => `claim:${ipHash}`;
+
+/** ¿La petición sigue vigente? */
+export const claimFresh = (claimAt: Date | null, now = new Date()) =>
+  !!claimAt && now.getTime() - claimAt.getTime() < CLAIM_TTL_MS;
+
+async function assertClaimAllowed(ipHash: string, now = new Date()) {
+  const asked = await db.loginAttempt.count({
+    where: { ipHash: claimAttemptKey(ipHash), createdAt: { gt: new Date(now.getTime() - CLAIM_LIMITS.windowMs) } },
+  });
+  if (asked >= CLAIM_LIMITS.perIp) throw new AppError("TOO_MANY_ATTEMPTS", 429);
+  await db.loginAttempt.create({ data: { ipHash: claimAttemptKey(ipHash), ok: false } });
+}
+
+/**
+ * Alguien perdió su sesión (abrió el enlace en otro navegador) y su nombre sigue ocupado: pide quedarse con ese
+ * mismo sitio. No cambia nada hasta que el anfitrión lo acepte (`resolveClaim`); mientras, el navegador espera con
+ * su propia cookie `c_`, que no pisa la `p_` por si ya tenía otro sitio en esta partida. No hace falta que la
+ * entrada esté abierta: es volver, no entrar.
+ */
+export async function requestSeat(input: { code: string; name: string }, ctx: JoinContext) {
+  const game = await findJoinableGame(input.code, ctx.ipHash);
+  const name = cleanName(input.name);
+  if (!name) throw new AppError("INVALID_NAME", 422);
+
+  // Si este navegador ya es ese sitio, no hay nada que pedir.
+  const mine = await currentParticipant(game.id);
+  if (mine && mine.name.toLowerCase() === name.toLowerCase()) return { gameId: game.id, name: mine.name, already: true };
+
+  const seat = await db.participant.findFirst({
+    where: { gameId: game.id, kickedAt: null, name: { equals: name, mode: "insensitive" } },
+  });
+  if (!seat) throw new AppError("CLAIM_NOT_FOUND", 404);
+  await assertClaimAllowed(ctx.ipHash);
+
+  const token = randomToken();
+  // Una petición nueva sustituye a la anterior (solo hay una pendiente por sitio).
+  await db.participant.update({ where: { id: seat.id }, data: { claimHash: sha256(token), claimAt: new Date() } });
+  (await cookies()).set(claimCookie(game.id), token, cookieOptions(CLAIM_TTL_MS / 1000));
+  emit({ type: "claim_requested", gameId: game.id, participantId: seat.id, name: seat.name });
+  return { gameId: game.id, name: seat.name, already: false };
+}
+
+/**
+ * ¿Ya me han dejado entrar? Lo consulta el navegador que espera. `accepted`: ya es el sitio (su cookie `c_` pasa a
+ * ser la `p_`); `pending`: sigue esperando; `gone`: lo rechazaron, otro lo sustituyó o caducó.
+ */
+export async function claimStatus(gameId: string, now = new Date()): Promise<"pending" | "accepted" | "gone"> {
+  const jar = await cookies();
+  const token = jar.get(claimCookie(gameId))?.value;
+  if (!token) return "gone";
+  const hash = sha256(token);
+
+  const accepted = await db.participant.findUnique({ where: { tokenHash: hash } });
+  if (accepted && accepted.gameId === gameId && !accepted.kickedAt) {
+    jar.set(participantCookie(gameId), token, cookieOptions(PARTICIPANT_TTL_SECONDS));
+    jar.delete(claimCookie(gameId));
+    return "accepted";
+  }
+  const pending = await db.participant.findFirst({ where: { gameId, claimHash: hash, kickedAt: null } });
+  return pending && claimFresh(pending.claimAt, now) ? "pending" : "gone";
+}
+
+/** El navegador que esperaba se arrepiente: se retira su petición y la tele deja de pedir respuesta. */
+export async function withdrawClaim(gameId: string) {
+  const jar = await cookies();
+  const token = jar.get(claimCookie(gameId))?.value;
+  if (!token) return;
+  jar.delete(claimCookie(gameId));
+  const hash = sha256(token);
+  const seat = await db.participant.findFirst({ where: { gameId, claimHash: hash } });
+  if (!seat) return;
+  const { count } = await db.participant.updateMany({ where: { id: seat.id, claimHash: hash }, data: { claimHash: null, claimAt: null } });
+  if (count) emit({ type: "claim_resolved", gameId, participantId: seat.id, accepted: false });
+}
+
+/**
+ * El anfitrión deja entrar (el sitio pasa al token del navegador nuevo y el viejo queda fuera) o rechaza. Es el mismo
+ * participante: conserva su equipo, sus puntos y sus fallos de la ronda.
+ */
+export async function resolveClaim(gameId: string, participantId: string, accept: boolean, now = new Date()) {
+  const seat = await db.participant.findFirst({ where: { id: participantId, gameId, kickedAt: null } });
+  if (!seat?.claimHash || !claimFresh(seat.claimAt, now)) throw new AppError("CLAIM_NOT_FOUND", 404);
+
+  // Condicional: solo si sigue siendo la misma petición (otra pudo sustituirla mientras tanto).
+  const { count } = await db.participant.updateMany({
+    where: { id: seat.id, claimHash: seat.claimHash },
+    data: accept ? { tokenHash: seat.claimHash, claimHash: null, claimAt: null } : { claimHash: null, claimAt: null },
+  });
+  if (!count) throw new AppError("CLAIM_NOT_FOUND", 404);
+  if (accept) await recordGameEvent("seat_reclaimed", gameId);
+  emit({ type: "claim_resolved", gameId, participantId, accepted: accept });
+}
+
 // ---------- Quién soy ----------
 
 /** El participante de esta partida según su cookie, o null (también si lo echaron). */
@@ -242,6 +345,8 @@ export async function listParticipants(gameId: string) {
     name: p.name,
     hasAccount: !!p.userId,
     team: p.player.color ? { name: p.player.name, color: p.player.color } : null,
+    /** Otro navegador pide quedarse con su sitio: el anfitrión decide. */
+    claim: !!p.claimHash && claimFresh(p.claimAt),
   }));
 }
 

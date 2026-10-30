@@ -136,6 +136,7 @@ export const host = {
   statsPhones: "Móviles unidos",
   statsFollowed: "Móviles que siguieron",
   statsShared: "Resultados compartidos",
+  statsReclaimed: "Sitios recuperados",
   statsStartedRate: (pct: string) => `${pct} de las creadas se empiezan`,
   statsFinishedRate: (pct: string) => `${pct} de las empezadas se terminan`,
   statsNoRate: "Aún sin partidas para calcular el porcentaje.",

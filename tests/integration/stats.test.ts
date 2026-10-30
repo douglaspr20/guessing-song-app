@@ -33,6 +33,7 @@ describe("estadísticas del panel", () => {
       { type: "phone_joined", gameId: "a", at: ago(3 * HOUR) },
       { type: "phone_followed", gameId: "d", at: ago(HOUR) },
       { type: "result_shared", gameId: "a", mode: "open", format: "solo", at: ago(2 * HOUR) },
+      { type: "seat_reclaimed", gameId: "a", mode: "open", format: "solo", at: ago(2 * HOUR) },
       // Fuera de la ventana de 24 h.
       { type: "game_created", gameId: "z", mode: "open", format: "solo", at: ago(3 * DAY) },
     ]);
@@ -45,6 +46,7 @@ describe("estadísticas del panel", () => {
     expect(s.replays).toBe(1);
     expect(s.phones).toEqual({ joined: 2, followed: 1 });
     expect(s.shared).toBe(1);
+    expect(s.reclaimed).toBe(1);
     expect(s.byMode.open).toEqual({ created: 3, started: 2, finished: 1 });
     expect(s.byMode.spotify).toEqual({ created: 1, started: 0, finished: 0 });
     expect(s.byFormat.teams).toEqual({ created: 1, started: 1, finished: 0 });

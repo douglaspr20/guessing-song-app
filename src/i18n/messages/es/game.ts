@@ -129,6 +129,12 @@ export const game = {
   kickTitle: (name: string) => `¿Sacar a ${name}?`,
   kickBody: "Deja de ver la partida y no puede volver a entrar con su cuenta. Sus puntos se quedan.",
   kick: "Sacar",
+  claimTitle: (name: string) => `${name} pide volver a entrar`,
+  claimHelp: "Dice que perdió su sesión (otro navegador u otro móvil). Si lo dejas entrar, el otro dispositivo sale de la partida.",
+  claimAllow: "Dejar entrar",
+  claimDeny: "No",
+  claimToast: (name: string) => `${name} pide volver a entrar`,
+  claimBadge: { one: "{n} pide entrar", other: "{n} piden entrar" },
   linkCopied: "Enlace copiado: pégalo en el chat.",
   cantCopy: "No se pudo copiar. Selecciona el enlace y cópialo a mano.",
   // Atajos

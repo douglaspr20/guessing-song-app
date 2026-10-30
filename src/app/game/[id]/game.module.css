@@ -810,6 +810,52 @@
   margin-left: 0;
 }
 
+/* Alguien que perdió su sesión pide su sitio de vuelta: la fila se resalta y trae sus dos botones. */
+.joinClaim {
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border-radius: 8px;
+  outline: 2px dashed var(--tomato-deep);
+  outline-offset: -2px;
+  background: var(--field);
+}
+
+.joinAsk {
+  flex-basis: 100%;
+  display: grid;
+  gap: 10px;
+}
+
+.joinAskText {
+  font-size: 17px;
+  line-height: 1.4;
+  color: var(--card-ink-soft);
+}
+
+.joinAskText strong {
+  color: var(--ink);
+}
+
+.joinAskActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Con el panel plegado, la insignia es lo que avisa de que alguien espera. */
+.joinBadge {
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: var(--tomato);
+  color: var(--on-tomato);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 /* Desplegado ya se ve el código grande: el pequeño del título solo hace falta plegado. */
 .join[open] .joinCodeSmall {
   display: none;

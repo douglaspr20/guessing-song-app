@@ -78,6 +78,7 @@ export async function getStats(window: StatWindow = "7d", now = new Date()) {
     replays: total("game_created", (g) => g.replay),
     phones: { joined: total("phone_joined"), followed: total("phone_followed") },
     shared: total("result_shared"),
+    reclaimed: total("seat_reclaimed"),
     daily: days,
   };
 }

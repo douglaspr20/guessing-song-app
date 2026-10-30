@@ -16,6 +16,7 @@ Estado al 27-10-2026. Marcas: `[x]` hecho, `[ ]` pendiente. Tamaño: S (horas), 
 - [x] Probar el teclado en un iPhone real.
 - [x] Probar el pulsador con varios móviles a la vez.
 - [x] Poner `ABLY_API_KEY` en Vercel (marcada como Sensitive).
+- [x] Recuperar el sitio: si un móvil pierde su sesión (abre el enlace en otro navegador), su nombre ocupado ya no es un callejón sin salida: pide entrar, la tele muestra «Pablo pide volver a entrar» y el anfitrión lo deja entrar o no. Mismo participante, así que conserva equipo, puntos y fallos de la ronda.
 - [x] Compartir el resultado: botón en la tele y en cada móvil que crea un enlace público (`/r/<código>`, sin canciones ni datos internos) con vista previa en WhatsApp, LinkedIn y X, y la tarjeta como imagen apaisada o vertical para descargar o compartir; el anfitrión puede dejar de compartir.
 - [x] Analítica mínima propia (`GameEvent`, sin datos personales): invitados nuevos, partidas creadas, empezadas, terminadas y abandonadas, desglose por modo y formato, móviles y los últimos 14 días, en «Cómo se usa» del panel del anfitrión. Los eventos personalizados de Vercel no están en el plan Hobby.
 - [x] «Otra igual» en la pantalla final: la misma partida (ajustes, filtros y personas) con un clic, y los móviles unidos pasan solos a la nueva.
@@ -57,7 +58,6 @@ La gente llega desde el post sin conocer el juego: lo primero que ve es la tarje
 
 ### Juego
 
-- [ ] **Reconexión del móvil (M).** Si un jugador pierde la cookie o cambia de dispositivo, reclamar su nombre con un PIN corto de la partida en vez de depender de que el anfitrión lo eche.
 
 ## P2 · Después: mejora la experiencia de quien ya juega
 
