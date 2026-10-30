@@ -31,6 +31,8 @@ test("alguien se une desde el móvil con el código, pulsa «¡Lo sé!» y acier
   // La tele muestra quién tiene el turno; el móvil responde con el título.
   await expect(page.getByRole("region", { name: "Turno de respuesta" })).toContainText("Pablo", { timeout: 15_000 });
   const round = await playingRound();
+  // La ronda guarda de qué búsqueda salió la canción.
+  expect(round.pickedVia).toMatch(/^itunes: .+ \([A-Z]{2}\)$/);
   await mobile.getByLabel("Canción").fill(round.trackName);
   await mobile.getByRole("button", { name: "Enviar respuesta" }).click();
 

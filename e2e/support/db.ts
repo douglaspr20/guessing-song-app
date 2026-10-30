@@ -12,9 +12,15 @@ export async function resetDb() {
 }
 
 /** La ronda en juego más reciente: su título y artista son lo que hay que escribir para acertarla. */
-export async function playingRound(): Promise<{ id: string; gameId: string; trackName: string; artists: string }> {
+export async function playingRound(): Promise<{
+  id: string;
+  gameId: string;
+  trackName: string;
+  artists: string;
+  pickedVia: string | null;
+}> {
   const { rows } = await pool.query(
-    `SELECT id, "gameId", "trackName", artists FROM "Round" WHERE status = 'PLAYING' ORDER BY "createdAt" DESC LIMIT 1`,
+    `SELECT id, "gameId", "trackName", artists, "pickedVia" FROM "Round" WHERE status = 'PLAYING' ORDER BY "createdAt" DESC LIMIT 1`,
   );
   if (!rows[0]) throw new Error("No hay ninguna ronda en juego");
   return rows[0];

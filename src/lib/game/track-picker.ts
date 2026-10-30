@@ -29,6 +29,8 @@ export interface PickedTrack {
   genre: string | null;
   /** Audio a reproducir en el navegador (modo abierto); sin él suena por Spotify. */
   audioUrl?: string | null;
+  /** De qué búsqueda salió, p. ej. `genre:"salsa" year:1980-1989 @20` (se guarda en la ronda para poder revisarlo). */
+  via?: string;
 }
 
 /** Margen al final de la canción para que el fragmento no se quede sin audio. */
@@ -83,10 +85,30 @@ function pickFrom<T>(items: T[], random: () => number): T | undefined {
   return items.length ? items[randomInt(items.length, random)] : undefined;
 }
 
+/** Lo que se sabe de una búsqueda: el total que dice Spotify, hasta dónde se ha leído y si ya no hay más. */
+interface SearchProgress {
+  total: number;
+  next: number;
+  done: boolean;
+}
+
+/**
+ * Offset de la siguiente página de una búsqueda. Si Spotify dice que hay muchas, se salta a una página al
+ * azar. Su `total` ya no es fiable (a veces dice 0 con la página llena), así que si no, se avanza página
+ * a página mientras haya canciones y, cuando se acaban, se vuelve a una ya vista.
+ */
+function nextSearchOffset(p: SearchProgress | undefined, limit: number, maxOffset: number, random: () => number) {
+  if (!p) return 0;
+  const top = Math.min(p.total, maxOffset) - limit;
+  if (p.total > limit * 2 && top > 0) return randomInt(top + 1, random);
+  if (!p.done) return p.next;
+  return randomInt(Math.ceil(p.next / limit), random) * limit;
+}
+
 /**
  * Elige una pista que cumpla los filtros y no se haya usado.
- * Estrategia: pide la primera página para conocer el total y luego salta a páginas
- * aleatorias, reintentando hasta `maxAttempts` veces.
+ * Estrategia: pide la primera página y luego salta a páginas aleatorias (o avanza página a página si
+ * Spotify no da un total útil), reintentando hasta `maxAttempts` veces.
  */
 export async function pickTrack(opts: PickOptions): Promise<PickedTrack> {
   const random = opts.random ?? Math.random;
@@ -94,17 +116,21 @@ export async function pickTrack(opts: PickOptions): Promise<PickedTrack> {
   const market = resolveMarket(opts.filters);
   const { filters } = opts;
 
-  // Total conocido por "fuente" (cada género o playlist) para elegir offsets válidos.
+  // Total conocido por playlist para elegir offsets válidos.
   const totals = new Map<string, number>();
+  // Lo leído de cada búsqueda (cada género).
+  const searches = new Map<string, SearchProgress>();
   // Playlists que Spotify deja leer (las de otras personas pueden dar 403 y se descartan).
   const playlists = [...filters.playlistIds];
-  // Géneros que Spotify no reconoce en el filtro `genre:` (0 resultados): se buscan como texto.
-  const genresAsText = new Set<string>();
+  // Géneros con los que `genre:` no devuelve ni una canción: se dejan de lado mientras otros funcionen.
+  const emptyGenres = new Set<string>();
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     let page: Page<Track>;
     let key: string;
     let genre: string | null = null;
+    let via: string;
+    let firstVisit: boolean;
 
     if (filters.source === "playlists") {
       const playlistId = pickFrom(playlists, random)!;
@@ -124,28 +150,39 @@ export async function pickTrack(opts: PickOptions): Promise<PickedTrack> {
         attempt--; // una playlist bloqueada no gasta intento
         continue;
       }
+      firstVisit = total === undefined;
+      totals.set(key, page.total);
+      via = `playlist:${playlistId} @${offset}`;
     } else {
-      genre = pickFrom(filters.genres, random) ?? null;
+      // Buscar un género como texto libre trae cualquier cosa que lleve esas palabras: con «rock en espanol»
+      // salió un grupo country alemán ronda tras ronda. Solo se hace si ningún género elegido da canciones.
+      const working = filters.genres.filter((g) => !emptyGenres.has(g));
+      const asText = filters.genres.length > 0 && !working.length;
+      genre = pickFrom(asText ? filters.genres : working, random) ?? null;
       const limit = opts.searchPageSize ?? 10;
-      const asText = !!genre && genresAsText.has(genre);
+      const maxOffset = opts.maxSearchOffset ?? 1000;
       const q = asText
         ? buildSearchQuery({ ...filters, keywords: [genre, filters.keywords].filter(Boolean).join(" ") }, undefined)
         : buildSearchQuery(filters, genre ?? undefined);
       key = `q:${q}`;
-      const total = totals.get(key);
-      const maxOffset = Math.min(total ?? 0, opts.maxSearchOffset ?? 1000) - limit;
-      const offset = total === undefined || maxOffset <= 0 ? 0 : randomInt(maxOffset + 1, random);
+      const progress = searches.get(key);
+      const offset = nextSearchOffset(progress, limit, maxOffset, random);
       page = await opts.source.search({ q, market, offset, limit });
-      if (page.total === 0 && genre && !asText) {
-        // p. ej. `genre:"salsa"` no devuelve nada, pero «salsa» como palabra sí.
-        genresAsText.add(genre);
+      if (!page.items.length && offset === 0 && genre && !asText) {
+        // Se mira la página y no `total`: Spotify a veces dice 0 con la página llena.
+        emptyGenres.add(genre);
         attempt--; // no gasta intento
         continue;
       }
+      firstVisit = !progress;
+      const seenTo = offset + page.items.length;
+      searches.set(key, {
+        total: page.total,
+        next: Math.max(progress?.next ?? 0, seenTo),
+        done: page.items.length < limit || seenTo >= maxOffset,
+      });
+      via = `${asText ? "texto: " : ""}${q} @${offset}`;
     }
-
-    const firstVisit = !totals.has(key);
-    totals.set(key, page.total);
 
     const candidates = page.items.filter((t) => isEligible(t, opts));
     // En la primera visita a una fuente grande preferimos saltar a una página aleatoria
@@ -154,9 +191,9 @@ export async function pickTrack(opts: PickOptions): Promise<PickedTrack> {
     const shouldJump = firstVisit && page.total > pageSize * 2 && attempt < maxAttempts - 1;
     if (candidates.length && !shouldJump) {
       const track = pickFrom(candidates, random)!;
-      return { track, startMs: computeStartMs(track.durationMs, opts.fragmentMs, random), genre };
+      return { track, startMs: computeStartMs(track.durationMs, opts.fragmentMs, random), genre, via };
     }
-    if (page.total === 0 && filters.source === "search" && filters.genres.length <= 1) break;
+    if (!page.items.length && filters.source === "search" && filters.genres.length <= 1 && !searches.get(key)?.next) break;
   }
 
   throw new AppError("NO_TRACKS_FOUND", 404, { key: "NO_NEW_TRACKS" });

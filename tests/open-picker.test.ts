@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { gameFiltersSchema } from "@/lib/game/filters";
-import { buildOpenTerm, pickOpenTrack, type OpenTrackSource } from "@/lib/game/open-picker";
+import { buildOpenTerm, matchesStoreGenre, pickOpenTrack, type OpenTrackSource } from "@/lib/game/open-picker";
 import type { Track } from "@/lib/spotify/types";
 
 const filters = (f: Record<string, unknown> = {}) => gameFiltersSchema.parse(f);
@@ -57,6 +57,29 @@ describe("pickOpenTrack", () => {
       random: () => 0,
     });
     expect(picked.track.id).toBe("ok");
+  });
+
+  it("en un género tropical descarta lo que la tienda clasifica como otra cosa (el género solo estaba en el título)", async () => {
+    const picked = await pickOpenTrack({
+      filters: filters({ genres: ["salsa"] }),
+      usedTrackIds: new Set(),
+      source: source([
+        song("rap", { name: "Salsa Tártara", storeGenre: "Hip-Hop/Rap" }),
+        song("urbano", { storeGenre: "Urbano latino" }),
+        song("lavoe", { storeGenre: "Salsa y tropical" }),
+      ]),
+      random: () => 0,
+    });
+    expect(picked.track.id).toBe("lavoe");
+    expect(picked.via).toBe("itunes: salsa (US)");
+  });
+
+  it("acepta los nombres de la tienda en cada país y lo que no trae género", () => {
+    const ok = (storeGenre: string | null) => matchesStoreGenre(song("x", { storeGenre }), "vallenato");
+    expect(["Salsa y tropical", "Música tropical", "Latin", "Música latina", null].map(ok)).toEqual([true, true, true, true, true]);
+    expect(["Pop", "Hip-Hop/Rap", "Urbano latino", "Pop Latino"].map(ok)).toEqual([false, false, false, false]);
+    // Los géneros que no son tropicales no se filtran.
+    expect(matchesStoreGenre(song("x", { storeGenre: "Hip-Hop/Rap" }), "pop")).toBe(true);
   });
 
   it("falla con NO_TRACKS_FOUND si no hay candidatas", async () => {

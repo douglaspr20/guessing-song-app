@@ -15,6 +15,7 @@ interface ItunesSong {
   releaseDate?: string;
   trackTimeMillis?: number;
   artworkUrl100?: string;
+  primaryGenreName?: string;
 }
 
 /** Pasa un resultado de iTunes a `Track`; descarta lo que no sea una canción con vista previa. */
@@ -34,6 +35,7 @@ export function normalizeItunesSong(s: ItunesSong): Track | null {
     isPlayable: true,
     previewUrl: s.previewUrl,
     releaseYear: Number.isFinite(year) ? year : null,
+    storeGenre: s.primaryGenreName ?? null,
   };
 }
 

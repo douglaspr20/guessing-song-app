@@ -172,5 +172,77 @@ describe("pickTrack con géneros que Spotify no reconoce", () => {
     expect(search.mock.calls[1][0].q).toBe("salsa");
     expect(picked.track.id).toBe("salsa-1");
     expect(picked.genre).toBe("salsa");
+    expect(picked.via).toBe("texto: salsa @0");
+  });
+
+  it("con otros géneros que sí dan canciones, el vacío se deja de lado y nunca se busca como texto", async () => {
+    // Partida en familia (octubre 2026): «rock en espanol» como texto trajo a un grupo country alemán.
+    const search = vi.fn(async ({ q, offset }: { q: string; offset: number }) =>
+      q.startsWith('genre:"salsa"') ? { items: [track(`salsa-${offset}`)], total: 0 } : { items: [], total: 0 },
+    );
+    for (const r of [0, 0.4, 0.99]) {
+      const picked = await pickTrack({
+        filters: filters({ genres: ["rock en espanol", "salsa"], yearFrom: 1970, yearTo: 2010 }),
+        fragmentMs: 60_000,
+        usedTrackIds: new Set(),
+        source: { search, playlist: vi.fn() },
+        random: () => r,
+      });
+      expect(picked.genre).toBe("salsa");
+    }
+    expect(search.mock.calls.every(([p]) => p.q.startsWith("genre:"))).toBe(true);
+  });
+});
+
+describe("pickTrack cuando Spotify no da un total útil", () => {
+  // Spotify a veces responde `total: 0` con la página llena (búsquedas por género con años, octubre de 2026).
+  const pages = (perPage: number, pagesWithSongs: number) =>
+    vi.fn(async ({ q, offset, limit }: { q: string; offset: number; limit: number }) => {
+      if (!q.startsWith("genre:") || offset >= perPage * pagesWithSongs) return { items: [], total: 0 };
+      return { items: Array.from({ length: Math.min(limit, perPage) }, (_, i) => track(`g${offset + i}`)), total: 0 };
+    });
+
+  it("con total 0 pero canciones en la página, no pasa a buscar el género como texto", async () => {
+    const search = pages(10, 1);
+    const picked = await pickTrack({
+      filters: filters({ genres: ["salsa"], yearFrom: 1980, yearTo: 1989 }),
+      fragmentMs: 60_000,
+      usedTrackIds: new Set(),
+      source: { search, playlist: vi.fn() },
+      random: () => 0,
+    });
+    expect(search.mock.calls.every(([p]) => p.q === 'genre:"salsa" year:1980-1989')).toBe(true);
+    expect(picked.track.id).toBe("g0");
+    expect(picked.via).toBe('genre:"salsa" year:1980-1989 @0');
+  });
+
+  it("si la primera página ya se usó, avanza a la siguiente en vez de repetirla", async () => {
+    const search = pages(10, 3);
+    const used = new Set(Array.from({ length: 10 }, (_, i) => `g${i}`));
+    const picked = await pickTrack({
+      filters: filters({ genres: ["salsa"] }),
+      fragmentMs: 60_000,
+      usedTrackIds: used,
+      source: { search, playlist: vi.fn() },
+      random: () => 0,
+    });
+    expect(search.mock.calls.map(([p]) => p.offset)).toEqual([0, 10]);
+    expect(picked.track.id).toBe("g10");
+    expect(picked.via).toBe('genre:"salsa" @10');
+  });
+
+  it("al acabarse las páginas no salta a buscar texto: se rinde con NO_TRACKS_FOUND", async () => {
+    const search = pages(10, 1);
+    const used = new Set(Array.from({ length: 10 }, (_, i) => `g${i}`));
+    await expect(
+      pickTrack({
+        filters: filters({ genres: ["salsa"] }),
+        fragmentMs: 60_000,
+        usedTrackIds: used,
+        source: { search, playlist: vi.fn() },
+        random: () => 0,
+      }),
+    ).rejects.toMatchObject({ code: "NO_TRACKS_FOUND" });
+    expect(search.mock.calls.some(([p]) => !p.q.startsWith("genre:"))).toBe(false);
   });
 });
