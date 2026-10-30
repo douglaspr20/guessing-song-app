@@ -49,6 +49,29 @@ export function buildOpenTerm(filters: GameFilters, random: () => number = Math.
   return { term: pickFrom(words, random)!, genre: null };
 }
 
+/** Géneros tropicales: en la tienda salen como «Salsa y tropical», «Música tropical»… o como latino a secas. */
+const TROPICAL_GENRES = new Set(["salsa", "merengue", "bachata", "cumbia", "vallenato"]);
+/** Nombres genéricos de la tienda que también valen para un género tropical (no «Urbano latino» ni «Pop Latino»). */
+const GENERIC_LATIN = new Set(["latin", "latino", "latina", "musica latina", "musica tropical"]);
+
+const plain = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
+
+/**
+ * ¿La canción es del género pedido según la tienda? El género se busca como texto, así que también salen
+ * canciones que solo lo llevan en el título («Salsa Tártara», de rap). De momento solo se comprueban los
+ * tropicales, donde se vio el problema; sin dato de la tienda se da por buena.
+ */
+export function matchesStoreGenre(track: Track, genre: string | null): boolean {
+  if (!genre || !TROPICAL_GENRES.has(genre) || !track.storeGenre) return true;
+  const store = plain(track.storeGenre);
+  return store.includes("tropical") || store.includes(genre) || GENERIC_LATIN.has(store);
+}
+
 function inYearRange(track: Track, filters: GameFilters): boolean {
   if (!filters.yearFrom && !filters.yearTo) return true;
   if (!track.releaseYear) return false;
@@ -68,10 +91,11 @@ export async function pickOpenTrack(opts: OpenPickOptions): Promise<PickedTrack>
     const { term, genre } = buildOpenTerm(opts.filters, random);
     const results = await opts.source.search({ term, country });
     const candidates = results.filter(
-      (t) => !!t.previewUrl && !opts.usedTrackIds.has(t.id) && inYearRange(t, opts.filters),
+      (t) =>
+        !!t.previewUrl && !opts.usedTrackIds.has(t.id) && inYearRange(t, opts.filters) && matchesStoreGenre(t, genre),
     );
     const track = pickFrom(candidates, random);
-    if (track) return { track, startMs: 0, genre, audioUrl: track.previewUrl };
+    if (track) return { track, startMs: 0, genre, audioUrl: track.previewUrl, via: `itunes: ${term} (${country})` };
   }
 
   throw new AppError("NO_TRACKS_FOUND", 404);

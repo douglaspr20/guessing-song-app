@@ -513,7 +513,7 @@ export async function startNextRound(gameId: string) {
     throw new AppError("NO_MORE_ROUNDS", 409);
   }
 
-  const { track, startMs, genre, audioUrl } = await takeNextTrack(game);
+  const { track, startMs, genre, audioUrl, via } = await takeNextTrack(game);
 
   const number = game.currentRound + 1;
   try {
@@ -530,6 +530,7 @@ export async function startNextRound(gameId: string) {
           genre,
           albumImage: track.albumImage,
           audioUrl: audioUrl ?? null,
+          pickedVia: via ?? null,
           durationMs: track.durationMs,
           startMs,
         },

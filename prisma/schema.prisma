@@ -232,6 +232,8 @@ model Round {
   albumImage           String?
   // URL de la vista previa (solo modo abierto).
   audioUrl             String?
+  // De qué búsqueda salió la canción (p. ej. `genre:"salsa" year:1980-1989 @20`), para revisar elecciones raras.
+  pickedVia            String?
   durationMs           Int
   startMs              Int
   // PLAYING | WON | REVEALED

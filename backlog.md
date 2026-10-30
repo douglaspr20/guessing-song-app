@@ -61,10 +61,13 @@ La gente llega desde el post sin conocer el juego: lo primero que ve es la tarje
 Salen de la primera partida real (familia, con Spotify y desde un móvil como anfitrión).
 
 - [x] **Las pistas también en los móviles (S).** El mando enseña las tres marcas de pista (`HintMarks compact`) en cuanto suena la pista, también al responder, y vuelve a leer el estado en `nextHintAt` (`useRefreshAt`, compartido con la tele).
-- [ ] **Canciones que no son del género elegido (M).** Con salsa, merengue y vallenato a veces sonaban canciones de un grupo llamado Tennessee: ronda perdida.
-  - Sospecha: cuando `genre:"vallenato"` (o el que sea) no devuelve nada en Spotify, el buscador lo repite como palabra suelta (`genresAsText` en `src/lib/game/track-picker.ts`) y esa búsqueda de texto trae cualquier canción o artista que contenga la palabra, sea del género que sea.
-  - Antes de arreglar: registrar qué búsqueda produjo cada canción (la query y si fue `genre:` o texto) para confirmar el origen.
-  - Ideas: comprobar los géneros del artista (`/artists?ids=`) antes de aceptar la canción y descartarla si no encaja; acotar la búsqueda de texto (por ejemplo, con el mercado del idioma o con palabras clave del género); y mostrar en «Probar filtros» de dónde sale la canción.
+- [x] **Canciones que no son del género elegido (M).** En la partida en familia (Spotify, seis o siete géneros latinos con idioma y décadas 1970-2010) sonaron canciones en alemán de Tennessee, un grupo country alemán, en nueve rondas de dos partidas.
+  - Causa (confirmada con las rondas de Neon): todas venían de «rock en espanol». `genre:"rock en espanol"` no daba nada útil y el buscador pasaba a buscar `rock en espanol` como texto libre, que trae cualquier cosa con «rock», y siempre de la primera página.
+  - Arreglo: un género vacío se deja de lado si otros dan canciones; el texto libre queda solo para cuando ninguno funciona. Además se mira la página y no `total` (Spotify dice 0 con la página llena), y se avanza página a página.
+  - Modo abierto: el género también se busca como texto en iTunes, así que en los géneros tropicales se descarta lo que la tienda no clasifica como tropical o latino (`matchesStoreGenre`).
+  - Cada ronda guarda de qué búsqueda salió (`Round.pickedVia`).
+  - Spotify ya no da los géneros de los artistas, así que la idea de comprobarlos con `/artists?ids=` no sirve.
+  - Pendiente cuando pase el límite de Spotify: comprobar con pocas consultas qué devuelve hoy `genre:"rock en espanol" year:1970-2010`.
 - [ ] **El anfitrión también juega (M/L).** Sin tele ni ordenador, la partida se lleva desde un móvil, y ese móvil no tiene «¡Lo sé!»: el anfitrión no puede quedarse el turno ni tener sus segundos para responder.
   - Opcional y antes de empezar: «Yo también juego como…» obliga a elegir uno de los nombres (o equipos) de la partida.
   - Ese dispositivo sigue llevando el control (pausar, revelar, repetir, siguiente) y además tiene su propio «¡Lo sé!» y su turno con cuenta atrás, igual que un móvil unido; si falla, queda fuera de esa pista como los demás.

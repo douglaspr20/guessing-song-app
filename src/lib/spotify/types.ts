@@ -12,6 +12,8 @@ export interface Track {
   previewUrl?: string | null;
   /** Año de lanzamiento, si la fuente lo da (para filtrar por años en el modo abierto). */
   releaseYear?: number | null;
+  /** Género que le pone la tienda (`primaryGenreName` de iTunes, p. ej. «Salsa y tropical»), si lo da. */
+  storeGenre?: string | null;
   /** `false` si no se puede reproducir en el mercado pedido; `null` si Spotify no lo indica. */
   isPlayable: boolean | null;
 }

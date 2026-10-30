@@ -48,7 +48,7 @@ Spotify only grants extended API access to registered businesses with 250k+ mont
 ## Features
 
 - **Spotify playback in the browser** through the Web Playback SDK: clips of 60–180 s from a random point of the song (skipping long intros).
-- **Open mode without any account:** 30-second iTunes previews played with a plain `<audio>` element, so anyone can try the game.
+- **Open mode without any account:** 30-second iTunes previews played with a plain `<audio>` element, so anyone can try the game. iTunes only searches by text, so for tropical genres (salsa, merengue, bachata, cumbia, vallenato) songs are also checked against the store's own genre: a rap track called "Salsa" doesn't count as salsa.
 - **Song sources:** general search (genres, language/market, year range, keyword) or your own playlists, including _Liked Songs_.
 - **Speed-based scoring:** title worth 3 / 2 / 1 points depending on how fast it is guessed (see the table above); **+1 for the artist**, independent from the title, only before the artist hint appears.
 - **Progressive hints:** number of words in the title → artist → first letters (`D_ M_____ L_____`). They show on the TV and on every phone, including while answering.
@@ -86,6 +86,7 @@ Spotify only grants extended API access to registered businesses with 250k+ mont
 ## Spotify limitations (please read)
 
 - Playing full tracks requires **Spotify Premium** and a browser with DRM support (**Chrome or Edge**).
+- Spotify's search **`total` isn't reliable** (it can say 0 with a full page), so the picker decides by the tracks it actually gets and walks the pages one by one. Each round stores the query it came from (`Round.pickedVia`).
 - Apps in Spotify's **development mode** only work for the owner and up to 5 users added by hand in the dashboard. A member whose account isn't on that list gets a clear message when linking Spotify and can still play open mode.
 - In development mode Spotify only lets the app read **playlists you own or collaborate on**; other people's playlists show up disabled.
 - While a song plays, Spotify apps logged into the same account (e.g. your phone) display the track name, so keep them out of sight.
