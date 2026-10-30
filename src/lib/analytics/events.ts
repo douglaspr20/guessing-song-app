@@ -14,7 +14,8 @@ export type EventType =
   | "game_finished"
   | "phone_joined"
   | "phone_followed"
-  | "result_shared";
+  | "result_shared"
+  | "seat_reclaimed";
 
 /** Quién grabó la partida: el tipo de dueño, nunca su id. */
 export type OwnerKind = "guest" | "free" | "member" | "host";

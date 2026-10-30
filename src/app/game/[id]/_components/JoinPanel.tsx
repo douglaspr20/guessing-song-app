@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Copy, DoorClosed, DoorOpen, UserMinus } from "lucide-react";
 import QRCode from "qrcode";
 import { useToast } from "@/components/feedback/FeedbackProvider";
 import { useConfirmedAction } from "@/components/feedback/useConfirmedAction";
+import controls from "@/components/styles/controls.module.css";
 import { TeamDot } from "@/components/TeamDot";
 import ui from "@/components/ui.module.css";
 import { api, errorText, type Game } from "@/lib/client/api";
@@ -18,6 +19,8 @@ interface Joined {
   name: string;
   hasAccount: boolean;
   team: { name: string; color: string } | null;
+  /** Otro navegador pide quedarse con su sitio (perdió su sesión): el anfitrión decide. */
+  claim: boolean;
 }
 
 /**
@@ -42,6 +45,8 @@ export function JoinPanel({
   const [url, setUrl] = useState("");
   const [qr, setQr] = useState("");
   const [busy, setBusy] = useState(false);
+  /** Quién tenía ya una petición al leer la lista: solo se avisa de las nuevas. */
+  const asked = useRef(new Set<string>());
 
   useEffect(() => {
     const link = `${window.location.origin}/join/${game.code}`;
@@ -54,10 +59,16 @@ export function JoinPanel({
   const load = useCallback(
     () =>
       api<{ participants: Joined[] }>(`/api/games/${game.id}/participants`).then(
-        (r) => setPeople(r.participants),
+        (r) => {
+          setPeople(r.participants);
+          // Avisa de cada petición nueva (con o sin tiempo real: sale de la propia lista, no del evento).
+          const now = new Set(r.participants.filter((p) => p.claim).map((p) => p.id));
+          for (const p of r.participants) if (p.claim && !asked.current.has(p.id)) toast({ tone: "ok", text: g.claimToast(p.name) });
+          asked.current = now;
+        },
         () => {},
       ),
-    [game.id],
+    [game.id, toast, g],
   );
 
   useEffect(() => {
@@ -68,7 +79,7 @@ export function JoinPanel({
   // Alguien entra o se va: se vuelve a leer la lista.
   useEffect(() => {
     if (!event) return;
-    if (["participant_joined", "participant_left", "poll", "reconnected"].includes(event.type)) void load();
+    if (["participant_joined", "participant_left", "claim_requested", "claim_resolved", "poll", "reconnected"].includes(event.type)) void load();
   }, [event, load]);
 
   const copy = async () => {
@@ -99,14 +110,26 @@ export function JoinPanel({
       after: load,
     });
 
+  /** Deja entrar (el sitio pasa al navegador nuevo y el viejo sale) o rechaza la petición. */
+  const resolve = async (p: Joined, accept: boolean) => {
+    try {
+      await api(`/api/games/${game.id}/participants/${p.id}/claim`, { method: "POST", json: { accept } });
+    } catch (e) {
+      toast({ tone: "error", text: errorText(e) });
+    }
+    await load();
+  };
+
+  const pending = people.filter((p) => p.claim).length;
   const started = !!game.round;
   const finished = game.status === "FINISHED";
   if (finished) return null;
 
   return (
-    <details className={`${ui.card} ${styles.join}`} open={!started}>
+    <details className={`${ui.card} ${styles.join}`} open={!started || pending > 0}>
       <summary className={styles.joinSummary}>
         <span className={ui.cardTitle}>{g.joinTitle}</span>
+        {pending > 0 && <span className={styles.joinBadge}>{plural(locale, pending, g.claimBadge)}</span>}
         <span className={styles.joinCodeSmall}>{game.code}</span>
       </summary>
       <div className={styles.joinBody}>
@@ -143,7 +166,7 @@ export function JoinPanel({
           {people.length > 0 && (
             <ul className={styles.joinList}>
               {people.map((p) => (
-                <li key={p.id} className={styles.joinPerson}>
+                <li key={p.id} className={`${styles.joinPerson} ${p.claim ? styles.joinClaim : ""}`}>
                   <span className={styles.joinName}>
                     <TeamDot color={p.team?.color} size={12} />
                     {p.name}
@@ -157,6 +180,21 @@ export function JoinPanel({
                   >
                     <UserMinus size={20} aria-hidden />
                   </button>
+                  {p.claim && (
+                    <div className={styles.joinAsk} role="group" aria-label={g.claimTitle(p.name)}>
+                      <p className={styles.joinAskText}>
+                        <strong>{g.claimTitle(p.name)}.</strong> {g.claimHelp}
+                      </p>
+                      <div className={styles.joinAskActions}>
+                        <button type="button" className={`${ui.btn} ${ui.primary} ${controls.small}`} onClick={() => resolve(p, true)}>
+                          {g.claimAllow}
+                        </button>
+                        <button type="button" className={`${ui.btn} ${ui.onCard} ${controls.small}`} onClick={() => resolve(p, false)}>
+                          {g.claimDeny}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>

@@ -23,6 +23,9 @@ export type GameEvent =
   | { type: "participant_joined"; gameId: string; participantId: string; name: string }
   | { type: "participant_left"; gameId: string; participantId: string }
   | { type: "join_toggled"; gameId: string; open: boolean }
+  /** Alguien que perdió su sesión pide quedarse con su sitio: el anfitrión decide. */
+  | { type: "claim_requested"; gameId: string; participantId: string; name: string }
+  | { type: "claim_resolved"; gameId: string; participantId: string; accepted: boolean }
   | { type: "buzz"; gameId: string; roundId: string; participantId: string; name: string }
   | {
       type: "buzz_resolved";

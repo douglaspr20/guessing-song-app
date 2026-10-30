@@ -39,6 +39,8 @@ export function NameStep({
   ready,
   busy,
   error,
+  taken,
+  onAskToEnter,
   onChangeCode,
   onSubmit,
 }: {
@@ -54,6 +56,9 @@ export function NameStep({
   ready: boolean;
   busy: boolean;
   error: string | null;
+  /** El nombre ya está dentro desde otro navegador: en vez del error, se ofrece pedir el sitio. */
+  taken: boolean;
+  onAskToEnter: () => void;
   onChangeCode: () => void;
   onSubmit: (e: FormEvent) => void;
 }) {
@@ -114,15 +119,28 @@ export function NameStep({
       {teams && claims && <p className={styles.asUser}>{j.alreadyListed}</p>}
 
       {error && <Notice>{error}</Notice>}
+      {taken && (
+        <div className={styles.taken} role="alert">
+          <p className={styles.takenTitle}>{j.takenTitle(name.trim())}</p>
+          <p className={styles.takenHelp}>{j.takenHelp}</p>
+        </div>
+      )}
       <div className={`${form.actions} ${styles.stickyActions}`}>
-        <button
-          type="submit"
-          className={`${ui.btn} ${ui.primary} ${ui.big}`}
-          disabled={busy || !ready || !found.joinOpen || found.full}
-        >
-          <LogIn size={24} aria-hidden />
-          {busy ? j.entering : j.enter}
-        </button>
+        {taken ? (
+          <button type="button" className={`${ui.btn} ${ui.primary} ${ui.big}`} onClick={onAskToEnter} disabled={busy}>
+            <LogIn size={24} aria-hidden />
+            {busy ? j.asking : j.askToEnter}
+          </button>
+        ) : (
+          <button
+            type="submit"
+            className={`${ui.btn} ${ui.primary} ${ui.big}`}
+            disabled={busy || !ready || !found.joinOpen || found.full}
+          >
+            <LogIn size={24} aria-hidden />
+            {busy ? j.entering : j.enter}
+          </button>
+        )}
       </div>
     </form>
   );

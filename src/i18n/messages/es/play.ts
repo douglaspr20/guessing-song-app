@@ -25,12 +25,21 @@ export const join = {
   alreadyListed: "El anfitrión ya te apuntó: entrarás directo en tu equipo.",
   entering: "Entrando…",
   enter: "Entrar",
+  // Recuperar el sitio (otro navegador): el anfitrión decide
+  takenTitle: (name: string) => `${name} ya está dentro desde otro navegador`,
+  takenHelp: "Si eres tú, pide entrar y el anfitrión te dejará desde su pantalla. Si solo coincidís en el nombre, escribe otro.",
+  askToEnter: "Soy yo: pedir entrar",
+  asking: "Pidiendo…",
+  waitTitle: "Esperando al anfitrión",
+  waitLede: (name: string) => `Pide a quien lleva la pantalla que deje entrar a ${name}. Cuando lo haga, entrarás solo.`,
+  waitCancel: "Cancelar",
+  waitGone: "El anfitrión no te dejó entrar, o la petición caducó.",
 };
 
 export const play = {
   outBand: "Fuera de la partida",
   outTitle: "Ya no estás en esta partida",
-  outLede: "Puede que haya terminado o que el anfitrión te haya sacado. Entra otra vez con el código.",
+  outLede: "Puede que haya terminado, que el anfitrión te haya sacado o que hayas entrado desde otro navegador. Entra otra vez con el código.",
   joinWithCode: "Unirme con un código",
   connecting: "Conectando",
   trackOf: (n: number, total: number) => `Pista ${n} de ${total}`,

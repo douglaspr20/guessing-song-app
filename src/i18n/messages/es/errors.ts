@@ -91,6 +91,7 @@ export const errors = {
   TEAM_REQUIRED: "Elige un equipo",
   TEAM_FULL: ({ team }: { team: string }) => `${team} está lleno`,
   PARTICIPANT_NOT_FOUND: "Participante no encontrado",
+  CLAIM_NOT_FOUND: "Esa petición ya no existe: puede que otra la sustituyera o que caducara.",
   LOCKED_OUT: "Ya fallaste en esta pista: espera a la siguiente",
   FRAGMENT_ENDED: "Se acabó el fragmento: pídele al anfitrión que lo repita",
   PAUSED: "El anfitrión pausó la canción",

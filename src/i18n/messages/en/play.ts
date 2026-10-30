@@ -26,12 +26,20 @@ export const join = {
   alreadyListed: "The host already added you: you'll go straight into your team.",
   entering: "Joining…",
   enter: "Join",
+  takenTitle: (name: string) => `${name} is already in from another browser`,
+  takenHelp: "If it's you, ask to come in and the host will let you from their screen. If you just share the name, type another one.",
+  askToEnter: "It's me: ask to come in",
+  asking: "Asking…",
+  waitTitle: "Waiting for the host",
+  waitLede: (name: string) => `Ask whoever runs the screen to let ${name} in. When they do, you'll come in on your own.`,
+  waitCancel: "Cancel",
+  waitGone: "The host didn't let you in, or the request expired.",
 } satisfies typeof esJoin;
 
 export const play = {
   outBand: "Out of the game",
   outTitle: "You're no longer in this game",
-  outLede: "It may have ended, or the host removed you. Join again with the code.",
+  outLede: "It may have ended, the host may have removed you, or you may have joined from another browser. Join again with the code.",
   joinWithCode: "Join with a code",
   connecting: "Connecting",
   trackOf: (n: number, total: number) => `Track ${n} of ${total}`,

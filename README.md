@@ -165,6 +165,8 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
 | GET · PATCH · DELETE        | `/api/games/:id`                                                       | Game state / change filters / delete                                                   |
 | POST                        | `/api/games/:id/players`                                               | Add a player `{ name }`                                                                |
 | POST                        | `/api/games/:id/replay`                                                | "Same again": a new game with the same settings and people (once the game is over)     |
+| POST · GET · DELETE         | `/api/join/claim`                                                      | A browser that lost its session asks for its seat / asks if it was let in / withdraws    |
+| POST                        | `/api/games/:id/participants/:pid/claim`                               | The host lets that request in or refuses it `{ accept }`                                |
 | POST                        | `/api/play/:id/follow`                                                 | A phone moves to the replayed game with its same name and seat                         |
 | POST · DELETE               | `/api/games/:id/share`                                                 | Create (or get) the public link of a finished game's result / stop sharing it         |
 | POST                        | `/api/play/:id/share`                                                  | A joined phone shares the same link                                                    |
@@ -222,6 +224,17 @@ The host panel shows it under **Cómo se usa** (`/host`): new guests → games c
 ### "Same again"
 
 On the final screen, **Otra igual** records a new game with the same mode, rounds, filters, answer time, lockout and people (solo players, or teams with colors and members, including those who joined from a phone). The old game keeps a link to the new one (`nextGameId`), so a double click returns the same game instead of creating two. Phones that were in the old game move to the new one on their own with the same name and seat (`next_game` event, then `POST /api/play/:id/follow`); if that fails they get a button to retry. It respects the same limits as creating a game.
+
+### Getting back in (a lost session)
+
+A phone is identified by a cookie (`p_<game>`). If it is lost — typically the link was opened in a chat's in-app browser and then in Safari/Chrome, which have separate cookies — the name looks taken. Signed-in accounts already get their seat back on their own; for everyone else **the host decides**:
+
+1. The new browser types its name, gets `NAME_TAKEN` and is offered **"Soy yo: pedir entrar"** instead of a dead end.
+2. That stores a pending request on the *same* `Participant` (`claimHash`, `claimAt`; one per seat, newest wins, it expires after 5 minutes). The browser keeps a separate cookie (`c_<game>`), so it never overwrites a seat it already had in that game, and polls `GET /api/join/claim`.
+3. The TV shows the request in the join panel (it opens by itself and shows a badge even when the panel is folded): **Dejar entrar** or **No**. Accepting swaps the participant's `tokenHash` for the new browser's, so the old device is out.
+4. It is the same participant, so team, points and a missed track of the current round stay as they were (a player who already failed can't use this to buzz again).
+
+Closing the entry does not block it (it is coming back, not joining), requests are limited to 5 per connection every 10 minutes, and a kicked player can't be reclaimed. No PIN on purpose: nobody needs to remember anything, and nobody can take a seat just by typing the same name.
 
 ### Sharing a result
 

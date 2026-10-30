@@ -1,11 +1,12 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { BandStatus } from "@/components/band/BandStatus";
 import { Card } from "@/components/Card";
 import { useI18n } from "@/i18n/client";
 import { api, ApiError, errorText, type AccessStatus } from "@/lib/client/api";
+import { ClaimWaiting } from "./ClaimWaiting";
 import { CodeStep } from "./CodeStep";
 import { NameStep, type Lookup } from "./NameStep";
 import styles from "./JoinFlow.module.css";
@@ -32,6 +33,10 @@ export function JoinFlow() {
   /** La API no respondió: se dice y se ofrece reintentar. */
   const [offline, setOffline] = useState(false);
   const autoLooked = useRef(false);
+  /** Ese nombre ya está dentro desde otro navegador: se ofrece pedir el sitio al anfitrión. */
+  const [taken, setTaken] = useState(false);
+  /** Esperando a que el anfitrión deje entrar: la partida a la que se pidió el sitio. */
+  const [claiming, setClaiming] = useState<{ gameId: string; name: string } | null>(null);
 
   useEffect(() => {
     api<AccessStatus>("/api/access/status").then(
@@ -87,15 +92,40 @@ export function JoinFlow() {
       router.push(`/play/${r.gameId}`);
     } catch (err) {
       // Solo se libera el botón si falló: al entrar, la página cambia.
-      setError(errorText(err));
+      if (err instanceof ApiError && err.code === "NAME_TAKEN" && !user) setTaken(true);
+      else setError(errorText(err));
       setBusy(false);
     }
   };
+
+  /** «Soy yo»: pide al anfitrión quedarse con el sitio de ese nombre y espera su respuesta. */
+  const askToEnter = async () => {
+    if (!found) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await api<{ gameId: string; already: boolean }>("/api/join/claim", { json: { code: found.code, name: finalName } });
+      if (r.already) router.push(`/play/${r.gameId}`);
+      else setClaiming({ gameId: r.gameId, name: finalName });
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** El anfitrión no lo dejó entrar (o caducó): vuelve al nombre, con el motivo. */
+  const claimGone = useCallback(() => {
+    setClaiming(null);
+    setTaken(false);
+    setError(m.join.waitGone);
+  }, [m.join.waitGone]);
 
   const reset = () => {
     setFound(null);
     setTeamId("");
     setError(null);
+    setTaken(false);
   };
 
   return (
@@ -103,7 +133,15 @@ export function JoinFlow() {
       <BandStatus text={m.join.band} />
       <main className={styles.main}>
         <Card className={styles.card} aria-labelledby={titleId}>
-          {!found ? (
+          {claiming ? (
+            <ClaimWaiting
+              titleId={titleId}
+              gameId={claiming.gameId}
+              name={claiming.name}
+              onGone={claimGone}
+              onCancel={() => setClaiming(null)}
+            />
+          ) : !found ? (
             <CodeStep
               titleId={titleId}
               code={code}
@@ -126,6 +164,7 @@ export function JoinFlow() {
               onName={(value) => {
                 setName(value);
                 setError(null);
+                setTaken(false);
               }}
               teamId={teamId}
               onTeam={setTeamId}
@@ -133,6 +172,8 @@ export function JoinFlow() {
               ready={ready}
               busy={busy}
               error={error}
+              taken={taken}
+              onAskToEnter={askToEnter}
               onChangeCode={reset}
               onSubmit={submitJoin}
             />

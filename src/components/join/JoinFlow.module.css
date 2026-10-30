@@ -137,3 +137,36 @@
     width: 100%;
   }
 }
+
+/* El nombre ya está dentro desde otro navegador: se ofrece pedir el sitio en vez de un error seco. */
+.taken {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: var(--stroke) dashed var(--tomato-deep);
+  border-radius: var(--radius-control);
+  background: var(--field);
+}
+
+.takenTitle {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+
+.takenHelp {
+  font-size: 18px;
+  line-height: 1.4;
+  color: var(--card-ink-soft);
+}
+
+/* La espera: el nombre en grande, como en la carátula. */
+.waitName {
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: clamp(36px, 10vw, 52px);
+  line-height: 1.1;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
