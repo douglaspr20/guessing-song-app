@@ -54,9 +54,27 @@ La gente llega desde el post sin conocer el juego: lo primero que ve es la tarje
 
 ### Medir
 
-- [ ] **Prueba con grupos reales (S, sin código).** Jugar con 5-10 grupos y anotar qué piden repetir. Decide qué de P2 y P3 importa de verdad.
+- [ ] **Prueba con grupos reales (S, sin código).** Jugar con 5-10 grupos y anotar qué piden repetir. Decide qué de P2 y P3 importa de verdad. **1 de 5 hecha** (familia, octubre 2026): de ella salen los tres puntos de abajo.
 
 ### Juego
+
+Salen de la primera partida real (familia, con Spotify y desde un móvil como anfitrión).
+
+- [ ] **Las pistas también en los móviles (S).** Hoy las pistas (palabras, artista, letras) solo se ven en la pantalla del anfitrión; quien juega desde su móvil no las ve.
+  - El servidor ya las manda: `toPublicRound` incluye `hints` y `nextHintAt`, y `/api/play/:id` las devuelve. Falta pintarlas en el mando (`src/app/play/[gameId]/`) con el mismo estilo de las marcas del casete.
+  - Las pistas se desbloquean por tiempo, sin evento: el móvil tiene que volver a leer el estado en `nextHintAt` (o calcularlo con el reloj de la ronda, como hace la tele), respetando las pausas y el turno de «¡Lo sé!».
+- [ ] **Canciones que no son del género elegido (M).** Con salsa, merengue y vallenato a veces sonaban canciones de un grupo llamado Tennessee: ronda perdida.
+  - Sospecha: cuando `genre:"vallenato"` (o el que sea) no devuelve nada en Spotify, el buscador lo repite como palabra suelta (`genresAsText` en `src/lib/game/track-picker.ts`) y esa búsqueda de texto trae cualquier canción o artista que contenga la palabra, sea del género que sea.
+  - Antes de arreglar: registrar qué búsqueda produjo cada canción (la query y si fue `genre:` o texto) para confirmar el origen.
+  - Ideas: comprobar los géneros del artista (`/artists?ids=`) antes de aceptar la canción y descartarla si no encaja; acotar la búsqueda de texto (por ejemplo, con el mercado del idioma o con palabras clave del género); y mostrar en «Probar filtros» de dónde sale la canción.
+- [ ] **El anfitrión también juega (M/L).** Sin tele ni ordenador, la partida se lleva desde un móvil, y ese móvil no tiene «¡Lo sé!»: el anfitrión no puede quedarse el turno ni tener sus segundos para responder.
+  - Opcional y antes de empezar: «Yo también juego como…» obliga a elegir uno de los nombres (o equipos) de la partida.
+  - Ese dispositivo sigue llevando el control (pausar, revelar, repetir, siguiente) y además tiene su propio «¡Lo sé!» y su turno con cuenta atrás, igual que un móvil unido; si falla, queda fuera de esa pista como los demás.
+  - Dudas para planificarlo:
+    - **Cómo responde:** escribiendo en su pantalla, como un móvil, o de palabra (y se lo apunta él mismo con «¡Acertó!»).
+    - **Spoilers:** en modo Spotify, el móvil del anfitrión puede enseñar el título en la notificación o la pantalla de bloqueo; quizá avisar o recomendar el modo abierto.
+    - **Ventaja de control:** el anfitrión sabe cuándo revela y puede darse puntos; en familia no importa, pero conviene que «¡Acertó!» sobre sí mismo pase por el mismo turno que los demás.
+    - **Pantalla:** en un móvil caben a la vez el casete, los controles y el botón grande de «¡Lo sé!».
 
 
 ## P2 · Después: mejora la experiencia de quien ya juega
