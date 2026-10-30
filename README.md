@@ -51,7 +51,7 @@ Spotify only grants extended API access to registered businesses with 250k+ mont
 - **Open mode without any account:** 30-second iTunes previews played with a plain `<audio>` element, so anyone can try the game.
 - **Song sources:** general search (genres, language/market, year range, keyword) or your own playlists, including _Liked Songs_.
 - **Speed-based scoring:** title worth 3 / 2 / 1 points depending on how fast it is guessed (see the table above); **+1 for the artist**, independent from the title, only before the artist hint appears.
-- **Progressive hints:** number of words in the title → artist → first letters (`D_ M_____ L_____`).
+- **Progressive hints:** number of words in the title → artist → first letters (`D_ M_____ L_____`). They show on the TV and on every phone, including while answering.
 - **Forgiving answer matching:** ignores accents, case, `- Remastered 2011`, `(feat. …)` and small typos (Levenshtein similarity); a distinctive word of the artist's name is enough (`soda` → _Soda Stereo_).
 - **Host override:** accept an answer the matcher rejected (great for people who describe an English song they can't spell); points are computed from the moment the answer was given.
 - **Pause that really pauses:** the server-side clock for points and hints freezes too. Reloading mid-round leaves the round paused and **Seguir** resumes the clip where it stopped.

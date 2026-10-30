@@ -1,16 +1,10 @@
 import type { CSSProperties, ReactNode } from "react";
 import { formatClock } from "@/lib/client/api";
 import { useI18n } from "@/i18n/client";
+import { HintMarks, type HintMark } from "./HintMarks";
 import styles from "./Cassette.module.css";
 
-export interface HintMark {
-  key: string;
-  label: string;
-  at: string;
-  /** Valor ya desbloqueado (o null si aún no). */
-  value: string | null;
-  unlocked: boolean;
-}
+export type { HintMark };
 
 /**
  * La carcasa del casete: etiqueta, ventana con las dos bobinas y el contador de cuenta atrás,
@@ -65,14 +59,7 @@ export function Cassette({
         </div>
       </div>
 
-      <ol className={styles.marks} aria-label={m.common.hints}>
-        {hints.map((h) => (
-          <li key={h.key} className={`${styles.mark} ${h.unlocked ? styles.markOn : ""}`}>
-            {h.at} · {h.label}
-            <strong>{h.unlocked ? (h.value ?? m.common.unavailable) : "—"}</strong>
-          </li>
-        ))}
-      </ol>
+      <HintMarks hints={hints} />
     </section>
   );
 }

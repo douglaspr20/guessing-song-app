@@ -159,59 +159,6 @@
   color: var(--sky);
 }
 
-.marks {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin: clamp(10px, 1.2vw, 16px) 4% 0;
-  list-style: none;
-}
-
-.mark {
-  border-top: 6px solid var(--shell-hi);
-  padding-top: 8px;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(15px, 1.5vw, 22px);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--on-shell-soft);
-  transition:
-    border-color 400ms var(--ease-out),
-    color 400ms var(--ease-out);
-}
-
-.mark strong {
-  display: block;
-  font-family: var(--font-script);
-  font-weight: 700;
-  font-size: clamp(20px, 2.1vw, 30px);
-  letter-spacing: 0;
-  text-transform: none;
-  line-height: 1.15;
-  color: var(--card);
-  overflow-wrap: anywhere;
-}
-
-.markOn {
-  border-color: var(--saffron);
-  color: var(--saffron);
-}
-
-.markOn strong {
-  animation: write 600ms var(--ease-out) both;
-}
-
-/* La pista aparece con un pequeño deslizamiento, como al escribirla. */
-@keyframes write {
-  from {
-    transform: translateX(-10px);
-  }
-  to {
-    transform: none;
-  }
-}
-
 @media (max-width: 640px) {
   .window {
     border-radius: 28px;
@@ -221,9 +168,5 @@
   }
   .caption {
     letter-spacing: 0.08em;
-  }
-  .marks {
-    margin: 14px 0 0;
-    gap: 8px;
   }
 }

@@ -336,6 +336,8 @@ Una línea pequeña (16px, texto suave): «Hecho por **Douglas Pérez** · Códi
 ### Cassette (signature)
 La carcasa (28px, tornillos) lleva una etiqueta de cartulina con el título manuscrito y «vale N pts» en tomate hondo. La ventana es una píldora de hasta 900px que se mide a sí misma (container query): bobinas de clamp(48px, 16cqw, 150px) y contador de clamp(40px, 15cqw, 150px), así el contador nunca invade una bobina. El rollo de cada bobina cambia de radio según la cinta que le queda; los dientes del eje giran solo mientras suena. El contador va en azafrán y pasa a tomate con poco tiempo. Debajo, tres marcas de pista (20, 40 y 60 s) con borde superior de 6px que se encienden en azafrán y escriben la pista en Kalam.
 
+**Las marcas en el móvil** (`HintMarks compact`): las mismas tres marcas, sobre la cartulina del mando y no sobre la carcasa. Aparecen bajo el titular en cuanto la pista suena (antes no, para no meter ruido en la espera). La raya apagada va en `card-rule` y se enciende en azafrán; la etiqueta, en condensada de 14px en tinta suave, pasa a tinta al desbloquearse, y el valor va en Kalam de 22px. En «Tu turno» van bajo el reloj, y con el teclado abierto bajan a 12 y 18px.
+
 ### Scoreboard
 Carátula con filas: puesto en tomate hondo, nombre manuscrito, puntos a 46px tabulares. Cuando alguien suma, aparece «+N» en verde y la fila se ilumina de azafrán 1,2 s; al reordenarse, las filas se deslizan a su puesto (FLIP con transform) en vez de saltar.
 
