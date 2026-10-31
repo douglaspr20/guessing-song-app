@@ -11,7 +11,7 @@ A "guess the song" party game for family get-togethers. A clip of at least 60 se
 
 The interface is designed around a **home-recorded cassette**: every game is a numbered tape (`C-014`) on a shelf, the round timer is the tape running from one reel to the other, and the scoreboard is hand-written on the J-card.
 
-![A full game: 3-second countdown, the cassette timer, hints, answers with points, the reveal and the final podium](docs/demo.gif)
+![A real game, TV and phone side by side: a phone joins with the code, the cassette plays and a hint unlocks, the phone presses "¡Lo sé!" and dictates the title and artist, the TV scores it, and the game ends on the podium](docs/demo.gif)
 
 > The UI is in **Spanish and English**: it follows the browser's language, with an ES · EN switch in the top band (see [Languages](#languages)). The screenshots are in Spanish, the language the game was built for.
 
@@ -145,6 +145,7 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
 | `npm run build`            | Production build                                                                                |
 | `npm run db:up`            | Start the local Postgres container (`docker compose up -d`)                                     |
 | `npm run db:migrate`       | Apply Prisma migrations                                                                         |
+| `node scripts/capture-media.mjs` | Plays a real two-round game (TV + a phone that dictates its answer, real iTunes songs) and writes `docs/demo.gif` plus screenshots for social posts in `media/` (not committed). Needs `npm run db:up` and `npm run build`; runs its own server on port 3107. Never point it at production |
 
 ## API overview
 
