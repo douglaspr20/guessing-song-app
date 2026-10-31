@@ -88,7 +88,9 @@
   background: color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
-.chip[aria-pressed="true"] {
+/* Marcada se queda marcada aunque el ratón (o el dedo, que en móvil deja el hover puesto) siga encima. */
+.chip[aria-pressed="true"],
+.chip[aria-pressed="true"]:hover:not(:disabled) {
   background: var(--ink);
   color: var(--card);
 }

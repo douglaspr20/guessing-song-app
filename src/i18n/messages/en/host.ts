@@ -131,6 +131,7 @@ export const host = {
   statsFollowed: "Phones that followed",
   statsShared: "Results shared",
   statsReclaimed: "Seats recovered",
+  statsHostPlays: "With the host playing",
   statsStartedRate: (pct: string) => `${pct} of the created ones get started`,
   statsFinishedRate: (pct: string) => `${pct} of the started ones get finished`,
   statsNoRate: "No games yet to work out the percentage.",

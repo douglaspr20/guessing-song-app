@@ -123,6 +123,37 @@
   margin-top: 12px;
 }
 
+/* «Yo también juego»: casilla grande, una línea de ayuda y, al marcarla, los nombres para elegir. */
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--hit-min);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.toggle input {
+  width: 26px;
+  height: 26px;
+  accent-color: var(--tomato-deep);
+}
+
+.toggleHelp {
+  margin-top: 4px;
+  font-size: 18px;
+  line-height: 1.4;
+  color: var(--card-ink-soft);
+}
+
+.hostNames {
+  margin-top: 14px;
+}
+
 /* ---------- Ajustes ---------- */
 
 .settingsRow {

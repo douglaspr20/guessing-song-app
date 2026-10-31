@@ -18,7 +18,7 @@ const pauseSpotify = () => void getPlayer()?.pause().catch(() => {});
 export function useSpotifyPlayer(enabled = true) {
   const device = useSyncExternalStore(subscribe, getState, getServerState);
   const timer = useFragmentTimer(pauseSpotify);
-  const { start, freeze, thaw, reset } = timer; // estables: no cambian con cada tick
+  const { start, freeze, thaw, reset, prepare } = timer; // estables: no cambian con cada tick
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,18 +42,24 @@ export function useSpotifyPlayer(enabled = true) {
       let deviceId = getState().deviceId;
       if (!deviceId) throw new Error(currentMessages().game.player.notReady);
       setError(null);
-      reset();
-      let res = await requestPlay(gameId, roundId, { deviceId, offsetMs });
-      // Spotify olvidó el dispositivo (p. ej. tras una reconexión): se registra de nuevo y se reintenta.
-      if (res.status === 404 && res.data.error === "SPOTIFY_API_ERROR") {
-        deviceId = await reconnect();
-        res = await requestPlay(gameId, roundId, { deviceId, offsetMs });
+      // El servidor marca la ronda como sonando antes de que Spotify arranque: mientras, «arrancando».
+      prepare();
+      try {
+        let res = await requestPlay(gameId, roundId, { deviceId, offsetMs });
+        // Spotify olvidó el dispositivo (p. ej. tras una reconexión): se registra de nuevo y se reintenta.
+        if (res.status === 404 && res.data.error === "SPOTIFY_API_ERROR") {
+          deviceId = await reconnect();
+          res = await requestPlay(gameId, roundId, { deviceId, offsetMs });
+        }
+        if (!res.ok) throw new Error(res.data.message ?? currentMessages().game.player.cantPlay);
+        start(res.data.fragmentMs, res.data.remainingMs ?? res.data.fragmentMs);
+        return res.data;
+      } catch (e) {
+        reset();
+        throw e;
       }
-      if (!res.ok) throw new Error(res.data.message ?? currentMessages().game.player.cantPlay);
-      start(res.data.fragmentMs, res.data.remainingMs ?? res.data.fragmentMs);
-      return res.data;
     },
-    [reset, start],
+    [prepare, reset, start],
   );
 
   const pause = useCallback(async () => {

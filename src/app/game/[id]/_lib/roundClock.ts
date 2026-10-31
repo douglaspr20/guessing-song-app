@@ -69,13 +69,16 @@ export function deriveRoundClock({
   const nextDropInMs = nextTierInMs(elapsedMs, rules);
   const artistOpen = !!round?.artistAvailable && elapsedMs < rules.hintAtMs.artist;
 
+  // Arrancando: la ronda ya consta como sonando pero el audio aún carga. Se pinta como si sonara desde el
+  // principio, pero no es «sin audio»: congelarla ahora pausaría el servidor con la música a punto de sonar.
+  const starting = open && started && player.phase === "starting";
   const orphan = open && started && player.phase === "idle";
-  const orphanLeftMs = orphan ? Math.max(0, fragmentMs - elapsedMs) : 0;
+  const orphanLeftMs = orphan || starting ? Math.max(0, fragmentMs - elapsedMs) : 0;
   const needsFreeze = orphan && !round?.paused && orphanLeftMs > 0;
   const canResume = player.phase === "paused" || (orphan && orphanLeftMs > 0);
 
   let tapeProgress = 0;
-  if (orphan) tapeProgress = 1 - orphanLeftMs / (fragmentMs || 1);
+  if (orphan || starting) tapeProgress = 1 - orphanLeftMs / (fragmentMs || 1);
   else if (player.fragmentMs) tapeProgress = 1 - player.remainingMs / player.fragmentMs;
   else if (open && started) tapeProgress = 1;
 
@@ -90,7 +93,7 @@ export function deriveRoundClock({
     orphan,
     orphanLeftMs,
     needsFreeze,
-    shownLeftMs: orphan ? orphanLeftMs : player.remainingMs,
+    shownLeftMs: orphan || starting ? orphanLeftMs : player.remainingMs,
     tapeProgress,
     canResume,
     caption: round?.buzz ? text.answering(round.buzz.name || text.someone) : captionFor(started, canResume, player.phase, text),

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRefreshAt } from "@/hooks/useRefreshAt";
-import { api, ApiError, type Game, type GuessRow, errorText } from "@/lib/client/api";
+import { api, ApiError, type HostGame as Game, type GuessRow, errorText } from "@/lib/client/api";
 import { HINT_REFRESH_DELAY_MS } from "@/lib/client/hints";
 
 /**

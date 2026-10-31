@@ -3,6 +3,7 @@ import { assertOwnerCanCreateGame } from "@/lib/access/limits";
 import { currentOwner, requireOwner } from "@/lib/access/owner";
 import { handle } from "@/lib/errors";
 import { z } from "zod";
+import { takeHostSeat } from "@/lib/game/join";
 import { createGame, deleteAllGames, listGames } from "@/lib/game/service";
 
 /** Estantería del usuario o invitado actual: sus últimas partidas con el podio. Query: ?limit=12 */
@@ -16,12 +17,16 @@ export const GET = handle(async (req: NextRequest) => {
 
 /**
  * Crea una partida para el usuario o invitado actual.
- * Body: { mode?, players: string[], rounds: number, fragmentSeconds?: number (>= 60), filters?: GameFilters }
+ * Body: { mode?, players: string[], rounds: number, fragmentSeconds?: number (>= 60), filters?: GameFilters,
+ * hostPlaysAs?: string (el anfitrión también juega con ese nombre) }
  */
 export const POST = handle(async (req: Request) => {
   const owner = await requireOwner();
   await assertOwnerCanCreateGame(owner);
-  const game = await createGame(await req.json(), owner);
+  const body = await req.json();
+  const game = await createGame(body, owner);
+  // `createGame` ya comprobó que el nombre es uno de los de la partida.
+  if (typeof body?.hostPlaysAs === "string" && body.hostPlaysAs.trim()) await takeHostSeat(game.id, body.hostPlaysAs);
   return Response.json(game, { status: 201 });
 });
 

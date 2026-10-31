@@ -347,10 +347,14 @@ export async function listParticipants(gameId: string) {
     team: p.player.color ? { name: p.player.name, color: p.player.color } : null,
     /** Otro navegador pide quedarse con su sitio: el anfitrión decide. */
     claim: !!p.claimHash && claimFresh(p.claimAt),
+    /** Es el propio anfitrión, que también juega: no se le puede sacar. */
+    host: p.isHost,
   }));
 }
 
 export async function kickParticipant(gameId: string, participantId: string) {
+  const host = await db.participant.findFirst({ where: { id: participantId, gameId, isHost: true, kickedAt: null } });
+  if (host) throw new AppError("CANT_KICK_HOST", 409);
   const { count } = await db.participant.updateMany({
     where: { id: participantId, gameId, kickedAt: null },
     data: { kickedAt: new Date() },
@@ -362,4 +366,55 @@ export async function kickParticipant(gameId: string, participantId: string) {
 export async function setJoinOpen(gameId: string, open: boolean) {
   await db.game.update({ where: { id: gameId }, data: { joinOpen: open } });
   emit({ type: "join_toggled", gameId, open });
+}
+
+// ---------- El anfitrión también juega ----------
+
+/**
+ * El anfitrión juega desde su propia pantalla con uno de los nombres de la partida: este navegador pasa a ser
+ * también ese participante (su cookie `p_`), con su «¡Lo sé!» y su turno. Quien llama ya comprobó que es el dueño.
+ * Solo antes de la primera ronda; si ya jugaba con otro nombre, se cambia.
+ */
+export async function takeHostSeat(gameId: string, rawName: string) {
+  const name = cleanName(rawName);
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+    include: { players: { include: { members: true } }, participants: { where: { kickedAt: null } } },
+  });
+  if (!game) throw new AppError("GAME_NOT_FOUND", 404);
+  if (game.currentRound > 0 || game.status !== "LOBBY") throw new AppError("GAME_ALREADY_STARTED", 409);
+
+  const lower = name.toLowerCase();
+  const seat =
+    game.format === "teams"
+      ? game.players.flatMap((p) => p.members.map((m) => ({ playerId: p.id, memberId: m.id as string | null, name: m.name })))
+          .find((s) => s.name.toLowerCase() === lower)
+      : game.players.map((p) => ({ playerId: p.id, memberId: null as string | null, name: p.name })).find((s) => s.name.toLowerCase() === lower);
+  if (!seat) throw new AppError("HOST_NAME_NOT_FOUND", 404);
+
+  const current = game.participants.find((p) => p.isHost);
+  const holder = game.participants.find((p) => (seat.memberId ? p.memberId === seat.memberId : p.playerId === seat.playerId));
+  if (holder && holder.id !== current?.id) throw new AppError("NAME_TAKEN", 409);
+
+  const token = randomToken();
+  const data = { playerId: seat.playerId, memberId: seat.memberId, name: seat.name, tokenHash: sha256(token) };
+  const participant = current
+    ? await db.participant.update({ where: { id: current.id }, data })
+    : await db.participant.create({ data: { ...data, gameId, isHost: true } });
+
+  (await cookies()).set(participantCookie(gameId), token, cookieOptions(PARTICIPANT_TTL_SECONDS));
+  emit({ type: "participant_joined", gameId, participantId: participant.id, name: participant.name });
+  return { participantId: participant.id, name: participant.name };
+}
+
+/** El anfitrión deja de jugar (solo antes de la primera ronda): su sitio queda libre para un móvil. */
+export async function leaveHostSeat(gameId: string) {
+  const game = await db.game.findUnique({ where: { id: gameId }, select: { currentRound: true, status: true } });
+  if (!game) throw new AppError("GAME_NOT_FOUND", 404);
+  if (game.currentRound > 0 || game.status !== "LOBBY") throw new AppError("GAME_ALREADY_STARTED", 409);
+  const host = await db.participant.findFirst({ where: { gameId, isHost: true, kickedAt: null } });
+  (await cookies()).delete(participantCookie(gameId));
+  if (!host) return;
+  await db.participant.delete({ where: { id: host.id } });
+  emit({ type: "participant_left", gameId, participantId: host.id });
 }

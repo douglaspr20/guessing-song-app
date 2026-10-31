@@ -2,8 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-/** Estado del fragmento: sin sonar, sonando, en pausa o terminado. */
-export type FragmentPhase = "idle" | "playing" | "paused" | "ended";
+/**
+ * Estado del fragmento: sin sonar, arrancando (ya pedido al servidor, esperando al audio), sonando, en pausa o
+ * terminado. `starting` no es `idle`: si en ese momento llega el estado de la partida, la ronda no se da por
+ * «sin audio» (eso la congelaría en el servidor mientras ya suena).
+ */
+export type FragmentPhase = "idle" | "starting" | "playing" | "paused" | "ended";
 
 /**
  * Cuenta atrás del fragmento, común a cualquier reproductor: arranca, se pausa, se reanuda
@@ -80,10 +84,16 @@ export function useFragmentTimer(onEnd: () => void) {
     setPhase("idle");
   }, [clearTimers]);
 
+  /** Se ha pedido que suene y se espera al audio: `start` lo pone en marcha, `reset` lo deja si falla. */
+  const prepare = useCallback(() => {
+    clearTimers();
+    setPhase("starting");
+  }, [clearTimers]);
+
   useEffect(() => clearTimers, [clearTimers]);
 
   return useMemo(
-    () => ({ phase, fragmentMs, remainingMs, start, freeze, thaw, reset }),
-    [phase, fragmentMs, remainingMs, start, freeze, thaw, reset],
+    () => ({ phase, fragmentMs, remainingMs, start, freeze, thaw, reset, prepare }),
+    [phase, fragmentMs, remainingMs, start, freeze, thaw, reset, prepare],
   );
 }

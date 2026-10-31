@@ -68,14 +68,9 @@ Salen de la primera partida real (familia, con Spotify y desde un móvil como an
   - Cada ronda guarda de qué búsqueda salió (`Round.pickedVia`).
   - Spotify ya no da los géneros de los artistas, así que la idea de comprobarlos con `/artists?ids=` no sirve.
   - Pendiente cuando pase el límite de Spotify: comprobar con pocas consultas qué devuelve hoy `genre:"rock en espanol" year:1970-2010`.
-- [ ] **El anfitrión también juega (M/L).** Sin tele ni ordenador, la partida se lleva desde un móvil, y ese móvil no tiene «¡Lo sé!»: el anfitrión no puede quedarse el turno ni tener sus segundos para responder.
-  - Opcional y antes de empezar: «Yo también juego como…» obliga a elegir uno de los nombres (o equipos) de la partida.
-  - Ese dispositivo sigue llevando el control (pausar, revelar, repetir, siguiente) y además tiene su propio «¡Lo sé!» y su turno con cuenta atrás, igual que un móvil unido; si falla, queda fuera de esa pista como los demás.
-  - Dudas para planificarlo:
-    - **Cómo responde:** escribiendo en su pantalla, como un móvil, o de palabra (y se lo apunta él mismo con «¡Acertó!»).
-    - **Spoilers:** en modo Spotify, el móvil del anfitrión puede enseñar el título en la notificación o la pantalla de bloqueo; quizá avisar o recomendar el modo abierto.
-    - **Ventaja de control:** el anfitrión sabe cuándo revela y puede darse puntos; en familia no importa, pero conviene que «¡Acertó!» sobre sí mismo pase por el mismo turno que los demás.
-    - **Pantalla:** en un móvil caben a la vez el casete, los controles y el botón grande de «¡Lo sé!».
+- [x] **El anfitrión también juega (M/L).** «Yo también juego» al grabar (o desde la sala antes de empezar) obliga a elegir uno de los nombres.
+  - Su pantalla tiene una franja «¡Lo sé!» sobre el casete, y en su turno el formulario de respuesta. Lo juzga el servidor; en su turno no tiene «Lo dijo bien», «Falló» ni «Revelar».
+  - De paso se arregló una carrera al arrancar cada pista: si el estado llegaba antes que el audio, la ronda se quedaba en pausa en el servidor con la música sonando, y nadie podía pulsar.
 
 
 ## P2 · Después: mejora la experiencia de quien ya juega

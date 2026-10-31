@@ -7,7 +7,7 @@ import ui from "@/components/ui.module.css";
 import { useRemainingMs } from "@/hooks/useNow";
 import { useI18n } from "@/i18n/client";
 import { api, ApiError } from "@/lib/client/api";
-import styles from "./play.module.css";
+import styles from "./Buzzer.module.css";
 
 /** Lo que dijo el servidor de la respuesta enviada. */
 export interface Verdict {

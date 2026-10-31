@@ -542,7 +542,10 @@ export async function startNextRound(gameId: string) {
       return created;
     });
     emit({ type: "round_started", gameId, roundId: round.id, number });
-    if (number === 1) await recordGameEvent("game_started", gameId);
+    if (number === 1) {
+      await recordGameEvent("game_started", gameId);
+      if (game.participants.some((p) => p.isHost && !p.kickedAt)) await recordGameEvent("host_plays", gameId);
+    }
     if (number < game.totalRounds) schedulePreload(gameId);
     return toPublicRound(round, game);
   } catch (err) {

@@ -9,6 +9,19 @@ export type GameSummary = GameList["games"][number];
 export type GuessRow = Awaited<ReturnType<typeof getRoundGuesses>>[number];
 export type Player = Game["players"][number];
 
+/** El sitio del anfitrión cuando también juega desde su pantalla (`GET /api/games/:id`). */
+export interface HostSeat {
+  id: string;
+  name: string;
+  playerId: string;
+  memberId: string | null;
+  /** Ya falló en la ronda en curso (él o su equipo). */
+  lockedOut: boolean;
+}
+
+/** La partida tal como la ve su anfitrión. */
+export type HostGame = Game & { hostSeat: HostSeat | null };
+
 /** Quién usa la app (`/api/access/status`). */
 export interface AccessStatus {
   user: {

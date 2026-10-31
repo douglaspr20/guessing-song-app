@@ -168,6 +168,7 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
 | POST                        | `/api/games/:id/replay`                                                | "Same again": a new game with the same settings and people (once the game is over)     |
 | POST · GET · DELETE         | `/api/join/claim`                                                      | A browser that lost its session asks for its seat / asks if it was let in / withdraws    |
 | POST                        | `/api/games/:id/participants/:pid/claim`                               | The host lets that request in or refuses it `{ accept }`                                |
+| PUT · DELETE                | `/api/games/:id/host-seat`                                             | The host plays too as one of the names `{ name }` / stops playing (before the first track) |
 | POST                        | `/api/play/:id/follow`                                                 | A phone moves to the replayed game with its same name and seat                         |
 | POST · DELETE               | `/api/games/:id/share`                                                 | Create (or get) the public link of a finished game's result / stop sharing it         |
 | POST                        | `/api/play/:id/share`                                                  | A joined phone shares the same link                                                    |
@@ -236,6 +237,15 @@ A phone is identified by a cookie (`p_<game>`). If it is lost — typically the 
 4. It is the same participant, so team, points and a missed track of the current round stay as they were (a player who already failed can't use this to buzz again).
 
 Closing the entry does not block it (it is coming back, not joining), requests are limited to 5 per connection every 10 minutes, and a kicked player can't be reclaimed. No PIN on purpose: nobody needs to remember anything, and nobody can take a seat just by typing the same name.
+
+### The host plays too
+
+Without a TV, the game is run from one phone, and that phone had no "¡Lo sé!". Now the host can also play as one of the names: with **Yo también juego** when recording the game (`hostPlaysAs`), or from the lobby before the first track (`PUT /api/games/:id/host-seat`).
+
+- The host's browser simply becomes that participant as well (`p_<game>` cookie, `Participant.isHost`). It uses the same buzz and answer routes as a phone, so the **server judges the answer**.
+- In the host's own turn, "Lo dijo bien", "Falló", "Revelar" and the award shortcuts are off, so nobody can award themselves. "Cancelar turno" stays, for an accidental press. Outside that turn, the manual tools stay as they are (they are needed for people without a phone).
+- On screen, a "¡Lo sé!" strip sits above the cassette; in the host's turn it becomes the answer form. Their seat shows as "anfitrión" in the join panel and can't be kicked. "Otra igual" keeps it.
+- The panel counts how many games started with the host playing (`host_plays`).
 
 ### Sharing a result
 

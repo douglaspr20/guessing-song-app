@@ -22,7 +22,7 @@ function whenSeekable(audio: HTMLAudioElement): Promise<void> {
 export function usePreviewPlayer(enabled = true) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pauseAudio = useCallback(() => audioRef.current?.pause(), []);
-  const { phase, fragmentMs, remainingMs, start, freeze, thaw, reset } = useFragmentTimer(pauseAudio);
+  const { phase, fragmentMs, remainingMs, start, freeze, thaw, reset, prepare } = useFragmentTimer(pauseAudio);
   const [error, setError] = useState<string | null>(null);
 
   const audio = useCallback(() => (audioRef.current ??= new Audio()), []);
@@ -42,24 +42,30 @@ export function usePreviewPlayer(enabled = true) {
   const playFragment = useCallback(
     async (gameId: string, roundId: string, offsetMs = 0) => {
       setError(null);
-      reset();
-      const res = await requestPlay(gameId, roundId, { offsetMs });
-      if (!res.ok) throw new Error(res.data.message ?? currentMessages().game.player.cantPlay);
-      if (!res.data.audioUrl) throw new Error(currentMessages().game.player.noPreview);
-
-      const el = audio();
-      if (el.src !== res.data.audioUrl) el.src = res.data.audioUrl;
-      await whenSeekable(el);
-      el.currentTime = offsetMs / 1000;
+      // El servidor marca la ronda como sonando antes de que cargue el audio: mientras, «arrancando».
+      prepare();
       try {
-        await el.play();
-      } catch {
-        throw new Error(currentMessages().game.player.audioBlocked);
+        const res = await requestPlay(gameId, roundId, { offsetMs });
+        if (!res.ok) throw new Error(res.data.message ?? currentMessages().game.player.cantPlay);
+        if (!res.data.audioUrl) throw new Error(currentMessages().game.player.noPreview);
+
+        const el = audio();
+        if (el.src !== res.data.audioUrl) el.src = res.data.audioUrl;
+        await whenSeekable(el);
+        el.currentTime = offsetMs / 1000;
+        try {
+          await el.play();
+        } catch {
+          throw new Error(currentMessages().game.player.audioBlocked);
+        }
+        start(res.data.fragmentMs, res.data.remainingMs ?? res.data.fragmentMs);
+        return res.data;
+      } catch (e) {
+        reset();
+        throw e;
       }
-      start(res.data.fragmentMs, res.data.remainingMs ?? res.data.fragmentMs);
-      return res.data;
     },
-    [audio, reset, start],
+    [audio, prepare, reset, start],
   );
 
   const pause = useCallback(async () => {

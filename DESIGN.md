@@ -338,6 +338,13 @@ La carcasa (28px, tornillos) lleva una etiqueta de cartulina con el título manu
 
 **Las marcas en el móvil** (`HintMarks compact`): las mismas tres marcas, sobre la cartulina del mando y no sobre la carcasa. Aparecen bajo el titular en cuanto la pista suena (antes no, para no meter ruido en la espera). La raya apagada va en `card-rule` y se enciende en azafrán; la etiqueta, en condensada de 14px en tinta suave, pasa a tinta al desbloquearse, y el valor va en Kalam de 22px. En «Tu turno» van bajo el reloj, y con el teclado abierto bajan a 12 y 18px.
 
+### El anfitrión también juega
+- **«Yo también juego» en `/new`:** una casilla en «Quién juega» (condensada de 22px, casilla de 26px en tomate hondo), una línea de ayuda y, al marcarla, los nombres como chips manuscritos. Uno marcado se queda en tinta aunque el ratón o el dedo siga encima.
+- **En la sala:** una carátula «¿Juegas tú también?» (o «Juegas como Ana») con los mismos chips y «No juego».
+- **Durante la pista:** una carátula con rayas sobre el casete. Lleva «Juegas como» con el nombre en Kalam y el botón tomate en franja: 96px de alto, la mano al lado del texto y no encima, para no robarle el sitio al casete. Al empezar cada pista se trae a la vista si quedó por encima.
+- **En su turno:** la franja pasa a ser el formulario de respuesta del móvil, y el aviso del turno con «Lo dijo bien» no aparece.
+- **En la lista de quién está dentro:** su fila dice «anfitrión» en lugar del botón de sacar.
+
 ### Scoreboard
 Carátula con filas: puesto en tomate hondo, nombre manuscrito, puntos a 46px tabulares. Cuando alguien suma, aparece «+N» en verde y la fila se ilumina de azafrán 1,2 s; al reordenarse, las filas se deslizan a su puesto (FLIP con transform) en vez de saltar.
 

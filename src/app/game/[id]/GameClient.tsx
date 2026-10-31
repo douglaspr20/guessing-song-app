@@ -15,6 +15,8 @@ import { AttemptsList } from "./_components/AttemptsList";
 import { BuzzBanner } from "./_components/BuzzBanner";
 import { JoinPanel } from "./_components/JoinPanel";
 import { FeedbackLine } from "./_components/FeedbackLine";
+import { HostBuzzer } from "./_components/HostBuzzer";
+import { HostSeatPicker } from "./_components/HostSeatPicker";
 import { Finale } from "./_components/Finale";
 import { NextActions } from "./_components/NextActions";
 import { ReadyCard } from "./_components/ReadyCard";
@@ -71,7 +73,19 @@ export function GameClient() {
 
         <div className={styles.layout}>
           <div className={styles.deck}>
-            {ctl.buzz && (
+            {/* El anfitrión que también juega: su botón, o su respuesta en su turno (el turno de otro lo cuenta el aviso). */}
+            {round && clock.open && ctl.hostSeat && (!ctl.buzz || ctl.ownTurn) && (
+              <HostBuzzer
+                gameId={game.id}
+                round={round}
+                seat={ctl.hostSeat}
+                player={game.players.find((p) => p.id === ctl.hostSeat?.playerId)}
+                fetchedAt={ctl.fetchedAt}
+                onChanged={() => ctl.refresh().catch(() => {})}
+              />
+            )}
+
+            {ctl.buzz && !ctl.ownTurn && (
               <BuzzBanner
                 buzz={ctl.buzz}
                 leftMs={ctl.buzzLeftMs}
@@ -85,6 +99,9 @@ export function GameClient() {
             )}
 
             {!round && <ReadyCard game={game} />}
+            {!round && game.status !== "FINISHED" && (
+              <HostSeatPicker game={game} onChanged={() => ctl.refresh().catch(() => {})} />
+            )}
 
             {round && clock.open && (
               <>
@@ -104,6 +121,7 @@ export function GameClient() {
                   onReveal={actions.reveal}
                   onAwardTitle={actions.awardTitle}
                   onAwardArtist={actions.awardArtist}
+                  focusOnStart={!ctl.hostSeat}
                 />
               </>
             )}
