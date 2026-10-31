@@ -122,6 +122,63 @@
   padding: 0 14px;
 }
 
+/* El campo y su micrófono en la misma fila. */
+.fieldRow {
+  display: flex;
+  gap: 8px;
+}
+
+.fieldRow input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Micrófono: cuadrado del alto del campo, borde de tinta; escuchando, en tomate y con un pulso suave. */
+.micBtn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  min-height: 64px;
+  border: var(--stroke) solid var(--ink);
+  border-radius: var(--radius-control);
+  background: var(--card);
+  color: var(--ink);
+  transition: background-color 140ms var(--ease-out), color 140ms var(--ease-out);
+}
+
+.micBtn:focus-visible {
+  outline: 3px solid var(--tomato-deep);
+  outline-offset: 2px;
+}
+
+.micBtn[aria-pressed="true"] {
+  background: var(--tomato);
+  border-color: var(--tomato);
+  color: var(--on-tomato);
+  animation: listen 1.2s ease-in-out infinite;
+}
+
+.micBtn:disabled {
+  opacity: 0.45;
+}
+
+@keyframes listen {
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--tomato) 30%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .micBtn[aria-pressed="true"] {
+    animation: none;
+  }
+}
+
+.micNote {
+  font-size: 17px;
+}
+
 .answerField input:focus-visible {
   outline: 3px solid var(--tomato-deep);
   outline-offset: 2px;
@@ -179,6 +236,10 @@
   .answerField input {
     min-height: 52px;
     font-size: 24px;
+  }
+  .micBtn {
+    width: 52px;
+    min-height: 52px;
   }
   .answerClock {
     font-size: 56px;

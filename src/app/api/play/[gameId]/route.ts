@@ -15,5 +15,7 @@ export const GET = handle(async (_req: NextRequest, ctx: RouteContext<"/api/play
   return Response.json({
     game,
     me: { id: me.id, name: me.name, playerId: me.playerId, memberId: me.memberId, lockedOut },
+    // De los filtros solo hace falta el idioma de la música: en él se escucha al dictar la respuesta.
+    musicLanguage: full.filters.language ?? null,
   });
 });

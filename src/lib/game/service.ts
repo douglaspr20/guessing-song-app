@@ -18,6 +18,7 @@ import {
   PLAYLIST_PAGE_SIZE,
 } from "@/lib/spotify/sources";
 import { emit } from "./events";
+import { pickAvoidingHeard } from "./fresh";
 import { createGameSchema, gameFiltersSchema, type CreateGameInput, type GameFilters, type GameMode, type TeamInput } from "./filters";
 import { isCorrectArtist, isCorrectGuess } from "./matcher";
 import { pickOpenTrack, type OpenTrackSource } from "./open-picker";
@@ -164,6 +165,8 @@ function toPublicGame(
     answerSeconds: game.answerSeconds,
     /** Al fallar queda fuera "person" (solo quien falló) o "team" (todo su equipo). */
     lockout: game.lockout as "person" | "team",
+    /** No repetir las canciones de las últimas N partidas del mismo dueño. */
+    freshGames: game.freshGames,
     filters: JSON.parse(game.filters) as GameFilters,
     /** La partida creada con «Otra igual» al terminar esta (los móviles unidos pasan a ella solos). */
     nextGameId: game.nextGameId,
@@ -248,20 +251,41 @@ async function finishIfLastRound(tx: Prisma.TransactionClient, game: Game, round
 /** Canción elegida (lo que se guarda en `Game.nextTrack`). */
 type PreparedTrack = PickedTrack;
 
+/** Canciones que sonaron en las últimas `freshGames` partidas del mismo dueño (sin contar esta). */
+export async function recentlyHeardTrackIds(game: Pick<Game, "id" | "userId" | "guestId" | "freshGames">) {
+  if (game.freshGames <= 0) return new Set<string>();
+  const recent = await db.game.findMany({
+    where: { ...sameOwner(game), id: { not: game.id } },
+    orderBy: { createdAt: "desc" },
+    take: game.freshGames,
+    select: { id: true },
+  });
+  if (!recent.length) return new Set<string>();
+  const rows = await db.round.findMany({
+    where: { gameId: { in: recent.map((g) => g.id) } },
+    select: { trackId: true },
+    distinct: ["trackId"],
+  });
+  return new Set(rows.map((r) => r.trackId));
+}
+
 async function chooseTrack(game: Game & { rounds: Round[] }, exclude: string[] = []): Promise<PreparedTrack> {
   const filters = gameFiltersSchema.parse(JSON.parse(game.filters));
-  const usedTrackIds = new Set([...game.rounds.map((r) => r.trackId), ...exclude]);
-  if (game.mode === "open") return pickOpenTrack({ filters, usedTrackIds, source: itunesSource });
-  const picked = await pickTrack({
-    filters,
-    fragmentMs: game.fragmentSeconds * 1000,
-    usedTrackIds,
-    source: spotifySourceFor(spotifyUserOf(game)),
-    searchPageSize: SEARCH_PAGE_SIZE,
-    playlistPageSize: PLAYLIST_PAGE_SIZE,
-    maxSearchOffset: SEARCH_MAX_OFFSET,
-  });
-  return picked;
+  const used = new Set([...game.rounds.map((r) => r.trackId), ...exclude]);
+  const heard = await recentlyHeardTrackIds(game);
+  return pickAvoidingHeard(used, heard, (usedTrackIds) =>
+    game.mode === "open"
+      ? pickOpenTrack({ filters, usedTrackIds, source: itunesSource })
+      : pickTrack({
+          filters,
+          fragmentMs: game.fragmentSeconds * 1000,
+          usedTrackIds,
+          source: spotifySourceFor(spotifyUserOf(game)),
+          searchPageSize: SEARCH_PAGE_SIZE,
+          playlistPageSize: PLAYLIST_PAGE_SIZE,
+          maxSearchOffset: SEARCH_MAX_OFFSET,
+        }),
+  );
 }
 
 /** Elige en segundo plano la canción de la próxima ronda y la guarda en la partida. */
@@ -326,6 +350,7 @@ export async function createGame(
           format: data.format,
           answerSeconds: data.answerSeconds,
           lockout: data.lockout,
+          freshGames: data.freshGames,
           maxTeamSize: data.format === "teams" ? data.maxTeamSize : null,
           players: {
             create:
@@ -371,6 +396,7 @@ function replayInput(game: Game & { players: PlayerWithMembers[] }): CreateGameI
     fragmentSeconds: game.fragmentSeconds,
     answerSeconds: game.answerSeconds,
     lockout: game.lockout as "person" | "team",
+    freshGames: game.freshGames,
     filters: gameFiltersSchema.parse(JSON.parse(game.filters)),
   };
   if (game.format === "teams") {

@@ -82,6 +82,7 @@ export function GameClient() {
                 player={game.players.find((p) => p.id === ctl.hostSeat?.playerId)}
                 fetchedAt={ctl.fetchedAt}
                 onChanged={() => ctl.refresh().catch(() => {})}
+                musicLanguage={game.filters.language ?? null}
               />
             )}
 

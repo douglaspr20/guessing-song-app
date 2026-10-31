@@ -28,7 +28,7 @@ test("el anfitrión también juega: lo elige al grabar, pulsa «¡Lo sé!» en s
   await expect(form).toBeVisible();
   await expect(page.getByRole("button", { name: "Lo dijo bien" })).toHaveCount(0);
   const round = await playingRound();
-  await form.getByLabel("Canción").fill(round.trackName);
+  await form.getByLabel("Canción", { exact: true }).fill(round.trackName);
   await form.getByRole("button", { name: "Enviar respuesta" }).click();
 
   await expect(page.getByText(`Era ${round.trackName}`)).toBeVisible({ timeout: 15_000 });

@@ -338,6 +338,16 @@ La carcasa (28px, tornillos) lleva una etiqueta de cartulina con el título manu
 
 **Las marcas en el móvil** (`HintMarks compact`): las mismas tres marcas, sobre la cartulina del mando y no sobre la carcasa. Aparecen bajo el titular en cuanto la pista suena (antes no, para no meter ruido en la espera). La raya apagada va en `card-rule` y se enciende en azafrán; la etiqueta, en condensada de 14px en tinta suave, pasa a tinta al desbloquearse, y el valor va en Kalam de 22px. En «Tu turno» van bajo el reloj, y con el teclado abierto bajan a 12 y 18px.
 
+### Dictar la respuesta
+- **El micrófono** va a la derecha de cada campo, en la misma fila: un cuadrado del alto del campo (64 px, 52 en pantallas bajitas), con borde de tinta y el icono `Mic`.
+- **Escuchando**, se rellena de tomate con un halo que late suavemente (sin halo con «reducir movimiento»), y el campo dice «Te escucho…».
+- **Errores y ayuda:** los avisos del micrófono y la sugerencia del teclado (cuando el navegador no tiene reconocimiento) van en una línea de texto suave de 17 px bajo los campos.
+- **Modo teclado:** solo lo activa un campo de texto. Pulsar el micrófono no encoge el reloj, porque si no el botón se movería bajo el dedo.
+
+### No repetir canciones
+- En «Cómo se juega» de `/new`, bajo «Rondas», hay un segmentado «No repetir canciones de las últimas partidas»: No · 1 · 3 · 5 · 10.
+- Debajo, una línea de ayuda avisa de que puede repetirse alguna si los filtros se quedan sin canciones nuevas.
+
 ### El anfitrión también juega
 - **«Yo también juego» en `/new`:** una casilla en «Quién juega» (condensada de 22px, casilla de 26px en tomate hondo), una línea de ayuda y, al marcarla, los nombres como chips manuscritos. Uno marcado se queda en tinta aunque el ratón o el dedo siga encima.
 - **En la sala:** una carátula «¿Juegas tú también?» (o «Juegas como Ana») con los mismos chips y «No juego».
