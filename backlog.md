@@ -49,6 +49,8 @@ La gente llega desde el post sin conocer el juego: lo primero que ve es la tarje
 ### El post (sin código)
 
 - [ ] **Material para el post.** Vídeo de 30-45 s de una partida real (tele + varios móviles pulsando «¡Lo sé!»), 3-4 capturas de apoyo, la historia (por qué y para quién) y tres puntos técnicos: Spotify Web Playback SDK, tiempo real con Ably, CI con e2e y acceso del anfitrión con TOTP.
+  - Hecho: el GIF del README (tele y móvil) y las capturas, con `node scripts/capture-media.mjs`. Salen en `media/linkedin/`: tele en plena ronda, móviles con «¡Lo sé!» y el dictado, podio, tarjetas para compartir y crear partida.
+  - Falta: el vídeo de una partida real, la historia y los puntos técnicos.
 
 ## P1 · Siguiente: valor alto y esfuerzo bajo
 
