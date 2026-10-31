@@ -27,6 +27,8 @@ interface Props {
   onReveal: () => void;
   onAwardTitle: () => void;
   onAwardArtist: () => void;
+  /** Llevar el cursor al título al empezar a sonar (no si el anfitrión también juega). */
+  focusOnStart?: boolean;
 }
 
 /**
@@ -47,6 +49,7 @@ export function AnswerForm({
   onReveal,
   onAwardTitle,
   onAwardArtist,
+  focusOnStart = true,
 }: Props) {
   const { m } = useI18n();
   const g = m.game;
@@ -54,10 +57,11 @@ export function AnswerForm({
   const [artist, setArtist] = useState("");
   const titleRef = useRef<HTMLInputElement>(null);
 
-  // En cuanto empieza a sonar, el cursor va al título (Esc lo suelta para usar los atajos).
+  // En cuanto empieza a sonar, el cursor va al título (Esc lo suelta para usar los atajos). Si el anfitrión
+  // también juega no: lo suyo es «¡Lo sé!», y en el móvil el salto bajaría la página y abriría el teclado.
   useEffect(() => {
-    if (clock.started) titleRef.current?.focus();
-  }, [clock.started]);
+    if (clock.started && focusOnStart) titleRef.current?.focus();
+  }, [clock.started, focusOnStart]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();

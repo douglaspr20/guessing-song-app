@@ -79,6 +79,7 @@ export async function getStats(window: StatWindow = "7d", now = new Date()) {
     phones: { joined: total("phone_joined"), followed: total("phone_followed") },
     shared: total("result_shared"),
     reclaimed: total("seat_reclaimed"),
+    hostPlays: total("host_plays"),
     daily: days,
   };
 }

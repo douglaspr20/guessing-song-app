@@ -66,14 +66,18 @@ export function useGameController(gameId: string) {
   const finished = !!game && (game.status === "FINISHED" || game.currentRound >= game.totalRounds);
   const ready = player.status === "ready";
   const roundOpen = !!round && clock.open;
+  /** El anfitrión también juega desde aquí (con qué nombre), o null. */
+  const hostSeat = game?.hostSeat ?? null;
+  /** Es el turno del propio anfitrión: lo juzga el servidor, así que no puede darse los puntos a mano. */
+  const ownTurn = !!buzz && !!hostSeat && buzz.participantId === hostSeat.id;
   /** Qué se puede hacer ahora mismo: lo comparten los botones y los atajos. */
   const can = {
     next: !roundOpen && (finished || (!busy && ready)),
     play: roundOpen && !busy && ready && !buzz,
     pause: roundOpen && !busy && !buzz && (player.phase === "playing" || clock.canResume),
-    reveal: roundOpen && !busy,
-    awardTitle: roundOpen && clock.started && !busy && !!selectedPlayer && !round?.winnerPlayerId,
-    awardArtist: roundOpen && clock.started && !busy && !!selectedPlayer && clock.artistOpen,
+    reveal: roundOpen && !busy && !ownTurn,
+    awardTitle: roundOpen && clock.started && !busy && !!selectedPlayer && !round?.winnerPlayerId && !ownTurn,
+    awardArtist: roundOpen && clock.started && !busy && !!selectedPlayer && clock.artistOpen && !ownTurn,
   };
 
   /** Ejecuta una acción del anfitrión bloqueando los botones y mostrando su error. */
@@ -162,6 +166,9 @@ export function useGameController(gameId: string) {
     can,
     buzz,
     buzzLeftMs,
+    hostSeat,
+    ownTurn,
+    fetchedAt,
     liveEvent,
     liveStatus,
     actions: {

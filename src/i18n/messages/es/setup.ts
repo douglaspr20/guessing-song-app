@@ -20,6 +20,10 @@ export const setup = {
   // Lo que impide grabar
   needOnePlayer: "Escribe el nombre de al menos un jugador.",
   repeatedNames: "Hay nombres repetidos.",
+  hostPickName: "Elige con qué nombre juegas tú.",
+  hostPlays: "Yo también juego",
+  hostPlaysHelp: "Tendrás tu «¡Lo sé!» en esta pantalla y seguirás llevando la partida.",
+  hostPlaysAs: "Juego como",
   needPlaylist: "Elige al menos una playlist.",
   yearsInverted: "El año «desde» es mayor que el año «hasta».",
   // Cómo se juega

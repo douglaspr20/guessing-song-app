@@ -28,6 +28,24 @@ describe("lo que impide grabar la partida", () => {
   });
 });
 
+describe("el anfitrión también juega", () => {
+  it("si lo marca tiene que elegir uno de los nombres, y se manda ese", () => {
+    expect(setupBlocker(form({ players: ["Ana", "Luis"], hostPlays: true }), [])).toBe("Elige con qué nombre juegas tú.");
+
+    const f = form({ players: ["Ana", "Luis"], hostPlays: true, hostName: "Luis" });
+    expect(setupBlocker(f, [])).toBeNull();
+    expect(createGameBody(f, [])).toMatchObject({ hostPlaysAs: "Luis" });
+    expect(createGameSchema.parse(createGameBody(f, [])).hostPlaysAs).toBe("Luis");
+  });
+
+  it("si el nombre elegido se borra de la lista, vuelve a pedirlo; sin marcar no se manda nada", () => {
+    expect(setupBlocker(form({ players: ["Ana"], hostPlays: true, hostName: "Luis" }), [])).toBe(
+      "Elige con qué nombre juegas tú.",
+    );
+    expect(createGameBody(form({ players: ["Ana"], hostName: "Ana" }), [])).not.toHaveProperty("hostPlaysAs");
+  });
+});
+
 describe("lo que se envía", () => {
   it("cada fuente manda solo sus filtros", () => {
     const f = form({ genres: ["pop"], keywords: "  bolero ", yearFrom: "1980", mode: "spotify", playlistIds: ["x"] });

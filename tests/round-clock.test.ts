@@ -76,6 +76,15 @@ describe("deriveRoundClock", () => {
     expect(turn.caption).toBe("responde Ana");
   });
 
+  it("mientras arranca el audio (el servidor ya cuenta) no se toma por recarga: no congela ni ofrece seguir", () => {
+    // Pasaba al llegar el aviso «round_playing» antes de que cargara el audio: la ronda se quedaba en pausa
+    // en el servidor con la música sonando, y nadie podía pulsar «¡Lo sé!».
+    const c = deriveRoundClock(input({ round: round({ elapsedMs: 300 }), player: { phase: "starting", remainingMs: 0, fragmentMs: 0 } }));
+    expect(c.needsFreeze).toBe(false);
+    expect(c.canResume).toBe(false);
+    expect(c.shownLeftMs).toBe(59_700);
+  });
+
   it("ya pausada tras recargar no vuelve a pedir la pausa", () => {
     const c = deriveRoundClock(
       input({ round: round({ paused: true }), player: { phase: "idle", remainingMs: 0, fragmentMs: 0 } }),

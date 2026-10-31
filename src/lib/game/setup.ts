@@ -26,6 +26,9 @@ export interface SetupForm {
   yearTo: string;
   keywords: string;
   playlistIds: string[];
+  /** El anfitrión también juega desde su pantalla, con uno de los nombres (`hostName`). */
+  hostPlays: boolean;
+  hostName: string;
 }
 
 export function initialSetup(teams: TeamDraft[], mode: GameMode): SetupForm {
@@ -46,7 +49,20 @@ export function initialSetup(teams: TeamDraft[], mode: GameMode): SetupForm {
     yearTo: "",
     keywords: "",
     playlistIds: [],
+    hostPlays: false,
+    hostName: "",
   };
+}
+
+/** Los nombres con los que puede jugar el anfitrión: los jugadores, o los miembros de los equipos. */
+export const seatNames = (form: SetupForm) =>
+  form.format === "teams" ? everyone(form.teams).map((n) => n.trim()).filter(Boolean) : playerNames(form);
+
+/** El nombre con el que juega el anfitrión, si lo eligió y sigue estando en la partida. */
+export function hostPlaysAs(form: SetupForm): string | null {
+  if (!form.hostPlays) return null;
+  const lower = form.hostName.trim().toLowerCase();
+  return seatNames(form).find((n) => n.toLowerCase() === lower) ?? null;
 }
 
 /** Nombres escritos, sin huecos. */
@@ -85,6 +101,7 @@ export function setupBlocker(form: SetupForm, usableIds: string[], text: typeof 
           ? text.repeatedNames
           : null;
   if (who) return who;
+  if (form.hostPlays && !hostPlaysAs(form)) return text.hostPickName;
   if (effectiveSource(form) === "playlists" && usableIds.length === 0) return text.needPlaylist;
   if (form.yearFrom && form.yearTo && Number(form.yearFrom) > Number(form.yearTo)) return text.yearsInverted;
   return null;
@@ -103,5 +120,6 @@ export function createGameBody(form: SetupForm, usableIds: string[]) {
     answerSeconds: form.answerSeconds,
     lockout: form.lockout,
     filters: buildFilters(form, usableIds),
+    ...(hostPlaysAs(form) ? { hostPlaysAs: hostPlaysAs(form)! } : {}),
   };
 }

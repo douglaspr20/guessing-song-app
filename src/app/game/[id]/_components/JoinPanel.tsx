@@ -21,6 +21,8 @@ interface Joined {
   team: { name: string; color: string } | null;
   /** Otro navegador pide quedarse con su sitio (perdió su sesión): el anfitrión decide. */
   claim: boolean;
+  /** Es el propio anfitrión, que también juega: no se le saca desde aquí. */
+  host: boolean;
 }
 
 /**
@@ -172,14 +174,18 @@ export function JoinPanel({
                     {p.name}
                   </span>
                   {p.team && <span className={styles.joinTeam}>{p.team.name}</span>}
-                  <button
-                    type="button"
-                    className={styles.joinKick}
-                    onClick={() => kick(p)}
-                    aria-label={g.kickLabel(p.name)}
-                  >
-                    <UserMinus size={20} aria-hidden />
-                  </button>
+                  {p.host ? (
+                    <span className={styles.joinTeam}>{g.hostTag}</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className={styles.joinKick}
+                      onClick={() => kick(p)}
+                      aria-label={g.kickLabel(p.name)}
+                    >
+                      <UserMinus size={20} aria-hidden />
+                    </button>
+                  )}
                   {p.claim && (
                     <div className={styles.joinAsk} role="group" aria-label={g.claimTitle(p.name)}>
                       <p className={styles.joinAskText}>

@@ -104,6 +104,15 @@ export const game = {
   saidRight: "Lo dijo bien",
   failed: "Falló",
   cancelTurn: "Cancelar turno",
+  // El anfitrión también juega
+  hostPlaysLabel: "Juegas como",
+  hostPlaysAs: (name: string) => `Tu pulsador: juegas como ${name}`,
+  hostTag: "anfitrión",
+  hostJoinQuestion: "¿Juegas tú también?",
+  hostJoinHelp: "Tendrás tu «¡Lo sé!» aquí mismo. En tu turno decide el servidor, como en los móviles.",
+  hostJoinPick: "Toca tu nombre",
+  hostJoined: (name: string) => `Juegas como ${name}`,
+  hostLeave: "No juego",
   // Final
   endOfTape: "Fin de la cinta",
   restOfScoreboard: "Resto del marcador",

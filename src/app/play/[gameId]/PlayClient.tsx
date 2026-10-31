@@ -16,7 +16,7 @@ import { HINT_REFRESH_DELAY_MS, hintMarks } from "@/lib/client/hints";
 import { useLiveGame } from "@/lib/client/live";
 import { rulesFor } from "@/lib/game/scoring";
 import { trackStatus } from "@/lib/client/status";
-import { BuzzerPad } from "./BuzzerPad";
+import { BuzzerPad } from "@/components/buzzer/BuzzerPad";
 import { OutOfGame, PlayFinale, PlayReveal, PlayWaiting } from "./PlayStates";
 import styles from "./play.module.css";
 

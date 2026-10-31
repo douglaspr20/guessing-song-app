@@ -3,12 +3,13 @@
 import { useId } from "react";
 import { Minus, Plus } from "lucide-react";
 import { Card } from "@/components/Card";
+import { Chip, chipsClass } from "@/components/Chip";
 import { Notice } from "@/components/Notice";
 import { Segmented } from "@/components/Segmented";
 import ui from "@/components/ui.module.css";
 import { useI18n } from "@/i18n/client";
 import { formatList, plural } from "@/i18n/format";
-import { peopleCount, playerNames, type SetupForm } from "@/lib/game/setup";
+import { hostPlaysAs, peopleCount, playerNames, seatNames, type SetupForm } from "@/lib/game/setup";
 import { repeated, type GameFormat } from "@/lib/game/teams";
 import styles from "../setup.module.css";
 import { TeamsEditor } from "./TeamsEditor";
@@ -57,8 +58,35 @@ export function PlayersCard({ form, update }: { form: SetupForm; update: (patch:
             <SoloPlayersList players={form.players} onPlayers={(players) => update({ players })} />
           )}
         </div>
+        <HostPlays form={form} update={update} />
       </div>
     </Card>
+  );
+}
+
+/** «Yo también juego»: el anfitrión elige con cuál de los nombres juega desde su propia pantalla. */
+function HostPlays({ form, update }: { form: SetupForm; update: (patch: Partial<SetupForm>) => void }) {
+  const { m } = useI18n();
+  const t = m.setup;
+  const names = seatNames(form);
+  const chosen = hostPlaysAs(form);
+  return (
+    <div className={styles.section}>
+      <label className={styles.toggle}>
+        <input type="checkbox" checked={form.hostPlays} onChange={(e) => update({ hostPlays: e.target.checked })} />
+        {t.hostPlays}
+      </label>
+      <p className={styles.toggleHelp}>{t.hostPlaysHelp}</p>
+      {form.hostPlays && names.length > 0 && (
+        <div className={`${chipsClass} ${styles.hostNames}`} role="group" aria-label={t.hostPlaysAs}>
+          {names.map((name) => (
+            <Chip key={name} hand pressed={name === chosen} onClick={() => update({ hostName: name })}>
+              {name}
+            </Chip>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

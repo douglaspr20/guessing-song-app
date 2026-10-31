@@ -297,6 +297,8 @@ model Participant {
   // Solo vale si el anfitrión lo acepta (entonces pasa a ser el `tokenHash`); caduca a los 5 minutos.
   claimHash String?
   claimAt   DateTime?
+  // El propio anfitrión juega desde su pantalla con este nombre: no se le puede sacar de la partida.
+  isHost    Boolean   @default(false)
   kickedAt  DateTime?
   createdAt DateTime  @default(now())
 

@@ -88,6 +88,8 @@ const gameSettingsSchema = z.object({
   rounds: z.number().int().min(1).max(50),
   fragmentSeconds: z.number().int().min(OPEN_FRAGMENT_SECONDS).max(MAX_FRAGMENT_SECONDS).default(MIN_FRAGMENT_SECONDS),
   filters: gameFiltersSchema.default({ source: "search", genres: [], playlistIds: [] }),
+  /** El anfitrión también juega, desde su pantalla, con este nombre (uno de los jugadores o miembros). */
+  hostPlaysAs: personName.optional(),
 });
 
 export const MAX_SOLO_PLAYERS = 20;
@@ -97,6 +99,12 @@ type Settings = z.infer<typeof gameSettingsSchema>;
 /** Las reglas de quién juega: jugadores sueltos o equipos. */
 function checkWhoPlays(g: Settings, ctx: z.RefinementCtx) {
   const fail = (message: string, path: (string | number)[]) => ctx.addIssue({ code: "custom", message, path });
+
+  const host = g.hostPlaysAs?.toLowerCase();
+  const people = g.format === "solo" ? g.players : g.teams.flatMap((t) => t.members);
+  if (host && !people.some((n) => n.toLowerCase() === host)) {
+    fail("Elige con cuál de los nombres de la partida juegas", ["hostPlaysAs"]);
+  }
 
   if (g.format === "solo") {
     if (g.players.length < 1) fail("Escribe el nombre de al menos un jugador", ["players"]);
