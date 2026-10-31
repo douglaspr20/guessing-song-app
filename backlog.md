@@ -84,6 +84,18 @@ Salen de la primera partida real (familia, con Spotify y desde un móvil como an
   - Buscar solo entre las más populares.
   - Ajustes especiales por usuario.
 
+### Responder
+
+- [ ] **Dictar la respuesta por voz (S/M).** Decir el título y el artista en vez de escribirlos tras pulsar «¡Lo sé!» (idea del usuario, octubre 2026).
+  - Paso 0, sin código: el micrófono del teclado del móvil (Gboard, iPhone) ya dicta en cualquier campo y no pide permiso. Basta con una línea de ayuda bajo los campos: «Puedes dictar con el micrófono del teclado».
+  - Paso 1, lo propuesto: un botón 🎤 junto a «Canción» y otro junto a «Artista» con el reconocimiento de voz del navegador (Web Speech API, `SpeechRecognition`/`webkitSpeechRecognition`).
+    - Gratis, sin claves ni servidor nuestro: reconocen Google (Chrome Android) o Apple (Safari iPhone).
+    - El navegador pide permiso del micrófono la primera vez; el texto cae en el campo y se puede corregir antes de enviar.
+    - Si el navegador no lo tiene (Firefox, algunos navegadores dentro de apps como WhatsApp), el botón no aparece y queda la línea del paso 0.
+    - Idioma del reconocimiento: el de la música elegido en la partida y, si no hay, el de la pantalla. Con un título en inglés y el reconocimiento en español puede escribir algo como «guan mor taim»; el comparador ya tolera errores pequeños.
+    - Sirve en el móvil y en la franja «¡Lo sé!» del anfitrión (el mismo `BuzzAnswerForm`).
+  - Descartado por ahora: grabar el audio y transcribirlo en el servidor (por ejemplo, Whisper). Es más preciso con títulos mezclados, pero cuesta por uso, pide claves y añade espera. Solo si el paso 1 se queda corto.
+
 ### Plataforma
 
 - [ ] **Instalable como app (S).** Manifest y service worker para añadirla a la pantalla de inicio. Barato y se nota en el móvil; comparte el icono de P0.
