@@ -28,6 +28,14 @@ describe("lo que impide grabar la partida", () => {
   });
 });
 
+describe("no repetir canciones de otras partidas", () => {
+  it("por defecto mira las últimas 5 y se envía lo elegido", () => {
+    expect(createGameBody(form({ players: ["Ana"] }), [])).toMatchObject({ freshGames: 5 });
+    expect(createGameSchema.parse(createGameBody(form({ players: ["Ana"], freshGames: 0 }), [])).freshGames).toBe(0);
+    expect(() => createGameSchema.parse({ ...createGameBody(form({ players: ["Ana"] }), []), freshGames: 11 })).toThrow();
+  });
+});
+
 describe("el anfitrión también juega", () => {
   it("si lo marca tiene que elegir uno de los nombres, y se manda ese", () => {
     expect(setupBlocker(form({ players: ["Ana", "Luis"], hostPlays: true }), [])).toBe("Elige con qué nombre juegas tú.");

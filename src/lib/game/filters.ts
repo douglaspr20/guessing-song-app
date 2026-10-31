@@ -59,6 +59,11 @@ export const MIN_ANSWER_SECONDS = 10;
 export const MAX_ANSWER_SECONDS = 60;
 export const DEFAULT_ANSWER_SECONDS = 20;
 
+/** Cuántas partidas anteriores se miran para no repetir canciones: opciones de «No repetir canciones de». */
+export const FRESH_GAMES_OPTIONS = [0, 1, 3, 5, 10] as const;
+export const DEFAULT_FRESH_GAMES = 5;
+const MAX_FRESH_GAMES = 10;
+
 const personName = z.string().trim().min(1).max(30);
 
 const teamSchema = z.object({
@@ -88,6 +93,8 @@ const gameSettingsSchema = z.object({
   rounds: z.number().int().min(1).max(50),
   fragmentSeconds: z.number().int().min(OPEN_FRAGMENT_SECONDS).max(MAX_FRAGMENT_SECONDS).default(MIN_FRAGMENT_SECONDS),
   filters: gameFiltersSchema.default({ source: "search", genres: [], playlistIds: [] }),
+  /** No repetir las canciones de las últimas N partidas del mismo dueño (0: no mirar otras partidas). */
+  freshGames: z.number().int().min(0).max(MAX_FRESH_GAMES).default(DEFAULT_FRESH_GAMES),
   /** El anfitrión también juega, desde su pantalla, con este nombre (uno de los jugadores o miembros). */
   hostPlaysAs: personName.optional(),
 });

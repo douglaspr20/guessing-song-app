@@ -14,6 +14,7 @@ import { useI18n } from "@/i18n/client";
 import { api, ApiError, catalogLabel, errorText, type Game } from "@/lib/client/api";
 import { HINT_REFRESH_DELAY_MS, hintMarks } from "@/lib/client/hints";
 import { useLiveGame } from "@/lib/client/live";
+import { speechLang } from "@/lib/client/speech";
 import { rulesFor } from "@/lib/game/scoring";
 import { trackStatus } from "@/lib/client/status";
 import { BuzzerPad } from "@/components/buzzer/BuzzerPad";
@@ -25,6 +26,8 @@ type PlayGame = Omit<Game, "filters" | "nextTrackReady">;
 interface PlayState {
   game: PlayGame;
   me: { id: string; name: string; playerId: string; memberId: string | null; lockedOut: boolean };
+  /** Idioma de la música elegido en la partida (para dictar la respuesta), o null. */
+  musicLanguage: string | null;
 }
 
 /** El mando de quien se unió con el código: dónde va la partida y quién es él. */
@@ -135,7 +138,15 @@ export function PlayClient() {
             ) : round.status === "PLAYING" ? (
               <>
                 <h1 className={styles.headline}>{round.buzz?.participantId === me.id ? t.yourTurn : t.track(round.number)}</h1>
-                <BuzzerPad gameId={gameId} round={round} me={me} fetchedAt={fetchedAt} onChanged={refresh} hints={hints} />
+                <BuzzerPad
+                  gameId={gameId}
+                  round={round}
+                  me={me}
+                  fetchedAt={fetchedAt}
+                  onChanged={refresh}
+                  hints={hints}
+                  speechLang={speechLang(state.musicLanguage, locale)}
+                />
               </>
             ) : (
               <PlayReveal round={round} players={game.players} myPlayerId={me.playerId} teams={teams} />

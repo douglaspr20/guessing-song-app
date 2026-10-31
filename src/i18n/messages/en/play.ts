@@ -83,6 +83,13 @@ export const play = {
   songPlaceholder: "Song title",
   artist: "Artist",
   artistPlaceholder: "Who sings it",
+  dictateSong: "Dictate the song",
+  dictateArtist: "Dictate the artist",
+  listening: "Listening…",
+  micDenied: "I couldn't use the microphone: check the browser's permission.",
+  micNoSpeech: "I didn't hear you, try again.",
+  micFailed: "Dictation failed: type it instead.",
+  keyboardMicHint: "You can also dictate with your keyboard's microphone.",
   sending: "Sending…",
   send: "Send answer",
 } satisfies typeof esPlay;

@@ -77,7 +77,7 @@ Salen de la primera partida real (familia, con Spotify y desde un móvil como an
 
 ### Contenido y búsqueda
 
-- [ ] **No repetir canciones entre partidas del mismo dueño (M).** Hoy solo evita repetidas dentro de una partida. Necesita historial de pistas por dueño y un límite (por ejemplo, las últimas N partidas) para no agotar el catálogo.
+- [x] **No repetir canciones entre partidas del mismo dueño (M).** Ajuste por partida «No repetir canciones de las últimas partidas»: No · 1 · 3 · 5 · 10 (5 por defecto, `Game.freshGames`; «Otra igual» lo copia). Si con esos filtros ya no queda ninguna nueva, suena una ya oída antes que dejar la ronda sin canción (`pickAvoidingHeard`); dentro de la misma partida nunca se repite.
 - [ ] **Mejorar la búsqueda (L).** Empezar por el respaldo, que evita rondas fallidas; lo demás según lo que pidan los grupos.
   - Respaldo: si en una ronda no se encuentra canción, buscar una parecida.
   - Añadir artistas concretos.
@@ -86,15 +86,12 @@ Salen de la primera partida real (familia, con Spotify y desde un móvil como an
 
 ### Responder
 
-- [ ] **Dictar la respuesta por voz (S/M).** Decir el título y el artista en vez de escribirlos tras pulsar «¡Lo sé!» (idea del usuario, octubre 2026).
-  - Paso 0, sin código: el micrófono del teclado del móvil (Gboard, iPhone) ya dicta en cualquier campo y no pide permiso. Basta con una línea de ayuda bajo los campos: «Puedes dictar con el micrófono del teclado».
-  - Paso 1, lo propuesto: un botón 🎤 junto a «Canción» y otro junto a «Artista» con el reconocimiento de voz del navegador (Web Speech API, `SpeechRecognition`/`webkitSpeechRecognition`).
-    - Gratis, sin claves ni servidor nuestro: reconocen Google (Chrome Android) o Apple (Safari iPhone).
-    - El navegador pide permiso del micrófono la primera vez; el texto cae en el campo y se puede corregir antes de enviar.
-    - Si el navegador no lo tiene (Firefox, algunos navegadores dentro de apps como WhatsApp), el botón no aparece y queda la línea del paso 0.
-    - Idioma del reconocimiento: el de la música elegido en la partida y, si no hay, el de la pantalla. Con un título en inglés y el reconocimiento en español puede escribir algo como «guan mor taim»; el comparador ya tolera errores pequeños.
-    - Sirve en el móvil y en la franja «¡Lo sé!» del anfitrión (el mismo `BuzzAnswerForm`).
-  - Descartado por ahora: grabar el audio y transcribirlo en el servidor (por ejemplo, Whisper). Es más preciso con títulos mezclados, pero cuesta por uso, pide claves y añade espera. Solo si el paso 1 se queda corto.
+- [x] **Dictar la respuesta por voz (S/M).** Un 🎤 junto a «Canción» y otro junto a «Artista» con el reconocimiento de voz del navegador (`useDictation`).
+  - Escucha en el idioma de la música de la partida o, si no se eligió, en el de la pantalla (`speechLang`).
+  - Sin soporte en el navegador no hay botón y se sugiere el micrófono del teclado.
+  - Sirve en el móvil y en la franja del anfitrión.
+  - Pendiente de probar en móviles reales (Chrome Android, Safari iPhone).
+  - Descartado por ahora: transcribir en el servidor (por ejemplo, Whisper), solo si el reconocimiento del navegador se queda corto.
 
 ### Plataforma
 

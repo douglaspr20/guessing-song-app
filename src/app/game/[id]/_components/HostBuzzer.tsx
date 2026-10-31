@@ -5,6 +5,7 @@ import { BuzzerPad } from "@/components/buzzer/BuzzerPad";
 import { PlayerName } from "@/components/PlayerName";
 import ui from "@/components/ui.module.css";
 import type { HostSeat, Player, Round } from "@/lib/client/api";
+import { speechLang } from "@/lib/client/speech";
 import { useI18n } from "@/i18n/client";
 import styles from "../game.module.css";
 
@@ -19,6 +20,7 @@ export function HostBuzzer({
   player,
   fetchedAt,
   onChanged,
+  musicLanguage,
 }: {
   gameId: string;
   round: Round;
@@ -27,8 +29,10 @@ export function HostBuzzer({
   player: Player | undefined;
   fetchedAt: number;
   onChanged: () => Promise<unknown>;
+  /** Idioma de la música de la partida (para dictar la respuesta). */
+  musicLanguage: string | null;
 }) {
-  const { m } = useI18n();
+  const { m, locale } = useI18n();
   const ref = useRef<HTMLElement>(null);
   // En el móvil «Empezar» queda abajo y la franja arriba: al empezar cada pista se trae a la vista.
   useEffect(() => {
@@ -52,6 +56,7 @@ export function HostBuzzer({
           me={{ id: seat.id, lockedOut: seat.lockedOut }}
           fetchedAt={fetchedAt}
           onChanged={onChanged}
+          speechLang={speechLang(musicLanguage, locale)}
         />
       </div>
     </section>

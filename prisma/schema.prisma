@@ -158,6 +158,8 @@ model Game {
   answerSeconds    Int      @default(20)
   // Al fallar queda fuera: "person" (solo quien falló) | "team" (todo su equipo).
   lockout          String   @default("person")
+  // No repetir las canciones de las últimas N partidas del mismo dueño (0: no mirar otras partidas).
+  freshGames       Int      @default(5)
   // El anfitrión puede cerrar la entrada de más gente.
   joinOpen         Boolean  @default(true)
   // GameFilters serializado como JSON.

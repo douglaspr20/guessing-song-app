@@ -4,7 +4,7 @@ import { Segmented } from "@/components/Segmented";
 import { Stepper } from "@/components/Stepper";
 import form from "@/components/styles/form.module.css";
 import { useI18n } from "@/i18n/client";
-import { MAX_ANSWER_SECONDS, MIN_ANSWER_SECONDS, type GameMode } from "@/lib/game/filters";
+import { FRESH_GAMES_OPTIONS, MAX_ANSWER_SECONDS, MIN_ANSWER_SECONDS, type GameMode } from "@/lib/game/filters";
 import type { SetupForm, SongSource } from "@/lib/game/setup";
 import styles from "../setup.module.css";
 
@@ -79,10 +79,22 @@ export function PlaySettings({
             />
           </div>
         )}
+        <div className={form.field}>
+          <span className={form.label}>{t.freshGames}</span>
+          <Segmented<`${FreshGames}`>
+            label={t.freshGames}
+            value={`${f.freshGames as FreshGames}`}
+            onChange={(v) => update({ freshGames: Number(v) })}
+            options={FRESH_GAMES_OPTIONS.map((n) => ({ value: `${n}`, label: n === 0 ? t.freshGamesNone : String(n) }))}
+          />
+        </div>
       </div>
+      <p className={`${styles.hint} ${styles.freshHint}`}>{t.freshGamesHint}</p>
     </div>
   );
 }
+
+type FreshGames = (typeof FRESH_GAMES_OPTIONS)[number];
 
 /** «Desde el móvil»: segundos para responder tras «¡Lo sé!» y, por equipos, quién queda fuera al fallar. */
 export function PhoneSettings({ form: f, update }: Props) {

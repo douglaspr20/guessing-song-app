@@ -21,13 +21,15 @@ interface Props {
   hints?: ReactNode;
   /** En la pantalla del anfitrión: una franja en vez de medio alto de pantalla (allí manda el casete). */
   compact?: boolean;
+  /** Idioma en que se escucha al dictar la respuesta. */
+  speechLang: string;
 }
 
 /**
  * El mando durante una pista: el botón «¡Lo sé!» y, si te toca, los campos para responder con su
  * cuenta atrás. El servidor decide quién tiene el turno; aquí solo se explica por qué no se puede pulsar.
  */
-export function BuzzerPad({ gameId, round, me, fetchedAt, onChanged, hints, compact = false }: Props) {
+export function BuzzerPad({ gameId, round, me, fetchedAt, onChanged, hints, compact = false, speechLang }: Props) {
   const { m } = useI18n();
   const t = m.play;
   const [busy, setBusy] = useState(false);
@@ -61,6 +63,7 @@ export function BuzzerPad({ gameId, round, me, fetchedAt, onChanged, hints, comp
         onVerdict={(v) => setVerdict({ roundId: round.id, ...v })}
         onChanged={onChanged}
         hints={hints}
+        speechLang={speechLang}
       />
     );
   }

@@ -81,6 +81,7 @@ export function useEditPrefill(editId: string | null, update: (patch: Partial<Se
           rounds: g.totalRounds,
           answerSeconds: g.answerSeconds,
           lockout: g.lockout,
+          freshGames: g.freshGames,
           fragmentSeconds: g.fragmentSeconds,
           mode: g.mode,
           source: g.filters.source,

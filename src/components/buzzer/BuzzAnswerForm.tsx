@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, type FocusEvent, type FormEvent, type ReactNode } from "react";
-import { Send } from "lucide-react";
+import { Mic, Send } from "lucide-react";
 import { Notice } from "@/components/Notice";
 import ui from "@/components/ui.module.css";
+import { useDictation } from "@/hooks/useDictation";
 import { useRemainingMs } from "@/hooks/useNow";
 import { useI18n } from "@/i18n/client";
 import { api, ApiError } from "@/lib/client/api";
@@ -29,6 +30,7 @@ export function BuzzAnswerForm({
   onVerdict,
   onChanged,
   hints,
+  speechLang,
 }: {
   gameId: string;
   roundId: string;
@@ -38,9 +40,12 @@ export function BuzzAnswerForm({
   onChanged: () => Promise<unknown> | void;
   /** Las pistas ya desbloqueadas, bajo el reloj: la de letras ayuda justo al escribir. */
   hints?: ReactNode;
+  /** Idioma en que se escucha al dictar (el de la música de la partida o el de la pantalla). */
+  speechLang: string;
 }) {
   const { m } = useI18n();
   const t = m.play;
+  const dictation = useDictation(speechLang);
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
   const [busy, setBusy] = useState(false);
@@ -59,6 +64,7 @@ export function BuzzAnswerForm({
   const send = async () => {
     if (sent.current) return;
     sent.current = true;
+    dictation.stop();
     setBusy(true);
     try {
       const r = await api<Omit<Verdict, "roundId"> & { lockedOut: boolean }>(
@@ -97,9 +103,13 @@ export function BuzzAnswerForm({
       className={styles.answerForm}
       data-typing={typing}
       onSubmit={submit}
-      onFocus={() => setTyping(true)}
+      // Solo un campo de texto saca el teclado. Un botón (el micrófono) no: si encogiera el reloj al pulsarlo, el
+      // botón se movería bajo el dedo y la pulsación se perdería.
+      onFocus={(e) => {
+        if (e.target instanceof HTMLInputElement) setTyping(true);
+      }}
       onBlur={(e) => {
-        // Pasar de un campo a otro no es dejar de escribir.
+        // Pasar a otro campo o a un botón del formulario no es dejar de escribir (y así «Enviar» no se mueve).
         if (!e.currentTarget.contains(e.relatedTarget)) setTyping(false);
       }}
       aria-label={t.yourAnswer}
@@ -112,38 +122,84 @@ export function BuzzAnswerForm({
       <p className={`${styles.padNote} ${styles.answerNote}`}>{t.turnNote}</p>
       <label className={styles.answerField}>
         <span>{t.song}</span>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder={t.songPlaceholder}
-          autoComplete="off"
-          autoCapitalize="sentences"
-          enterKeyHint="next"
-          onFocus={reveal}
-          autoFocus
-          disabled={busy}
-          maxLength={200}
-        />
+        <div className={styles.fieldRow}>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={dictation.listening === "title" ? t.listening : t.songPlaceholder}
+            autoComplete="off"
+            autoCapitalize="sentences"
+            enterKeyHint="next"
+            onFocus={reveal}
+            autoFocus
+            disabled={busy}
+            maxLength={200}
+          />
+          {dictation.supported && (
+            <MicButton field="title" label={t.dictateSong} dictation={dictation} disabled={busy} onText={setTitle} />
+          )}
+        </div>
       </label>
       <label className={styles.answerField}>
         <span>{t.artist}</span>
-        <input
-          value={artist}
-          onChange={(e) => setArtist(e.target.value)}
-          placeholder={t.artistPlaceholder}
-          autoComplete="off"
-          enterKeyHint="send"
-          onFocus={reveal}
-          disabled={busy}
-          maxLength={200}
-        />
+        <div className={styles.fieldRow}>
+          <input
+            value={artist}
+            onChange={(e) => setArtist(e.target.value)}
+            placeholder={dictation.listening === "artist" ? t.listening : t.artistPlaceholder}
+            autoComplete="off"
+            enterKeyHint="send"
+            onFocus={reveal}
+            disabled={busy}
+            maxLength={200}
+          />
+          {dictation.supported && (
+            <MicButton field="artist" label={t.dictateArtist} dictation={dictation} disabled={busy} onText={setArtist} />
+          )}
+        </div>
       </label>
+      {dictation.error ? (
+        <p className={`${styles.padNote} ${styles.micNote}`} role="status">
+          {{ denied: t.micDenied, noSpeech: t.micNoSpeech, failed: t.micFailed }[dictation.error]}
+        </p>
+      ) : (
+        !dictation.supported && <p className={`${styles.padNote} ${styles.micNote} ${styles.answerNote}`}>{t.keyboardMicHint}</p>
+      )}
       {error && <Notice>{error}</Notice>}
       <button type="submit" className={`${ui.btn} ${ui.primary} ${ui.big} ${styles.sendBtn}`} disabled={busy}>
         <Send size={24} aria-hidden />
         {busy ? t.sending : t.send}
       </button>
     </form>
+  );
+}
+
+/** El micrófono de un campo: pulsar escucha (y vuelve a pulsar para), lo oído cae en el campo. */
+function MicButton({
+  field,
+  label,
+  dictation,
+  disabled,
+  onText,
+}: {
+  field: string;
+  label: string;
+  dictation: ReturnType<typeof useDictation>;
+  disabled: boolean;
+  onText: (text: string) => void;
+}) {
+  const on = dictation.listening === field;
+  return (
+    <button
+      type="button"
+      className={styles.micBtn}
+      aria-label={label}
+      aria-pressed={on}
+      disabled={disabled}
+      onClick={() => (on ? dictation.stop() : dictation.start(field, onText))}
+    >
+      <Mic size={26} aria-hidden />
+    </button>
   );
 }
 

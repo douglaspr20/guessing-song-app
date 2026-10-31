@@ -37,6 +37,9 @@ export const setup = {
   rounds: "Rounds",
   fragment: "Clip",
   fragmentSeconds: "Clip seconds",
+  freshGames: "Don't repeat songs from the last games",
+  freshGamesNone: "No",
+  freshGamesHint: "If these filters run out of new songs, one may repeat.",
   fromPhone: "From phones",
   fromPhoneHint:
     "Whoever joins with the code presses “I know it!”: the song pauses and they have this long to type the title and artist. If they miss, they're out for that track.",

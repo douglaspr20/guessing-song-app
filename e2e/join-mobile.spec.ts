@@ -33,7 +33,7 @@ test("alguien se une desde el móvil con el código, pulsa «¡Lo sé!» y acier
   const round = await playingRound();
   // La ronda guarda de qué búsqueda salió la canción.
   expect(round.pickedVia).toMatch(/^itunes: .+ \([A-Z]{2}\)$/);
-  await mobile.getByLabel("Canción").fill(round.trackName);
+  await mobile.getByLabel("Canción", { exact: true }).fill(round.trackName);
   await mobile.getByRole("button", { name: "Enviar respuesta" }).click();
 
   await expect(page.getByText(`Era ${round.trackName}`)).toBeVisible({ timeout: 15_000 });

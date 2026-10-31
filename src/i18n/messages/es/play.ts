@@ -85,6 +85,13 @@ export const play = {
   songPlaceholder: "Título de la canción",
   artist: "Artista",
   artistPlaceholder: "Quién la canta",
+  dictateSong: "Dictar la canción",
+  dictateArtist: "Dictar el artista",
+  listening: "Te escucho…",
+  micDenied: "No pude usar el micrófono: revisa el permiso del navegador.",
+  micNoSpeech: "No te oí, prueba otra vez.",
+  micFailed: "No pude dictar: escríbelo.",
+  keyboardMicHint: "También puedes dictar con el micrófono del teclado.",
   sending: "Enviando…",
   send: "Enviar respuesta",
 };

@@ -39,6 +39,9 @@ export const setup = {
   rounds: "Rondas",
   fragment: "Fragmento",
   fragmentSeconds: "Segundos de fragmento",
+  freshGames: "No repetir canciones de las últimas partidas",
+  freshGamesNone: "No",
+  freshGamesHint: "Si con estos filtros ya no quedan canciones nuevas, puede repetirse alguna.",
   // Desde el móvil
   fromPhone: "Desde el móvil",
   fromPhoneHint:
