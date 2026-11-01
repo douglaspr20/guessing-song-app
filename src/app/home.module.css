@@ -65,6 +65,14 @@
   composes: pageTitle from "../components/styles/layout.module.css";
 }
 
+/* «Explorar artistas» (secundario) al lado de «Grabar partida nueva». */
+.shelfActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .shelfSub {
   composes: pageSub from "../components/styles/layout.module.css";
 }

@@ -1,34 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { useToast } from "@/components/feedback/FeedbackProvider";
 import { useI18n } from "@/i18n/client";
-import { api, errorText, type AccessStatus } from "@/lib/client/api";
+import type { AccessStatus } from "@/lib/client/api";
 
-export type HomeView = "loading" | "error" | "connect" | "account" | "guest";
+export type HomeView = "error" | "connect" | "account" | "guest";
 
 /**
- * Quién usa la app (cuenta, invitado o nadie) y qué ve la portada. También lee una sola vez el resultado
- * del login de Spotify o Google que viene en la URL (`?error=…`, `?google=linked`) y limpia la dirección.
+ * Qué ve la portada según quién la usa (cuenta, invitado o nadie). Quién es lo lee el servidor al pintarla (`access`,
+ * null si no pudo): tras entrar, salir o cambiar algo, `refresh` le pide que lo vuelva a leer (`router.refresh()`).
+ * También lee una sola vez el resultado del login de Spotify o Google que viene en la URL (`?error=…`,
+ * `?google=linked`) y limpia la dirección.
  */
-export function useAccess() {
+export function useAccess(access: AccessStatus | null) {
   const { m } = useI18n();
   const t = m.home;
   const toast = useToast();
-  const [access, setAccess] = useState<AccessStatus | null>(null);
-  /** No se pudo saber quién usa la app (API caída): se dice y se ofrece reintentar. */
-  const [accessError, setAccessError] = useState<string | null>(null);
+  const router = useRouter();
+  const [, startRefresh] = useTransition();
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    try {
-      setAccess(await api<AccessStatus>("/api/access/status"));
-      setAccessError(null);
-    } catch (err) {
-      setAccess(null);
-      setAccessError(errorText(err));
-    }
-  }, []);
+  const refresh = useCallback(async () => startRefresh(() => router.refresh()), [router]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -38,18 +32,9 @@ export function useAccess() {
     if (code) setLoginError(t.loginErrors[code] ?? t.loginErrors.failed);
     if (params.get("google") === "linked") toast({ text: t.googleLinked });
     if (code || params.has("google")) window.history.replaceState(null, "", "/");
-    refresh();
-  }, [refresh, toast, t]);
+  }, [toast, t]);
 
-  const view: HomeView = accessError
-    ? "error"
-    : !access
-      ? "loading"
-      : access.user
-        ? "account"
-        : access.guest
-          ? "guest"
-          : "connect";
+  const view: HomeView = !access ? "error" : access.user ? "account" : access.guest ? "guest" : "connect";
 
-  return { access, accessError, loginError, view, refresh };
+  return { loginError, view, refresh };
 }

@@ -344,6 +344,19 @@ La carcasa (28px, tornillos) lleva una etiqueta de cartulina con el título manu
 - **Errores y ayuda:** los avisos del micrófono y la sugerencia del teclado (cuando el navegador no tiene reconocimiento) van en una línea de texto suave de 17 px bajo los campos.
 - **Modo teclado:** solo lo activa un campo de texto. Pulsar el micrófono no encoge el reloj, porque si no el botón se movería bajo el dedo.
 
+### Directorio de artistas (`/artists` y el paso «Elegir artistas» de `/new`)
+- **Una estantería de tarjetas** sobre el fondo de tinta: 2 columnas en el móvil, de 4 a 6 en escritorio.
+- **Cada tarjeta** es de cartulina, con la imagen cuadrada (foto de Spotify o portada de iTunes) y el nombre en Kalam de 21 px, como mucho en 2 líneas.
+- **Elegida:** borde de azafrán y un ✓ en un círculo azafrán sobre la imagen. Al llegar al tope, las demás se apagan con un aviso.
+- **Arriba:** una carátula con el buscador (lupa dentro del campo) y, en `/artists`, los lomos de géneros y, con iTunes, la época (chips «Cualquiera · Años 60 … Años 2020», de una en una; con Spotify no aparece porque su `year:` no filtra artistas).
+- **Abajo:** «Anterior · Página N de M · Siguiente».
+- **Mientras carga:** tarjetas vacías que laten despacio, sin latido con «reducir movimiento».
+- **Barra fija de abajo** (como la de `/new`): el recuento y el botón principal en una fila, y los elegidos como chips manuscritos en una fila que se desliza. En pantallas bajitas solo quedan el recuento y el botón.
+- **En `/new`**, el bloque «Artistas» enseña los elegidos como chips (✕ para quitar) y el botón «Elegir artistas» o «Cambiar artistas». La popularidad es un segmentado de tres, con una línea que explica el elegido.
+
+### Respaldo de filtros
+Si hubo que aflojar filtros, sale una línea discreta bajo el casete, en texto suave de la tele (18 px): «Con esos filtros ya no quedaban canciones: esta vez sin los años».
+
 ### No repetir canciones
 - En «Cómo se juega» de `/new`, bajo «Rondas», hay un segmentado «No repetir canciones de las últimas partidas»: No · 1 · 3 · 5 · 10.
 - Debajo, una línea de ayuda avisa de que puede repetirse alguna si los filtros se quedan sin canciones nuevas.

@@ -3,6 +3,21 @@ import { LANGUAGES } from "@/lib/spotify/catalog";
 import { GAME_FORMATS, MAX_PEOPLE, MAX_TEAM_SIZE, MAX_TEAMS, MIN_TEAMS, TEAM_COLOR_KEYS } from "./teams";
 
 const languageIds = LANGUAGES.map((l) => l.id) as [string, ...string[]];
+
+/** Cuántos artistas se pueden elegir para una partida. */
+export const MAX_ARTISTS = 20;
+/**
+ * Un artista elegido: su nombre y su id en la fuente de la que salió (`spotify:<id>` o `itunes:<id>`). El id distingue
+ * artistas que se llaman igual; el nombre sirve para buscarlo (y basta si la partida usa la otra fuente).
+ */
+const chosenArtistSchema = z.object({
+  id: z.string().trim().min(1).max(80),
+  name: z.string().trim().min(1).max(80),
+});
+export type ChosenArtist = z.infer<typeof chosenArtistSchema>;
+
+export const POPULARITY_LEVELS = ["hits", "mix", "gems"] as const;
+export type Popularity = (typeof POPULARITY_LEVELS)[number];
 const currentYear = new Date().getFullYear();
 const year = z.number().int().min(1900).max(currentYear + 1);
 
@@ -22,8 +37,12 @@ export const gameFiltersSchema = z
     yearTo: year.optional(),
     /** Texto libre extra para la búsqueda (p. ej. "en español", un artista...). */
     keywords: z.string().trim().max(100).optional(),
-    /** Popularidad mínima (0-100), solo si Spotify la devuelve. */
+    /** Popularidad mínima (0-100). Spotify ya no la devuelve: se conserva para partidas guardadas, sin efecto. */
     minPopularity: z.number().int().min(0).max(100).optional(),
+    /** Artistas elegidos: si hay alguno, cada pista sale de uno de ellos (los géneros solo filtran el listado). */
+    artists: z.array(chosenArtistSchema).max(MAX_ARTISTS).default([]),
+    /** Éxitos (lo primero de cada búsqueda), mezcla (todo) o joyas escondidas (lo de más abajo). */
+    popularity: z.enum(POPULARITY_LEVELS).default("mix"),
     playlistIds: z.array(z.string().min(1)).max(20).default([]),
   })
   .refine((f) => f.source !== "playlists" || f.playlistIds.length > 0, {
@@ -92,7 +111,7 @@ const gameSettingsSchema = z.object({
   maxTeamSize: z.number().int().min(1).max(MAX_TEAM_SIZE).optional(),
   rounds: z.number().int().min(1).max(50),
   fragmentSeconds: z.number().int().min(OPEN_FRAGMENT_SECONDS).max(MAX_FRAGMENT_SECONDS).default(MIN_FRAGMENT_SECONDS),
-  filters: gameFiltersSchema.default({ source: "search", genres: [], playlistIds: [] }),
+  filters: gameFiltersSchema.default({ source: "search", genres: [], playlistIds: [], artists: [], popularity: "mix" }),
   /** No repetir las canciones de las últimas N partidas del mismo dueño (0: no mirar otras partidas). */
   freshGames: z.number().int().min(0).max(MAX_FRESH_GAMES).default(DEFAULT_FRESH_GAMES),
   /** El anfitrión también juega, desde su pantalla, con este nombre (uno de los jugadores o miembros). */

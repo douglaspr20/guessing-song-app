@@ -1,7 +1,8 @@
 import { AppError } from "@/lib/errors";
 import { marketForLanguage } from "@/lib/spotify/catalog";
 import type { Page, Track } from "@/lib/spotify/types";
-import type { GameFilters } from "./filters";
+import type { GameFilters, Popularity } from "./filters";
+import { byArtist, POPULARITY_WINDOW, seedsOf, type Seed } from "./seeds";
 
 /** Fuente de pistas inyectable (la real usa la Web API; los tests usan una falsa). */
 export interface TrackSource {
@@ -42,10 +43,11 @@ export function resolveMarket(filters: GameFilters): string | undefined {
   return filters.market ?? marketForLanguage(filters.language);
 }
 
-/** Construye la query de /search, p. ej. `genre:"latin pop" year:1990-1999 mana`. */
-export function buildSearchQuery(filters: GameFilters, genre: string | undefined): string {
+/** Construye la query de /search, p. ej. `genre:"latin pop" year:1990-1999 mana` o `artist:"Juanes" year:2000`. */
+export function buildSearchQuery(filters: GameFilters, seed: Seed | string | undefined): string {
   const parts: string[] = [];
-  if (genre) parts.push(`genre:"${genre.replace(/"/g, "")}"`);
+  const s: Seed | undefined = typeof seed === "string" ? { kind: "genre", value: seed } : seed;
+  if (s) parts.push(`${s.kind}:"${s.value.replace(/"/g, "")}"`);
   if (filters.yearFrom || filters.yearTo) {
     const from = filters.yearFrom ?? 1900;
     const to = filters.yearTo ?? new Date().getFullYear();
@@ -97,12 +99,22 @@ interface SearchProgress {
  * azar. Su `total` ya no es fiable (a veces dice 0 con la página llena), así que si no, se avanza página
  * a página mientras haya canciones y, cuando se acaban, se vuelve a una ya vista.
  */
-function nextSearchOffset(p: SearchProgress | undefined, limit: number, maxOffset: number, random: () => number) {
-  if (!p) return 0;
+function nextSearchOffset(p: SearchProgress | undefined, limit: number, maxOffset: number, random: () => number, minOffset = 0) {
+  if (!p) return minOffset;
   const top = Math.min(p.total, maxOffset) - limit;
-  if (p.total > limit * 2 && top > 0) return randomInt(top + 1, random);
+  if (p.total > limit * 2 && top > minOffset) return minOffset + randomInt(top - minOffset + 1, random);
   if (!p.done) return p.next;
-  return randomInt(Math.ceil(p.next / limit), random) * limit;
+  return minOffset + randomInt(Math.max(1, Math.ceil((p.next - minOffset) / limit)), random) * limit;
+}
+
+/**
+ * Qué zona de los resultados se mira según la popularidad: Spotify ordena por relevancia (los éxitos primero) y ya
+ * no da su cifra de popularidad. Éxitos: solo las primeras páginas. Joyas: a partir de las primeras 60.
+ */
+export function offsetWindow(popularity: Popularity, maxOffset: number) {
+  if (popularity === "hits") return { minOffset: 0, maxOffset: Math.min(maxOffset, POPULARITY_WINDOW.hits) };
+  if (popularity === "gems") return { minOffset: POPULARITY_WINDOW.gemsFrom, maxOffset };
+  return { minOffset: 0, maxOffset };
 }
 
 /**
@@ -122,13 +134,16 @@ export async function pickTrack(opts: PickOptions): Promise<PickedTrack> {
   const searches = new Map<string, SearchProgress>();
   // Playlists que Spotify deja leer (las de otras personas pueden dar 403 y se descartan).
   const playlists = [...filters.playlistIds];
-  // Géneros con los que `genre:` no devuelve ni una canción: se dejan de lado mientras otros funcionen.
-  const emptyGenres = new Set<string>();
+  // Géneros o artistas con los que la búsqueda no devuelve ni una canción: se dejan de lado mientras otros funcionen.
+  const emptySeeds = new Set<string>();
+  const seeds = seedsOf(filters);
+  const popularity = filters.popularity ?? "mix";
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     let page: Page<Track>;
     let key: string;
     let genre: string | null = null;
+    let artist: { id: string; name: string } | null = null;
     let via: string;
     let firstVisit: boolean;
 
@@ -155,22 +170,27 @@ export async function pickTrack(opts: PickOptions): Promise<PickedTrack> {
       via = `playlist:${playlistId} @${offset}`;
     } else {
       // Buscar un género como texto libre trae cualquier cosa que lleve esas palabras: con «rock en espanol»
-      // salió un grupo country alemán ronda tras ronda. Solo se hace si ningún género elegido da canciones.
-      const working = filters.genres.filter((g) => !emptyGenres.has(g));
-      const asText = filters.genres.length > 0 && !working.length;
-      genre = pickFrom(asText ? filters.genres : working, random) ?? null;
+      // salió un grupo country alemán ronda tras ronda. Solo se hace si ningún género elegido da canciones (nunca
+      // con artistas: un artista sin canciones simplemente no cuenta).
+      const working = seeds.filter((s) => !emptySeeds.has(`${s.kind}:${s.value}`));
+      const asText = seeds.length > 0 && !working.length && seeds[0].kind === "genre";
+      if (seeds.length && !working.length && !asText) break;
+      const seed = pickFrom(asText ? seeds : working, random);
+      genre = seed?.kind === "genre" ? seed.value : null;
+      artist = seed?.kind === "artist" ? { id: seed.id, name: seed.value } : null;
       const limit = opts.searchPageSize ?? 10;
-      const maxOffset = opts.maxSearchOffset ?? 1000;
+      const window = offsetWindow(popularity, opts.maxSearchOffset ?? 1000);
       const q = asText
         ? buildSearchQuery({ ...filters, keywords: [genre, filters.keywords].filter(Boolean).join(" ") }, undefined)
-        : buildSearchQuery(filters, genre ?? undefined);
+        : buildSearchQuery(filters, seed);
       key = `q:${q}`;
       const progress = searches.get(key);
-      const offset = nextSearchOffset(progress, limit, maxOffset, random);
+      const offset = nextSearchOffset(progress, limit, window.maxOffset, random, window.minOffset);
       page = await opts.source.search({ q, market, offset, limit });
-      if (!page.items.length && offset === 0 && genre && !asText) {
-        // Se mira la página y no `total`: Spotify a veces dice 0 con la página llena.
-        emptyGenres.add(genre);
+      if (!page.items.length && !progress && seed && !asText) {
+        // Se mira la página y no `total`: Spotify a veces dice 0 con la página llena. Con «joyas» es la zona
+        // de abajo la que no tiene nada: tampoco sirve (si no queda ninguna, el respaldo afloja la popularidad).
+        emptySeeds.add(`${seed.kind}:${seed.value}`);
         attempt--; // no gasta intento
         continue;
       }
@@ -179,21 +199,23 @@ export async function pickTrack(opts: PickOptions): Promise<PickedTrack> {
       searches.set(key, {
         total: page.total,
         next: Math.max(progress?.next ?? 0, seenTo),
-        done: page.items.length < limit || seenTo >= maxOffset,
+        done: page.items.length < limit || seenTo >= window.maxOffset,
       });
-      via = `${asText ? "texto: " : ""}${q} @${offset}`;
+      via = `${asText ? "texto: " : ""}${q} @${offset} ${popularity}`;
     }
 
-    const candidates = page.items.filter((t) => isEligible(t, opts));
+    // Con un artista elegido, solo canciones suyas (Spotify también trae nombres parecidos y colaboraciones ajenas).
+    const candidates = page.items.filter((t) => isEligible(t, opts) && (!artist || byArtist(t, artist, "spotify")));
     // En la primera visita a una fuente grande preferimos saltar a una página aleatoria
     // para no sacar siempre las mismas canciones de la página 1.
     const pageSize = filters.source === "playlists" ? (opts.playlistPageSize ?? 50) : (opts.searchPageSize ?? 10);
-    const shouldJump = firstVisit && page.total > pageSize * 2 && attempt < maxAttempts - 1;
+    // Con «éxitos» no se salta: lo bueno está justo en las primeras páginas.
+    const shouldJump = firstVisit && page.total > pageSize * 2 && attempt < maxAttempts - 1 && popularity !== "hits";
     if (candidates.length && !shouldJump) {
       const track = pickFrom(candidates, random)!;
       return { track, startMs: computeStartMs(track.durationMs, opts.fragmentMs, random), genre, via };
     }
-    if (!page.items.length && filters.source === "search" && filters.genres.length <= 1 && !searches.get(key)?.next) break;
+    if (!page.items.length && filters.source === "search" && seeds.length <= 1 && !searches.get(key)?.next) break;
   }
 
   throw new AppError("NO_TRACKS_FOUND", 404, { key: "NO_NEW_TRACKS" });

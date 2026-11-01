@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { gameFiltersSchema } from "@/lib/game/filters";
-import { buildSearchQuery, computeStartMs, pickTrack, resolveMarket, type TrackSource } from "@/lib/game/track-picker";
+import { buildSearchQuery, computeStartMs, offsetWindow, pickTrack, resolveMarket, type TrackSource } from "@/lib/game/track-picker";
 import type { Track } from "@/lib/spotify/types";
 
 const filters = (f: Record<string, unknown> = {}) => gameFiltersSchema.parse(f);
@@ -172,7 +172,7 @@ describe("pickTrack con géneros que Spotify no reconoce", () => {
     expect(search.mock.calls[1][0].q).toBe("salsa");
     expect(picked.track.id).toBe("salsa-1");
     expect(picked.genre).toBe("salsa");
-    expect(picked.via).toBe("texto: salsa @0");
+    expect(picked.via).toBe("texto: salsa @0 mix");
   });
 
   it("con otros géneros que sí dan canciones, el vacío se deja de lado y nunca se busca como texto", async () => {
@@ -191,6 +191,85 @@ describe("pickTrack con géneros que Spotify no reconoce", () => {
       expect(picked.genre).toBe("salsa");
     }
     expect(search.mock.calls.every(([p]) => p.q.startsWith("genre:"))).toBe(true);
+  });
+});
+
+describe("pickTrack con artistas y popularidad", () => {
+  it("con artistas elegidos busca `artist:` (no los géneros) y solo acepta ese artista exacto", async () => {
+    const search = vi.fn(async ({ q }: { q: string }) => ({
+      items: q ? [track("parecida", { artists: ["Juanes Jr"] }), track("suya", { artists: ["Morat", "Juanes"] })] : [],
+      total: 2,
+    }));
+    // Elegido desde el directorio de iTunes (modo abierto) y jugado con Spotify: se compara el nombre exacto.
+    const picked = await pickTrack({
+      filters: filters({ genres: ["pop"], artists: [{ id: "itunes:9", name: "Juanes" }], yearFrom: 2000, yearTo: 2010 }),
+      fragmentMs: 60_000,
+      usedTrackIds: new Set(),
+      source: { search, playlist: vi.fn() },
+      random: () => 0,
+    });
+    expect(search.mock.calls[0][0].q).toBe('artist:"Juanes" year:2000-2010');
+    expect(picked.track.id).toBe("suya");
+  });
+
+  it("con el id de Spotify distingue a dos artistas que se llaman igual (hay muchos «A»)", async () => {
+    const search = vi.fn(async () => ({
+      items: [track("otro-a", { artists: ["A"], artistIds: ["x1"] }), track("el-elegido", { artists: ["A"], artistIds: ["x2"] })],
+      total: 2,
+    }));
+    const picked = await pickTrack({
+      filters: filters({ artists: [{ id: "spotify:x2", name: "A" }] }),
+      fragmentMs: 60_000,
+      usedTrackIds: new Set(),
+      source: { search, playlist: vi.fn() },
+      random: () => 0,
+    });
+    expect(picked.track.id).toBe("el-elegido");
+  });
+
+  it("un artista sin canciones se deja de lado y sale otro", async () => {
+    const search = vi.fn(async ({ q }: { q: string }) =>
+      q.includes("Nadie") ? { items: [], total: 0 } : { items: [track("m1", { artists: ["Maná"], artistIds: ["m"] })], total: 1 },
+    );
+    const picked = await pickTrack({
+      filters: filters({ artists: [{ id: "spotify:n", name: "Nadie" }, { id: "spotify:m", name: "Maná" }] }),
+      fragmentMs: 60_000,
+      usedTrackIds: new Set(),
+      source: { search, playlist: vi.fn() },
+      random: () => 0,
+    });
+    expect(picked.track.id).toBe("m1");
+    // Nunca pasa a buscar texto libre con artistas.
+    expect(search.mock.calls.every(([p]) => p.q.startsWith("artist:"))).toBe(true);
+  });
+
+  it("«Solo éxitos» no pasa del offset 40 y «Joyas» empieza en el 60", () => {
+    expect(offsetWindow("hits", 1000)).toEqual({ minOffset: 0, maxOffset: 40 });
+    expect(offsetWindow("gems", 1000)).toEqual({ minOffset: 60, maxOffset: 1000 });
+    expect(offsetWindow("mix", 1000)).toEqual({ minOffset: 0, maxOffset: 1000 });
+  });
+
+  it("con «Joyas» la primera página que se pide es la del offset 60, y con «Éxitos» se queda en las primeras aunque haya muchas", async () => {
+    const search = vi.fn(async ({ offset }: { offset: number }) => ({ items: [track(`t${offset}`)], total: 500 }));
+    await pickTrack({
+      filters: filters({ genres: ["rock"], popularity: "gems" }),
+      fragmentMs: 60_000,
+      usedTrackIds: new Set(),
+      source: { search, playlist: vi.fn() },
+      random: () => 0,
+    });
+    expect(search.mock.calls[0][0].offset).toBe(60);
+
+    search.mockClear();
+    const hit = await pickTrack({
+      filters: filters({ genres: ["rock"], popularity: "hits" }),
+      fragmentMs: 60_000,
+      usedTrackIds: new Set(),
+      source: { search, playlist: vi.fn() },
+      random: () => 0.999,
+    });
+    expect(search.mock.calls.every(([p]) => p.offset <= 40)).toBe(true);
+    expect(hit.track.id).toBe("t0");
   });
 });
 
@@ -213,7 +292,7 @@ describe("pickTrack cuando Spotify no da un total útil", () => {
     });
     expect(search.mock.calls.every(([p]) => p.q === 'genre:"salsa" year:1980-1989')).toBe(true);
     expect(picked.track.id).toBe("g0");
-    expect(picked.via).toBe('genre:"salsa" year:1980-1989 @0');
+    expect(picked.via).toBe('genre:"salsa" year:1980-1989 @0 mix');
   });
 
   it("si la primera página ya se usó, avanza a la siguiente en vez de repetirla", async () => {
@@ -228,7 +307,7 @@ describe("pickTrack cuando Spotify no da un total útil", () => {
     });
     expect(search.mock.calls.map(([p]) => p.offset)).toEqual([0, 10]);
     expect(picked.track.id).toBe("g10");
-    expect(picked.via).toBe('genre:"salsa" @10');
+    expect(picked.via).toBe('genre:"salsa" @10 mix');
   });
 
   it("al acabarse las páginas no salta a buscar texto: se rinde con NO_TRACKS_FOUND", async () => {

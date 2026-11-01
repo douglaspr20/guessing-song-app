@@ -1,9 +1,14 @@
 "use client";
 
+import { Users, X } from "lucide-react";
+import { Chip, chipsClass } from "@/components/Chip";
 import { Field } from "@/components/Field";
+import { Segmented } from "@/components/Segmented";
 import form from "@/components/styles/form.module.css";
+import ui from "@/components/ui.module.css";
 import { useI18n } from "@/i18n/client";
 import type { Catalog, Playlist } from "@/lib/client/api";
+import type { Popularity } from "@/lib/game/filters";
 import type { SetupForm } from "@/lib/game/setup";
 import styles from "../setup.module.css";
 import { GenreSpine, genreShelfClass } from "./GenreSpine";
@@ -17,8 +22,16 @@ type Props = { form: SetupForm; update: (patch: (form: SetupForm) => Partial<Set
 const toggled = (list: string[], value: string) => (list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
 const digits = (value: string) => value.replace(/\D/g, "").slice(0, 4);
 
-/** Búsqueda general: géneros (hasta 10), idioma de la música, años y palabra clave. */
-export function SearchFilters({ form: f, update, catalog }: Props & { catalog: Catalog | null }) {
+/**
+ * Búsqueda general: géneros (hasta 10), artistas elegidos en el directorio, popularidad, idioma de la música, años y
+ * palabra clave.
+ */
+export function SearchFilters({
+  form: f,
+  update,
+  catalog,
+  onChooseArtists,
+}: Props & { catalog: Catalog | null; onChooseArtists: () => void }) {
   const { m } = useI18n();
   const t = m.setup;
   return (
@@ -28,6 +41,7 @@ export function SearchFilters({ form: f, update, catalog }: Props & { catalog: C
           <h3 className={form.label}>{t.genres}</h3>
           <span className={styles.hint}>{f.genres.length ? t.genresChosen(f.genres.length) : t.anyGenre}</span>
         </div>
+        {f.artists.length > 0 && <p className={`${styles.hint} ${styles.artistsNote}`}>{t.genresOnlyFilter}</p>}
         <div className={genreShelfClass}>
           {catalog?.genres.map((g) => {
             const on = f.genres.includes(g);
@@ -42,6 +56,47 @@ export function SearchFilters({ form: f, update, catalog }: Props & { catalog: C
             );
           })}
         </div>
+      </div>
+      <div className={styles.section}>
+        <div className={styles.sectionHead}>
+          <h3 className={form.label}>{t.artists}</h3>
+        </div>
+        <p className={styles.hint}>{f.artists.length ? t.artistsChosenHelp : t.artistsHelp}</p>
+        {f.artists.length > 0 && (
+          <div className={`${chipsClass} ${styles.artistChips}`}>
+            {f.artists.map((artist) => (
+              <Chip
+                key={artist.id}
+                hand
+                pressed
+                aria-label={t.removeArtist(artist.name)}
+                onClick={() => update((s) => ({ artists: s.artists.filter((a) => a.id !== artist.id) }))}
+              >
+                {artist.name}
+                <X size={16} strokeWidth={3} aria-hidden />
+              </Chip>
+            ))}
+          </div>
+        )}
+        <button type="button" className={`${ui.btn} ${ui.onCard} ${styles.artistsBtn}`} onClick={onChooseArtists}>
+          <Users size={22} aria-hidden />
+          {f.artists.length ? t.changeArtists : t.chooseArtists}
+        </button>
+      </div>
+      <div className={styles.section}>
+        <Field label={t.popularity}>
+          <Segmented<Popularity>
+            label={t.popularity}
+            value={f.popularity}
+            onChange={(popularity) => update(() => ({ popularity }))}
+            options={[
+              { value: "hits", label: t.popularityHits },
+              { value: "mix", label: t.popularityMix },
+              { value: "gems", label: t.popularityGems },
+            ]}
+          />
+        </Field>
+        <p className={`${styles.hint} ${styles.popularityHint}`}>{t.popularityHint[f.popularity]}</p>
       </div>
       <div className={styles.section}>
         <div className={styles.inline}>

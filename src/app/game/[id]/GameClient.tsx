@@ -10,6 +10,7 @@ import ui from "@/components/ui.module.css";
 import { catalogLabel } from "@/lib/client/api";
 import { trackStatus } from "@/lib/client/status";
 import { useI18n } from "@/i18n/client";
+import { formatList } from "@/i18n/format";
 import { AnswerForm } from "./_components/AnswerForm";
 import { AttemptsList } from "./_components/AttemptsList";
 import { BuzzBanner } from "./_components/BuzzBanner";
@@ -107,6 +108,11 @@ export function GameClient() {
             {round && clock.open && (
               <>
                 <RoundCassette round={round} clock={clock} rules={rules} running={player.phase === "playing"} />
+                {round.relaxed.length > 0 && (
+                  <p className={styles.relaxedNote} role="status">
+                    {g.relaxedNote(formatList(locale, round.relaxed.map((r) => g.relaxedNames[r])))}
+                  </p>
+                )}
                 <AnswerForm
                   key={round.id}
                   players={ctl.seats}

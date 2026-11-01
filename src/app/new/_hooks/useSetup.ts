@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useReducer, useState } from "react";
 import type { Messages } from "@/i18n/messages";
 import { api, type AccessStatus, type Catalog, type Game, type Playlist } from "@/lib/client/api";
-import type { GameMode } from "@/lib/game/filters";
-import { initialSetup, type SetupForm } from "@/lib/game/setup";
+import { MAX_ARTISTS, type GameMode } from "@/lib/game/filters";
+import { initialSetup, parseChosenArtists, type SetupForm } from "@/lib/game/setup";
 import { byPalette } from "@/lib/game/standings";
 import { DEFAULT_TEAM_SIZE, DEFAULT_TEAMS, emptyTeams, type TeamDraft } from "@/lib/game/teams";
 
@@ -57,6 +57,32 @@ export function useSetupData(onNoSpotify: () => void) {
   return { catalog, playlists, connected, canLink };
 }
 
+/**
+ * Desde el directorio de artistas (/artists): `/new?artists=[{"id":"spotify:…","name":"Shakira"}]&genres=pop&yearFrom=1980&
+ * yearTo=1989` llega con esos artistas (y los géneros y la época con los que se filtró) ya puestos. Los artistas van en JSON
+ * porque un nombre puede llevar comas («Earth, Wind & Fire») y hace falta su id.
+ */
+export function useArtistsPrefill(params: URLSearchParams, update: (patch: Partial<SetupForm>) => void) {
+  const artists = params.get("artists");
+  const genres = params.get("genres");
+  const yearFrom = params.get("yearFrom");
+  const yearTo = params.get("yearTo");
+  useEffect(() => {
+    if (!artists) return;
+    const chosen = parseChosenArtists(artists);
+    if (!chosen.length) return;
+    const list = (v: string | null) => (v ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+    const year = (v: string | null) => (v && /^\d{4}$/.test(v) ? v : "");
+    update({
+      artists: chosen.slice(0, MAX_ARTISTS),
+      genres: list(genres),
+      yearFrom: year(yearFrom),
+      yearTo: year(yearTo),
+      source: "search",
+    });
+  }, [artists, genres, yearFrom, yearTo, update]);
+}
+
 /** Editar (desde «Editar ajustes» del juego): rellena el formulario con la partida aún sin empezar. */
 export function useEditPrefill(editId: string | null, update: (patch: Partial<SetupForm>) => void) {
   const router = useRouter();
@@ -91,6 +117,8 @@ export function useEditPrefill(editId: string | null, update: (patch: Partial<Se
           yearTo: g.filters.yearTo ? String(g.filters.yearTo) : "",
           keywords: g.filters.keywords ?? "",
           playlistIds: g.filters.playlistIds ?? [],
+          artists: g.filters.artists ?? [],
+          popularity: g.filters.popularity ?? "mix",
         });
       },
       () => router.replace("/new"),
