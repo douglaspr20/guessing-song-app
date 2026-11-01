@@ -18,6 +18,7 @@ import {
   PLAYLIST_PAGE_SIZE,
 } from "@/lib/spotify/sources";
 import { emit } from "./events";
+import { pickWithFallback, type Relaxed } from "./fallback";
 import { pickAvoidingHeard } from "./fresh";
 import { createGameSchema, gameFiltersSchema, type CreateGameInput, type GameFilters, type GameMode, type TeamInput } from "./filters";
 import { isCorrectArtist, isCorrectGuess } from "./matcher";
@@ -92,6 +93,8 @@ export function toPublicRound(round: Round, game: RoundGame, now = new Date(), p
     nextHintAt: closed ? null : nextHintAt,
     winnerPlayerId: round.winnerPlayerId,
     artistWinnerPlayerId: round.artistWinnerPlayerId,
+    /** Qué filtros hubo que aflojar para encontrar esta canción (vacío casi siempre). */
+    relaxed: (round.relaxed ? JSON.parse(round.relaxed) : []) as Relaxed[],
     /** Quien pulsó «¡Lo sé!» y está respondiendo (el reloj de la ronda está parado). */
     buzz:
       !closed && round.buzzParticipantId && round.buzzDeadline
@@ -249,7 +252,7 @@ async function finishIfLastRound(tx: Prisma.TransactionClient, game: Game, round
 // ---------- Selección y precarga de canciones ----------
 
 /** Canción elegida (lo que se guarda en `Game.nextTrack`). */
-type PreparedTrack = PickedTrack;
+type PreparedTrack = PickedTrack & { relaxed?: Relaxed[] };
 
 /** Canciones que sonaron en las últimas `freshGames` partidas del mismo dueño (sin contar esta). */
 export async function recentlyHeardTrackIds(game: Pick<Game, "id" | "userId" | "guestId" | "freshGames">) {
@@ -269,23 +272,38 @@ export async function recentlyHeardTrackIds(game: Pick<Game, "id" | "userId" | "
   return new Set(rows.map((r) => r.trackId));
 }
 
+/**
+ * Elige la canción de la próxima ronda. Si con los filtros no queda ninguna, los afloja (`pickWithFallback`) y lo
+ * anota en `relaxed` para avisar en la tele. En cada nivel se prefiere repetir una canción oída en otra partida
+ * antes que aflojar los filtros (`pickAvoidingHeard` dentro).
+ */
 async function chooseTrack(game: Game & { rounds: Round[] }, exclude: string[] = []): Promise<PreparedTrack> {
   const filters = gameFiltersSchema.parse(JSON.parse(game.filters));
   const used = new Set([...game.rounds.map((r) => r.trackId), ...exclude]);
   const heard = await recentlyHeardTrackIds(game);
-  return pickAvoidingHeard(used, heard, (usedTrackIds) =>
-    game.mode === "open"
-      ? pickOpenTrack({ filters, usedTrackIds, source: itunesSource })
-      : pickTrack({
-          filters,
-          fragmentMs: game.fragmentSeconds * 1000,
-          usedTrackIds,
-          source: spotifySourceFor(spotifyUserOf(game)),
-          searchPageSize: SEARCH_PAGE_SIZE,
-          playlistPageSize: PLAYLIST_PAGE_SIZE,
-          maxSearchOffset: SEARCH_MAX_OFFSET,
-        }),
+  const { picked, relaxed } = await pickWithFallback(filters, (f) =>
+    pickAvoidingHeard(used, heard, (usedTrackIds) => pickFor(game, f, usedTrackIds)),
   );
+  return { ...picked, relaxed };
+}
+
+/** Elige con unos filtros concretos en la fuente de la partida (iTunes o Spotify). */
+export function pickFor(
+  game: Pick<Game, "mode" | "fragmentSeconds" | "userId">,
+  filters: GameFilters,
+  usedTrackIds: Set<string>,
+): Promise<PickedTrack> {
+  return game.mode === "open"
+    ? pickOpenTrack({ filters, usedTrackIds, source: itunesSource })
+    : pickTrack({
+        filters,
+        fragmentMs: game.fragmentSeconds * 1000,
+        usedTrackIds,
+        source: spotifySourceFor(spotifyUserOf(game)),
+        searchPageSize: SEARCH_PAGE_SIZE,
+        playlistPageSize: PLAYLIST_PAGE_SIZE,
+        maxSearchOffset: SEARCH_MAX_OFFSET,
+      });
 }
 
 /** Elige en segundo plano la canción de la próxima ronda y la guarda en la partida. */
@@ -539,7 +557,7 @@ export async function startNextRound(gameId: string) {
     throw new AppError("NO_MORE_ROUNDS", 409);
   }
 
-  const { track, startMs, genre, audioUrl, via } = await takeNextTrack(game);
+  const { track, startMs, genre, audioUrl, via, relaxed } = await takeNextTrack(game);
 
   const number = game.currentRound + 1;
   try {
@@ -557,6 +575,7 @@ export async function startNextRound(gameId: string) {
           albumImage: track.albumImage,
           audioUrl: audioUrl ?? null,
           pickedVia: via ?? null,
+          relaxed: relaxed?.length ? JSON.stringify(relaxed) : null,
           durationMs: track.durationMs,
           startMs,
         },

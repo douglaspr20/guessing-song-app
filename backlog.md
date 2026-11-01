@@ -80,11 +80,13 @@ Salen de la primera partida real (familia, con Spotify y desde un móvil como an
 ### Contenido y búsqueda
 
 - [x] **No repetir canciones entre partidas del mismo dueño (M).** Ajuste por partida «No repetir canciones de las últimas partidas»: No · 1 · 3 · 5 · 10 (5 por defecto, `Game.freshGames`; «Otra igual» lo copia). Si con esos filtros ya no queda ninguna nueva, suena una ya oída antes que dejar la ronda sin canción (`pickAvoidingHeard`); dentro de la misma partida nunca se repite.
-- [ ] **Mejorar la búsqueda (L).** Empezar por el respaldo, que evita rondas fallidas; lo demás según lo que pidan los grupos.
-  - Respaldo: si en una ronda no se encuentra canción, buscar una parecida.
-  - Añadir artistas concretos.
-  - Buscar solo entre las más populares.
-  - Ajustes especiales por usuario.
+- [x] **Mejorar la búsqueda (L).**
+  - **Respaldo:** si con los filtros no sale ninguna canción, se aflojan en orden (popularidad, años, palabra clave, artistas, géneros, idioma) y la tele lo avisa (`Round.relaxed`). «Probar filtros» lo dice también.
+  - **Artistas:** hay un directorio (`/artists` y el paso «Elegir artistas» de `/new`) con buscador, páginas y filtrado por géneros. Con Spotify conectado sale de Spotify, con foto; si no, de iTunes, con la portada. Con artistas elegidos, las pistas salen solo de ellos.
+  - **Popularidad:** «Solo éxitos · Mezcla · Joyas escondidas», por la posición en los resultados, porque Spotify ya no da su cifra de popularidad.
+- [ ] **iTunes como catálogo también en Spotify (M).** El `genre:` de Spotify solo entiende categorías amplias (medido el 31-10-2026: salsa, reguetón, cumbia, vallenato, rock en español… dan 0, y por eso salía Tennessee). Elegir con iTunes y buscar la canción en Spotify lo arreglaría de raíz.
+- [ ] **Foto oficial del artista con iTunes (S/M).** La API pública no la da. La API de Apple Music sí, pero pide una cuenta de Apple Developer (99 USD/año) y una clave MusicKit.
+- [ ] **Ajustes guardados por usuario (M).** Guardar unos filtros favoritos para no elegirlos cada vez.
 
 ### Responder
 

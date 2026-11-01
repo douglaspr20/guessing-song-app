@@ -6,3 +6,4 @@ export { access } from "./access";
 export { setup } from "./setup";
 export { host } from "./host";
 export { share } from "./share";
+export { artists } from "./artists";

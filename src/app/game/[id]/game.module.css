@@ -863,6 +863,14 @@
 
 /* ---------- Turno de quien pulsó «¡Lo sé!» ---------- */
 
+/* El respaldo tuvo que aflojar filtros: una línea discreta bajo el casete, sobre el fondo de la tele. */
+.relaxedNote {
+  margin-top: -4px;
+  font-size: 18px;
+  line-height: 1.4;
+  color: var(--on-shell-soft);
+}
+
 /* El anfitrión también juega: su «¡Lo sé!» en una franja sobre el casete. */
 .hostPadBody {
   display: grid;

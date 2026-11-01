@@ -192,6 +192,23 @@
   margin-top: 10px;
 }
 
+/* Artistas elegidos: chips manuscritos que se quitan con un toque, y el botón que abre el directorio. */
+.artistChips {
+  margin-top: 12px;
+}
+
+.artistsBtn {
+  margin-top: 14px;
+}
+
+.artistsNote {
+  margin: -4px 0 12px;
+}
+
+.popularityHint {
+  margin-top: 10px;
+}
+
 .keyword {
   margin-top: 18px;
 }

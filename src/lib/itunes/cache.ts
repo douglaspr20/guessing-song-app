@@ -12,10 +12,13 @@ export const ITUNES_CACHE = {
   keepDays: 30,
 };
 
-type Search = { term: string; country: string };
+type Search = { term: string; country: string; attribute?: "artistTerm" };
 
 /** La clave de la caché: el mismo término escrito con otras mayúsculas o espacios es la misma búsqueda. */
 export const normalizeTerm = (term: string) => term.trim().replace(/\s+/g, " ").toLowerCase();
+
+/** Buscar solo por artista es otra búsqueda: se guarda como `artist:<término>` (sin tocar la tabla). */
+const cacheTerm = ({ term, attribute }: Search) => (attribute ? `artist:${normalizeTerm(term)}` : normalizeTerm(term));
 
 /**
  * Busca en iTunes pasando por la caché de Postgres: todas las visitas salen por las IP de Vercel y iTunes
@@ -23,11 +26,12 @@ export const normalizeTerm = (term: string) => term.trim().replace(/\s+/g, " ").
  * Si iTunes falla y hay una búsqueda guardada, aunque sea vieja, se juega con ella.
  */
 export async function cachedSearch(
-  { term, country }: Search,
+  search: Search,
   fetchSongs: (p: Search) => Promise<Track[]> = searchSongs,
   now = new Date(),
 ): Promise<Track[]> {
-  const key = { term: normalizeTerm(term), country };
+  const { country, attribute } = search;
+  const key = { term: cacheTerm(search), country };
   const saved = await db.itunesSearch.findUnique({ where: { term_country: key } });
   if (saved) {
     const tracks = saved.tracks as unknown as Track[];
@@ -37,7 +41,7 @@ export async function cachedSearch(
 
   let tracks: Track[];
   try {
-    tracks = await fetchSongs({ term: key.term, country });
+    tracks = await fetchSongs({ term: normalizeTerm(search.term), country, attribute });
   } catch (err) {
     if (!saved) throw err;
     console.warn(`iTunes falló para «${key.term}» (${country}); se usa la búsqueda guardada`, err);

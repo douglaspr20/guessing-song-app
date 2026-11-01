@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Play, Plus, Trash2 } from "lucide-react";
+import { Play, Plus, Trash2, Users } from "lucide-react";
 import { MadeBy } from "@/components/MadeBy";
 import { Notice } from "@/components/Notice";
 import { Podium } from "@/components/Podium";
@@ -62,10 +62,16 @@ export function Shelf({
                 : t.searchingCassettes}
           </p>
         </div>
-        <Link href={newGameHref} className={`${ui.btn} ${ui.primary} ${ui.big}`}>
-          <Plus size={28} strokeWidth={3} aria-hidden />
-          {t.newGame}
-        </Link>
+        <div className={styles.shelfActions}>
+          <Link href="/artists" className={`${ui.btn} ${ui.onShell}`}>
+            <Users size={22} aria-hidden />
+            {m.artists.explore}
+          </Link>
+          <Link href={newGameHref} className={`${ui.btn} ${ui.primary} ${ui.big}`}>
+            <Plus size={28} strokeWidth={3} aria-hidden />
+            {t.newGame}
+          </Link>
+        </div>
       </div>
 
       {aside}

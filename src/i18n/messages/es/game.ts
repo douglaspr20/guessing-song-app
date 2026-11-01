@@ -104,6 +104,16 @@ export const game = {
   saidRight: "Lo dijo bien",
   failed: "Falló",
   cancelTurn: "Cancelar turno",
+  // Respaldo: hubo que aflojar filtros para encontrar la canción
+  relaxedNote: (what: string) => `Con esos filtros ya no quedaban canciones: esta vez sin ${what}.`,
+  relaxedNames: {
+    popularity: "el nivel de popularidad",
+    years: "los años",
+    keywords: "la palabra clave",
+    artists: "los artistas elegidos",
+    genres: "los géneros",
+    language: "el idioma",
+  },
   // El anfitrión también juega
   hostPlaysLabel: "Juegas como",
   hostPlaysAs: (name: string) => `Tu pulsador: juegas como ${name}`,

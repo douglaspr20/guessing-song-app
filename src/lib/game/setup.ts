@@ -1,5 +1,5 @@
 import { setup as esSetup } from "@/i18n/messages/es/setup";
-import { DEFAULT_ANSWER_SECONDS, DEFAULT_FRESH_GAMES, type GameMode } from "./filters";
+import { DEFAULT_ANSWER_SECONDS, DEFAULT_FRESH_GAMES, type ChosenArtist, type GameMode, type Popularity } from "./filters";
 import { DEFAULT_TEAM_SIZE, everyone, repeated, teamsProblem, type GameFormat, type TeamDraft } from "./teams";
 
 export type SongSource = "search" | "playlists";
@@ -28,6 +28,10 @@ export interface SetupForm {
   yearTo: string;
   keywords: string;
   playlistIds: string[];
+  /** Artistas elegidos en el directorio: si hay alguno, las pistas salen solo de ellos. */
+  artists: ChosenArtist[];
+  /** Éxitos, mezcla o joyas escondidas. */
+  popularity: Popularity;
   /** El anfitrión también juega desde su pantalla, con uno de los nombres (`hostName`). */
   hostPlays: boolean;
   hostName: string;
@@ -52,6 +56,8 @@ export function initialSetup(teams: TeamDraft[], mode: GameMode): SetupForm {
     yearTo: "",
     keywords: "",
     playlistIds: [],
+    artists: [],
+    popularity: "mix",
     hostPlays: false,
     hostName: "",
   };
@@ -66,6 +72,19 @@ export function hostPlaysAs(form: SetupForm): string | null {
   if (!form.hostPlays) return null;
   const lower = form.hostName.trim().toLowerCase();
   return seatNames(form).find((n) => n.toLowerCase() === lower) ?? null;
+}
+
+/** Los artistas que llegan de /artists por la URL (JSON con id y nombre), si vienen bien formados; si no, ninguno. */
+export function parseChosenArtists(raw: string): ChosenArtist[] {
+  try {
+    const value: unknown = JSON.parse(raw);
+    if (!Array.isArray(value)) return [];
+    return value
+      .filter((a): a is ChosenArtist => !!a && typeof a === "object" && typeof a.id === "string" && typeof a.name === "string" && !!a.id && !!a.name)
+      .map(({ id, name }) => ({ id, name }));
+  } catch {
+    return [];
+  }
 }
 
 /** Nombres escritos, sin huecos. */
@@ -85,6 +104,8 @@ export function buildFilters(form: SetupForm, usableIds: string[]) {
     yearTo: search && form.yearTo ? Number(form.yearTo) : undefined,
     keywords: search && form.keywords.trim() ? form.keywords.trim() : undefined,
     playlistIds: search ? [] : usableIds,
+    artists: search ? form.artists : [],
+    popularity: search ? form.popularity : "mix",
   };
 }
 

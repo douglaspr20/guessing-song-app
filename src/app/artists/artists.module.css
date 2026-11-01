@@ -1,0 +1,5 @@
+/* Filtros propios de /artists (en /new vienen del formulario). */
+.filters {
+  display: grid;
+  gap: 18px;
+}

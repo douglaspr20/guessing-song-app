@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { createGameSchema } from "@/lib/game/filters";
-import { buildFilters, createGameBody, initialSetup, peopleCount, setupBlocker, type SetupForm } from "@/lib/game/setup";
+import { buildFilters, createGameBody, initialSetup, parseChosenArtists, peopleCount, setupBlocker, type SetupForm } from "@/lib/game/setup";
 import { emptyTeams } from "@/lib/game/teams";
 
 const form = (patch: Partial<SetupForm> = {}): SetupForm => ({ ...initialSetup(emptyTeams(2), "open"), ...patch });
+const juanes = { id: "spotify:0UWZUmn7sybxMCqrw9tGa7", name: "Juanes" };
 
 describe("lo que impide grabar la partida", () => {
   it("pide al menos un jugador y nombres distintos", () => {
@@ -56,7 +57,15 @@ describe("el anfitrión también juega", () => {
 
 describe("lo que se envía", () => {
   it("cada fuente manda solo sus filtros", () => {
-    const f = form({ genres: ["pop"], keywords: "  bolero ", yearFrom: "1980", mode: "spotify", playlistIds: ["x"] });
+    const f = form({
+      genres: ["pop"],
+      keywords: "  bolero ",
+      yearFrom: "1980",
+      mode: "spotify",
+      playlistIds: ["x"],
+      artists: [juanes],
+      popularity: "hits",
+    });
     expect(buildFilters(f, ["x"])).toEqual({
       source: "search",
       genres: ["pop"],
@@ -65,8 +74,29 @@ describe("lo que se envía", () => {
       yearTo: undefined,
       keywords: "bolero",
       playlistIds: [],
+      artists: [juanes],
+      popularity: "hits",
     });
-    expect(buildFilters({ ...f, source: "playlists" }, ["x"])).toMatchObject({ source: "playlists", genres: [], playlistIds: ["x"] });
+    // Con playlists no se mandan artistas ni popularidad (las canciones las eligió la persona).
+    expect(buildFilters({ ...f, source: "playlists" }, ["x"])).toMatchObject({
+      source: "playlists",
+      genres: [],
+      playlistIds: ["x"],
+      artists: [],
+      popularity: "mix",
+    });
+  });
+
+  it("artistas y popularidad pasan la validación del servidor", () => {
+    const shakira = { id: "itunes:889327", name: "Shakira" };
+    const body = createGameBody(form({ players: ["Ana"], artists: [shakira, juanes], popularity: "gems" }), []);
+    expect(createGameSchema.parse(body).filters).toMatchObject({ artists: [shakira, juanes], popularity: "gems" });
+  });
+
+  it("los artistas que llegan de /artists por la URL solo valen si traen id y nombre", () => {
+    expect(parseChosenArtists(JSON.stringify([juanes, { name: "sin id" }, "texto"]))).toEqual([juanes]);
+    expect(parseChosenArtists("no es json")).toEqual([]);
+    expect(parseChosenArtists(JSON.stringify({ id: "x" }))).toEqual([]);
   });
 
   it("el cuerpo de la partida pasa la validación del servidor", () => {

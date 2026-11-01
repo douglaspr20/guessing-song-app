@@ -11,6 +11,7 @@ interface ItunesSong {
   trackId: number;
   trackName: string;
   artistName: string;
+  artistId?: number;
   previewUrl?: string;
   releaseDate?: string;
   trackTimeMillis?: number;
@@ -27,7 +28,8 @@ export function normalizeItunesSong(s: ItunesSong): Track | null {
     uri: `itunes:track:${s.trackId}`,
     name: s.trackName,
     artists: [s.artistName],
-    artistIds: [],
+    // El id del artista en la tienda: distingue a dos artistas con el mismo nombre.
+    artistIds: s.artistId ? [String(s.artistId)] : [],
     durationMs: s.trackTimeMillis ?? 0,
     // La portada a mayor tamaño: iTunes acepta cambiar el sufijo de dimensiones.
     albumImage: s.artworkUrl100?.replace(/100x100bb/, "600x600bb") ?? null,
@@ -43,12 +45,22 @@ export function normalizeItunesSong(s: ItunesSong): Track | null {
  * Busca canciones en la API pública de iTunes (sin clave). `country` es el código ISO de la
  * tienda, que también aproxima el idioma de los resultados.
  */
-export async function searchSongs({ term, country }: { term: string; country: string }): Promise<Track[]> {
+export async function searchSongs({
+  term,
+  country,
+  attribute,
+}: {
+  term: string;
+  country: string;
+  /** `artistTerm`: busca solo en el nombre del artista. */
+  attribute?: "artistTerm";
+}): Promise<Track[]> {
   const url = new URL(SEARCH_URL);
   url.searchParams.set("term", term);
   url.searchParams.set("country", country);
   url.searchParams.set("media", "music");
   url.searchParams.set("entity", "song");
+  if (attribute) url.searchParams.set("attribute", attribute);
   url.searchParams.set("limit", String(ITUNES_PAGE_SIZE));
 
   const res = await fetch(url, { cache: "no-store" });

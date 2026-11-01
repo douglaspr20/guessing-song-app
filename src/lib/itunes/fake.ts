@@ -53,8 +53,13 @@ export const FAKE_TRACKS: Track[] = SONGS.map(([name, artist], i) => ({
 export const FAKE_RATE_LIMIT_KEYWORD = "e2e-itunes-limitado";
 
 export const fakeItunesSource: OpenTrackSource = {
-  search: async ({ term }) => {
+  search: async ({ term, attribute }) => {
     if (term.includes(FAKE_RATE_LIMIT_KEYWORD)) throw new AppError("ITUNES_RATE_LIMITED", 429);
+    // Buscando un artista, solo los suyos (como la tienda de verdad); cualquier otra búsqueda trae todas.
+    if (attribute === "artistTerm") {
+      const q = term.toLowerCase();
+      return FAKE_TRACKS.filter((t) => t.artists[0].toLowerCase().includes(q));
+    }
     return FAKE_TRACKS;
   },
 };

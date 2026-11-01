@@ -1,42 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { useConfirmedAction } from "@/components/feedback/useConfirmedAction";
 import { useI18n } from "@/i18n/client";
 import { plural } from "@/i18n/format";
-import { api, catalogLabel, errorText, type GameList, type GameSummary } from "@/lib/client/api";
+import { api, catalogLabel, type GameList, type GameSummary } from "@/lib/client/api";
 
 export const SHELF_TITLE_ID = "estanteria";
 
 /** El botón que abrió la confirmación desaparece al borrar: el foco vuelve al título de la estantería. */
 const focusShelf = () => document.getElementById(SHELF_TITLE_ID)?.focus();
 
-/** Los casetes de la estantería (se piden solo cuando se ve) y el borrado de uno o de todos. */
-export function useShelf(visible: boolean, reloadKey: unknown) {
+/**
+ * El borrado de uno o de todos los casetes. Los casetes (`list`) los lee el servidor al pintar la portada; tras borrar,
+ * `refresh` le pide que los vuelva a leer.
+ */
+export function useShelf(list: GameList | null, refresh: () => Promise<void>) {
   const { m, locale } = useI18n();
   const t = m.home;
   const act = useConfirmedAction();
-  const [list, setList] = useState<GameList | null>(null);
-  const [listError, setListError] = useState<string | null>(null);
-
-  const loadList = useCallback(async () => {
-    try {
-      setList(await api<GameList>("/api/games?limit=12"));
-      setListError(null);
-    } catch (err) {
-      setListError(errorText(err));
-    }
-  }, []);
-
-  useEffect(() => {
-    // La estantería se pide al saber quién es (viene del servidor); vacía mientras tanto.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setList(null);
-    if (visible) loadList();
-  }, [visible, reloadKey, loadList]);
 
   const afterDelete = async () => {
-    await loadList();
+    await refresh();
     focusShelf();
   };
 
@@ -78,5 +62,5 @@ export function useShelf(visible: boolean, reloadKey: unknown) {
     });
   };
 
-  return { list, listError, loadList, deleteGame, deleteHistory };
+  return { deleteGame, deleteHistory };
 }

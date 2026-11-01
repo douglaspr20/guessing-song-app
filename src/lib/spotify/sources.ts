@@ -31,6 +31,35 @@ export function normalizeTrack(t: SpotifyTrackObject): Track | null {
   };
 }
 
+/** Un artista tal como lo enseña el directorio: su id, nombre y su foto (la más cercana a 300 px). */
+export interface ArtistCard {
+  /** `spotify:<id>`: dos artistas pueden llamarse igual. */
+  id: string;
+  name: string;
+  image: string | null;
+}
+
+/** Busca artistas (por nombre, o con `genre:"…"`), ordenados por fama, con su foto oficial. */
+export async function searchArtists(
+  userId: string,
+  params: { q: string; market?: string; offset?: number; limit?: number },
+): Promise<{ items: ArtistCard[]; total: number }> {
+  const data = await spotifyFetch<{
+    artists: { items: { id: string; name: string; images?: { url: string; width?: number | null }[] }[]; total: number };
+  }>(userId, "/search", {
+    query: { q: params.q, type: "artist", market: params.market, limit: params.limit ?? SEARCH_PAGE_SIZE, offset: params.offset ?? 0 },
+  });
+  return {
+    items: data.artists.items.map((a) => {
+      const images = a.images ?? [];
+      // La más pequeña que llegue a 300 px (las tarjetas son pequeñas); si no, la que haya.
+      const fit = [...images].sort((x, y) => (x.width ?? 0) - (y.width ?? 0)).find((i) => (i.width ?? 0) >= 300) ?? images[0];
+      return { id: `spotify:${a.id}`, name: a.name, image: fit?.url ?? null };
+    }),
+    total: data.artists.total,
+  };
+}
+
 export async function searchTracks(userId: string, params: {
   q: string;
   market?: string;
