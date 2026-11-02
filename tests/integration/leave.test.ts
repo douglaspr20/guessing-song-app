@@ -12,7 +12,7 @@ const as = (browser: "tv" | "phone") => void (active = jars[browser]);
 vi.mock("next/headers", () => ({
   cookies: async () => ({
     get: (name: string) => (active.has(name) ? { name, value: active.get(name)! } : undefined),
-    set: (name: string, value: string) => void active.set(name, value),
+    set: (name: string, value: string, opts?: { maxAge?: number }) => void (opts?.maxAge === 0 ? active.delete(name) : active.set(name, value)),
     delete: (name: string) => void active.delete(name),
   }),
   headers: async () => new Headers(),

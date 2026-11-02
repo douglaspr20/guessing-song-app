@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { cookieName } from "@/lib/access/request";
+import { clearCookie, cookieName } from "@/lib/access/request";
 import { requireHost, revokeSessions } from "@/lib/access/session";
 import { handle } from "@/lib/errors";
 
@@ -7,6 +7,6 @@ import { handle } from "@/lib/errors";
 export const DELETE = handle(async () => {
   const host = await requireHost();
   const count = await revokeSessions(host.id);
-  (await cookies()).delete(cookieName("session"));
+  clearCookie(await cookies(), cookieName("session"));
   return Response.json({ revoked: count });
 });

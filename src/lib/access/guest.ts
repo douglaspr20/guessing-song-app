@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { randomToken, sha256 } from "./hash";
 import { GUEST_LIMITS } from "./limits";
-import { clientInfo, cookieName, cookieOptions } from "./request";
+import { clearCookie, clientInfo, cookieName, cookieOptions } from "./request";
 import { getAppState } from "./state";
 
 const GUEST_COOKIE = () => cookieName("guest");
@@ -61,5 +61,5 @@ export async function ensureGuest() {
 
 /** Olvida el invitado en este navegador (sus partidas las borra la limpieza cuando caduquen). */
 export async function forgetGuest() {
-  (await cookies()).delete(GUEST_COOKIE());
+  clearCookie(await cookies(), GUEST_COOKIE());
 }
