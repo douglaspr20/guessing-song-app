@@ -4,9 +4,10 @@ const ordinalRules = new Intl.PluralRules("en", { type: "ordinal" });
 const ORDINAL_SUFFIX: Record<string, string> = { one: "st", two: "nd", few: "rd", other: "th" };
 
 export const common = {
-  brand: "Adivina la canción",
+  brand: "Hum",
+  brandTitle: "Hum · Guess the song",
   metaDescription: "The family game of guessing songs with your Spotify.",
-  ogAlt: "Adivina la canción: “The tape is rolling. Who sings it?” next to a cassette with the round timer at 00:30.",
+  ogAlt: "Hum · Guess the song: “The tape is rolling. Who sings it?” next to a cassette with the round timer at 00:30.",
   language: "Language",
   retry: "Try again",
   retrying: "Trying…",
@@ -45,7 +46,7 @@ export const common = {
     digest: (digest: string) => `Error code: ${digest}`,
     tangledLabel: "Grandma's mix",
     tangledArt: "A broken cassette with tangled tape and a pencil in the reel",
-    globalTitle: "The tape got tangled · Adivina la canción",
+    globalTitle: "The tape got tangled · Hum",
     code404: "Error 404",
     lostTitle: "This tape",
     lostTitleEm: "got lost",

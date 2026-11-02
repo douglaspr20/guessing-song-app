@@ -15,7 +15,7 @@ const SITE_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
 
 export async function generateMetadata(): Promise<Metadata> {
   const { locale, m } = await getMessages();
-  const title = m.common.brand;
+  const title = m.common.brandTitle;
   const description = m.common.metaDescription;
   // La imagen al compartir va en el idioma de la página (los rastreadores sin idioma reciben el español).
   const image = {

@@ -1,4 +1,4 @@
-# Adivina la canción 🎵
+# Hum 🎵
 
 [![CI](https://github.com/douglaspr20/guessing-song-app/actions/workflows/ci.yml/badge.svg)](https://github.com/douglaspr20/guessing-song-app/actions/workflows/ci.yml)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black)
@@ -7,7 +7,7 @@
 
 **▶ Play it: [guessing-song-app.vercel.app](https://guessing-song-app.vercel.app)** (no account needed) · Made by [Douglas Pérez](https://www.linkedin.com/in/douglas-perez-software-developer/)
 
-A "guess the song" party game for family get-togethers. A clip of at least 60 seconds plays from the host's Spotify; whoever recognizes it shouts the title (and the artist), the host types it in, and the faster you answer the more points you get.
+**Hum** (Spanish UI: *Hum · Adivina la canción*) is a "guess the song" party game for family get-togethers. A clip of at least 60 seconds plays from the host's Spotify; whoever recognizes it shouts the title (and the artist), the host types it in, and the faster you answer the more points you get.
 
 The interface is designed around a **home-recorded cassette**: every game is a numbered tape (`C-014`) on a shelf, the round timer is the tape running from one reel to the other, and the scoreboard is hand-written on the J-card.
 

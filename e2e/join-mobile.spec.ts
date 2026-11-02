@@ -66,7 +66,7 @@ test("después de una partida, volver a «Unirme con un código» deja escribir 
   await page.waitForURL("**/game/*");
   const second = await lastGameCode();
   expect(second).not.toBe(first);
-  await mobile.getByRole("link", { name: "Adivina la canción" }).click();
+  await mobile.getByRole("link", { name: "Hum" }).click();
   await mobile.getByRole("link", { name: "Unirme con un código" }).click();
   await mobile.waitForURL("**/join");
 

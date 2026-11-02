@@ -39,7 +39,7 @@ export async function GET(req: Request, ctx: RouteContext<"/r/[token]/image">) {
     headers: {
       "content-type": "image/png",
       "cache-control": CACHE,
-      "content-disposition": `inline; filename="adivina-la-cancion-${format}.png"`,
+      "content-disposition": `inline; filename="hum-${format}.png"`,
     },
   });
 }

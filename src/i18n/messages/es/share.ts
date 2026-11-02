@@ -2,7 +2,7 @@
 export const share = {
   // Tarjeta y vista previa del enlace
   andMore: (n: number) => `y ${n} más`,
-  pageTitle: (headline: string, cat: string) => `${headline} · ${cat} · Adivina la canción`,
+  pageTitle: (headline: string, cat: string) => `${headline} · ${cat} · Hum`,
   pageDescription: (cat: string, tracks: string) => `El resultado de la partida ${cat} (${tracks}). Graba la tuya, sin cuenta.`,
   cardAlt: (headline: string, cat: string) => `Tarjeta del resultado de ${cat}: ${headline}`,
   // Página pública
@@ -23,7 +23,7 @@ export const share = {
   shareImage: "Compartir imagen",
   downloadWide: "Descargar apaisada",
   downloadTall: "Descargar vertical",
-  shareText: (headline: string, cat: string) => `${headline} en ${cat} · Adivina la canción`,
+  shareText: (headline: string, cat: string) => `${headline} en ${cat} · Hum`,
   close: "Cerrar",
   cantShare: (detail: string) => `No se pudo compartir. ${detail}`,
   stop: "Dejar de compartir",
