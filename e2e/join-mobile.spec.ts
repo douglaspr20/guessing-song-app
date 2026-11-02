@@ -39,3 +39,40 @@ test("alguien se une desde el móvil con el código, pulsa «¡Lo sé!» y acier
   await expect(page.getByText(`Era ${round.trackName}`)).toBeVisible({ timeout: 15_000 });
   await phone.close();
 });
+
+test("después de una partida, volver a «Unirme con un código» deja escribir otro código y entrar", async ({ page, browser, baseURL }) => {
+  await createSoloGame(page, ["Ana", "Luis"], 1);
+  const first = await lastGameCode();
+
+  const phone = await phoneContext(browser, baseURL);
+  const mobile = await phone.newPage();
+  await mobile.goto("/join");
+  await mobile.getByLabel("Código de la partida").fill(first);
+  await mobile.getByRole("button", { name: "Continuar" }).click();
+  await mobile.getByLabel("Tu nombre").fill("Pablo");
+  await mobile.getByRole("button", { name: "Entrar", exact: true }).click();
+  await expect(mobile.getByRole("heading", { name: "Esperando a que empiece" })).toBeVisible();
+
+  // El anfitrión graba otra partida; el móvil vuelve al inicio y a «Unirme con un código» sin recargar.
+  await page.goto("/");
+  await page.getByRole("link", { name: "Grabar partida nueva" }).click();
+  await page.getByRole("textbox", { name: "Jugador 1", exact: true }).fill("Ana");
+  await page.getByRole("textbox", { name: "Jugador 2", exact: true }).fill("Luis");
+  await page.getByRole("button", { name: "Grabar y empezar" }).click();
+  await page.waitForURL("**/game/*");
+  const second = await lastGameCode();
+  expect(second).not.toBe(first);
+  await mobile.getByRole("link", { name: "Adivina la canción" }).click();
+  await mobile.getByRole("link", { name: "Unirme con un código" }).click();
+  await mobile.waitForURL("**/join");
+
+  // Empieza de cero (no con la partida de antes y el botón en «Entrando…») y el código nuevo funciona.
+  const codeField = mobile.getByLabel("Código de la partida");
+  await expect(codeField).toHaveValue("");
+  await codeField.fill(second);
+  await mobile.getByRole("button", { name: "Continuar" }).click();
+  await mobile.getByLabel("Tu nombre").fill("Pablo");
+  await mobile.getByRole("button", { name: "Entrar", exact: true }).click();
+  await expect(mobile.getByRole("heading", { name: "Esperando a que empiece" })).toBeVisible();
+  await phone.close();
+});
