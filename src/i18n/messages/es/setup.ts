@@ -62,7 +62,7 @@ export const setup = {
   // Desde el móvil
   fromPhone: "Desde el móvil",
   fromPhoneHint:
-    "Quien se une con el código pulsa «¡Lo sé!»: la canción se pausa y tiene este tiempo para escribir el título y el artista. Si falla, queda fuera de esa pista.",
+    "Quien se une con el código pulsa «¡Lo sé!» y tiene este tiempo para escribir el título y el artista. Si falla, queda fuera de esa pista.",
   answerTime: "Tiempo para responder",
   answerSeconds: "Segundos para responder",
   lockout: "Al fallar queda fuera",
