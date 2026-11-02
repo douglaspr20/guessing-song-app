@@ -76,6 +76,9 @@ function applyOpenModeDefaults(input: unknown) {
 
 export const MIN_ANSWER_SECONDS = 10;
 export const MAX_ANSWER_SECONDS = 60;
+/** Qué pasa con la canción al pulsar «¡Lo sé!»: sigue sonando más baja o se pausa. */
+export const BUZZ_MODES = ["continue", "pause"] as const;
+export type BuzzMode = (typeof BUZZ_MODES)[number];
 export const DEFAULT_ANSWER_SECONDS = 20;
 
 /** Cuántas partidas anteriores se miran para no repetir canciones: opciones de «No repetir canciones de». */
@@ -107,6 +110,8 @@ const gameSettingsSchema = z.object({
   answerSeconds: z.number().int().min(MIN_ANSWER_SECONDS).max(MAX_ANSWER_SECONDS).default(DEFAULT_ANSWER_SECONDS),
   /** Al fallar queda fuera: solo esa persona o todo su equipo. */
   lockout: z.enum(["person", "team"]).default("person"),
+  /** Al pulsar «¡Lo sé!» la canción sigue sonando (más baja) o se pausa. Puntos y pistas se quedan quietos en los dos. */
+  buzzMode: z.enum(BUZZ_MODES).default("continue"),
   /** Máximo de miembros por equipo (formato "teams"). */
   maxTeamSize: z.number().int().min(1).max(MAX_TEAM_SIZE).optional(),
   rounds: z.number().int().min(1).max(50),

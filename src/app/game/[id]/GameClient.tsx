@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Keyboard } from "lucide-react";
 import { Notice, OfflineNotice } from "@/components/Notice";
 import { Scoreboard } from "@/components/Scoreboard";
+import { TurnSticker, useTurnSticker } from "@/components/buzzer/TurnSticker";
 import { BandStatus } from "@/components/band/BandStatus";
 import ui from "@/components/ui.module.css";
 import { catalogLabel } from "@/lib/client/api";
@@ -40,6 +41,8 @@ export function GameClient() {
   const [helpOpen, setHelpOpen] = useState(false);
   // Solo en la pantalla de juego: ni al cargar, ni en el entreacto, ni en el podio.
   useGameShortcuts(ctl, { enabled: !!game && !ctl.loadError && !ctl.showFinale && !ctl.intermission, onHelp: () => setHelpOpen(true) });
+  // Alguien acaba de pulsar «¡Lo sé!»: su nombre se pega sobre el casete unos segundos (la canción puede seguir).
+  const sticker = useTurnSticker(round?.id, ctl.buzz);
 
   if (ctl.loadError) return <LoadErrorScreen error={ctl.loadError} onRetry={ctl.retryLoad} />;
   if (!game) return <LoadingScreen />;
@@ -107,7 +110,10 @@ export function GameClient() {
 
             {round && clock.open && (
               <>
-                <RoundCassette round={round} clock={clock} rules={rules} running={player.phase === "playing"} />
+                <div className={styles.cassetteSlot}>
+                  <RoundCassette round={round} clock={clock} rules={rules} running={player.phase === "playing"} />
+                  {sticker && <TurnSticker key={`${round.id}:${sticker.participantId}`} name={sticker.name || g.buzzSomeone} color={buzzer?.color} />}
+                </div>
                 {round.relaxed.length > 0 && (
                   <p className={styles.relaxedNote} role="status">
                     {g.relaxedNote(formatList(locale, round.relaxed.map((r) => g.relaxedNames[r])))}

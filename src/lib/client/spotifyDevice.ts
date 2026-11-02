@@ -13,6 +13,8 @@ import { PLAYER_NAME } from "@/lib/spotify/constants";
 import { currentMessages } from "@/i18n/runtime";
 
 const SDK_URL = "https://sdk.scdn.co/spotify-player.js";
+/** Volumen normal del reproductor de Spotify (durante un turno baja a `DUCKED_VOLUME` de esto). */
+export const SPOTIFY_VOLUME = 0.85;
 const READY_TIMEOUT_MS = 10_000;
 
 export type PlayerStatus = "loading" | "ready" | "not_ready" | "error";
@@ -76,7 +78,7 @@ export function ensurePlayer(): Promise<void> {
     .then(() => {
       const p = new window.Spotify.Player({
         name: PLAYER_NAME,
-        volume: 0.85,
+        volume: SPOTIFY_VOLUME,
         getOAuthToken: (cb) => {
           fetchToken().then(cb, (e) => set({ error: e.message }));
         },

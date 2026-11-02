@@ -65,9 +65,12 @@ export function deriveRoundClock({
   const sinceFetch = round?.paused || !now ? 0 : Math.max(0, now - fetchedAt);
   const elapsedMs = started && open ? round!.elapsedMs + sinceFetch : (round?.elapsedMs ?? 0);
 
-  const pointsNow = pointsForElapsed(elapsedMs, rules);
-  const nextDropInMs = nextTierInMs(elapsedMs, rules);
-  const artistOpen = !!round?.artistAvailable && elapsedMs < rules.hintAtMs.artist;
+  // Durante un turno los puntos se quedan como al pulsar, aunque la canción siga sonando.
+  const frozen = open && !!round?.buzz;
+  const scoringMs = frozen ? round!.scoringElapsedMs : elapsedMs;
+  const pointsNow = pointsForElapsed(scoringMs, rules);
+  const nextDropInMs = frozen ? null : nextTierInMs(elapsedMs, rules);
+  const artistOpen = !!round?.artistAvailable && scoringMs < rules.hintAtMs.artist;
 
   // Arrancando: la ronda ya consta como sonando pero el audio aún carga. Se pinta como si sonara desde el
   // principio, pero no es «sin audio»: congelarla ahora pausaría el servidor con la música a punto de sonar.

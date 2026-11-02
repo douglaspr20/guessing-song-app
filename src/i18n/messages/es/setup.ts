@@ -69,6 +69,14 @@ export const setup = {
   lockoutGroup: "Quién queda fuera al fallar",
   lockoutPerson: "Solo esa persona",
   lockoutTeam: "Todo su equipo",
+  buzzMode: "Al pulsar ¡Lo sé!",
+  buzzModeGroup: "Qué pasa con la canción al pulsar ¡Lo sé!",
+  buzzModeContinue: "Seguir sonando",
+  buzzModePause: "Pausar",
+  buzzModeHint: {
+    continue: "La canción sigue, más baja, mientras responde. Los puntos y las pistas se quedan como estaban al pulsar.",
+    pause: "La canción se pausa mientras responde y sigue si falla.",
+  },
   // Canciones
   songSource: "De dónde salen las canciones",
   songSourceGroup: "Fuente de canciones",

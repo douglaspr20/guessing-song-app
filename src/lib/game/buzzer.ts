@@ -8,8 +8,8 @@ import { elapsedMs, fragmentEnded } from "./scoring";
 import { award, emitAward, loadRound } from "./service";
 
 /**
- * El pulsador: quien juega desde el móvil pulsa «¡Lo sé!», el reloj de la ronda se para (la tele
- * pausa la música) y esa persona tiene `answerSeconds` para escribir título y artista. Si acierta
+ * El pulsador: quien juega desde el móvil pulsa «¡Lo sé!», los puntos y las pistas se quedan quietos (la música
+ * sigue más baja o se pausa, según `buzzMode`) y esa persona tiene `answerSeconds` para escribir título y artista. Si acierta
  * el título gana la ronda; si falla o se le acaba el tiempo queda fuera de esta pista (ella sola o
  * todo su equipo, según el ajuste de la partida) y la canción sigue.
  *
@@ -126,7 +126,9 @@ export async function buzz(gameId: string, roundId: string, seat: Seat) {
       buzzParticipantId: seat.id,
       buzzedAt: now,
       buzzDeadline: new Date(now.getTime() + round.game.answerSeconds * 1000),
-      pausedAt: now,
+      // Con «Pausar» se para el reloj (la tele pausa la música); con «Seguir sonando» no: puntos y pistas se quedan
+      // quietos igual, porque se miden hasta `buzzedAt` (`scoringElapsedMs`).
+      ...(round.game.buzzMode === "pause" ? { pausedAt: now } : {}),
     },
   });
   if (!count) {

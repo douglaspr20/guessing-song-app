@@ -1,5 +1,10 @@
 /* ---------- El pulsador ---------- */
 
+/* El botón con la etiqueta del turno de otro encima (`TurnSticker`). */
+.buttonSlot {
+  position: relative;
+}
+
 .pad {
   display: grid;
   gap: 12px;

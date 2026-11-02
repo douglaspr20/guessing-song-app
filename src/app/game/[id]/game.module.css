@@ -921,6 +921,11 @@
   justify-self: start;
 }
 
+/* El casete con su etiqueta del turno encima (`TurnSticker`, posicionada sobre él). */
+.cassetteSlot {
+  position: relative;
+}
+
 .buzz {
   margin-bottom: 20px;
   animation: buzzIn 360ms var(--ease-out);

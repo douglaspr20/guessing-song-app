@@ -43,8 +43,8 @@ async function startRound(gameId: string, { started = true }: { started?: boolea
   });
 }
 
-async function soloSetup(opts: { started?: boolean } = {}) {
-  const game = await createGame({ mode: "open", rounds: 2, players: ["Ana", "Luis"] }, await newOwner());
+async function soloSetup(opts: { started?: boolean; buzzMode?: "continue" | "pause" } = {}) {
+  const game = await createGame({ mode: "open", rounds: 2, players: ["Ana", "Luis"], buzzMode: opts.buzzMode }, await newOwner());
   const [ana, luis] = ["Ana", "Luis"].map((n) => game.players.find((p) => p.name === n)!);
   const round = await startRound(game.id, opts);
   const anaSeat = await seatFor(game.id, ana.id, "Ana");
@@ -85,8 +85,8 @@ const reload = (roundId: string) => db.round.findUniqueOrThrow({ where: { id: ro
 const score = async (playerId: string) => (await db.player.findUniqueOrThrow({ where: { id: playerId } })).score;
 
 describe("pulsar «¡Lo sé!»", () => {
-  it("da el turno, para el reloj y lo cuenta la partida pública", async () => {
-    const { game, round, anaSeat } = await soloSetup();
+  it("con «Pausar» da el turno, para el reloj y lo cuenta la partida pública", async () => {
+    const { game, round, anaSeat } = await soloSetup({ buzzMode: "pause" });
     await buzz(game.id, round.id, anaSeat);
 
     const row = await reload(round.id);
@@ -98,6 +98,40 @@ describe("pulsar «¡Lo sé!»", () => {
     expect(pub.paused).toBe(true);
     expect(pub.buzz).toMatchObject({ participantId: anaSeat.id, name: "Ana", totalMs: 20_000 });
     expect(pub.buzz!.remainingMs).toBeGreaterThan(19_000);
+  });
+
+  it("con «Seguir sonando» (lo normal) da el turno sin parar el reloj, pero puntos y pistas se quedan quietos", async () => {
+    const { game, round, anaSeat } = await soloSetup();
+    expect(game.buzzMode).toBe("continue");
+    await buzz(game.id, round.id, anaSeat);
+
+    const row = await reload(round.id);
+    expect(row).toMatchObject({ buzzParticipantId: anaSeat.id, pausedAt: null });
+    await new Promise((r) => setTimeout(r, 80));
+    const pub = (await getGame(game.id)).round!;
+    expect(pub.paused).toBe(false);
+    // La cinta sigue corriendo; el reloj de puntos, no.
+    expect(pub.elapsedMs - pub.scoringElapsedMs).toBeGreaterThanOrEqual(70);
+    expect(pub.nextHintAt).toBeNull();
+  });
+
+  it("con «Seguir sonando», acertar vale lo que valía al pulsar aunque la canción siguiera", async () => {
+    const { game, round, ana, anaSeat } = await soloSetup();
+    // Sonando desde hace 25 s (en abierto ya vale 1), pero pulsó a los 15 s (valía 2).
+    await db.round.update({ where: { id: round.id }, data: { playStartedAt: new Date(Date.now() - 25_000) } });
+    await buzz(game.id, round.id, anaSeat);
+    await db.round.update({ where: { id: round.id }, data: { buzzedAt: new Date(Date.now() - 10_000) } });
+
+    const r = await answer(game.id, round.id, anaSeat, { title: "Bailando" });
+    expect(r).toMatchObject({ titleAwarded: true, points: 2 });
+    expect(await score(ana.id)).toBe(2);
+  });
+
+  it("con «Seguir sonando», fallar no toca el reloj: la canción nunca se paró", async () => {
+    const { game, round, anaSeat } = await soloSetup();
+    await buzz(game.id, round.id, anaSeat);
+    await answer(game.id, round.id, anaSeat, { title: "otra canción" });
+    expect(await reload(round.id)).toMatchObject({ status: "PLAYING", buzzParticipantId: null, buzzedAt: null, pausedAt: null, pausedMs: 0 });
   });
 
   it("si dos pulsan a la vez, solo uno se queda el turno", async () => {
@@ -159,8 +193,8 @@ describe("responder", () => {
     expect(g).toMatchObject({ playerId: ana.id, titleCorrect: true, viaPhone: true, title: "bailando" });
   });
 
-  it("fallar deja fuera a esa persona, reanuda el reloj sin gastar puntos y la canción sigue", async () => {
-    const { game, round, anaSeat, luisSeat } = await soloSetup();
+  it("con «Pausar», fallar deja fuera a esa persona, reanuda el reloj sin gastar puntos y la canción sigue", async () => {
+    const { game, round, anaSeat, luisSeat } = await soloSetup({ buzzMode: "pause" });
     await buzz(game.id, round.id, anaSeat);
     await new Promise((r) => setTimeout(r, 60));
     const r = await answer(game.id, round.id, anaSeat, { title: "otra canción" });

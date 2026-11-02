@@ -1,5 +1,12 @@
 import { setup as esSetup } from "@/i18n/messages/es/setup";
-import { DEFAULT_ANSWER_SECONDS, DEFAULT_FRESH_GAMES, type ChosenArtist, type GameMode, type Popularity } from "./filters";
+import {
+  DEFAULT_ANSWER_SECONDS,
+  DEFAULT_FRESH_GAMES,
+  type BuzzMode,
+  type ChosenArtist,
+  type GameMode,
+  type Popularity,
+} from "./filters";
 import { DEFAULT_TEAM_SIZE, everyone, repeated, teamsProblem, type GameFormat, type TeamDraft } from "./teams";
 
 export type SongSource = "search" | "playlists";
@@ -16,6 +23,8 @@ export interface SetupForm {
   /** Quien juega desde el móvil: segundos para responder tras pulsar y quién queda fuera al fallar. */
   answerSeconds: number;
   lockout: "person" | "team";
+  /** Al pulsar «¡Lo sé!»: la canción sigue sonando más baja o se pausa. */
+  buzzMode: BuzzMode;
   /** No repetir canciones de las últimas N partidas del mismo dueño (0: no mirar otras). */
   freshGames: number;
   fragmentSeconds: number;
@@ -46,6 +55,7 @@ export function initialSetup(teams: TeamDraft[], mode: GameMode): SetupForm {
     rounds: 10,
     answerSeconds: DEFAULT_ANSWER_SECONDS,
     lockout: "person",
+    buzzMode: "continue",
     freshGames: DEFAULT_FRESH_GAMES,
     fragmentSeconds: 60,
     mode,
@@ -143,6 +153,7 @@ export function createGameBody(form: SetupForm, usableIds: string[]) {
     fragmentSeconds: form.fragmentSeconds,
     answerSeconds: form.answerSeconds,
     lockout: form.lockout,
+    buzzMode: form.buzzMode,
     freshGames: form.freshGames,
     filters: buildFilters(form, usableIds),
     ...(hostPlaysAs(form) ? { hostPlaysAs: hostPlaysAs(form)! } : {}),

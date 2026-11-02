@@ -20,7 +20,15 @@ import {
 import { emit } from "./events";
 import { pickWithFallback, type Relaxed } from "./fallback";
 import { pickAvoidingHeard } from "./fresh";
-import { createGameSchema, gameFiltersSchema, type CreateGameInput, type GameFilters, type GameMode, type TeamInput } from "./filters";
+import {
+  createGameSchema,
+  gameFiltersSchema,
+  type BuzzMode,
+  type CreateGameInput,
+  type GameFilters,
+  type GameMode,
+  type TeamInput,
+} from "./filters";
 import { isCorrectArtist, isCorrectGuess } from "./matcher";
 import { pickOpenTrack, type OpenTrackSource } from "./open-picker";
 import type { GameFormat } from "./teams";
@@ -30,6 +38,7 @@ import {
   elapsedMs,
   pointsForElapsed,
   rulesFor,
+  scoringElapsedMs,
   unlockedHints,
   type RoundClock,
 } from "./scoring";
@@ -57,6 +66,7 @@ function roundClock(round: Round): RoundClock {
     playStartedAt: round.playStartedAt,
     pausedAt: round.pausedAt,
     pausedMs: round.pausedMs,
+    buzzedAt: round.buzzedAt,
     trackName: round.trackName,
     artists: JSON.parse(round.artists) as string[],
     genre: round.genre,
@@ -74,6 +84,7 @@ export function toPublicRound(round: Round, game: RoundGame, now = new Date(), p
   const rules = rulesFor(game.mode);
   const clock = roundClock(round);
   const elapsed = elapsedMs(clock, now);
+  const scoring = scoringElapsedMs(clock, now);
   const { hints, nextHintAt } = unlockedHints(clock, now, closed, rules);
   return {
     id: round.id,
@@ -86,8 +97,10 @@ export function toPublicRound(round: Round, game: RoundGame, now = new Date(), p
     /** El anfitrión pausó: el reloj de puntos y pistas está parado. */
     paused: !!round.pausedAt,
     elapsedMs: elapsed,
+    /** El reloj de puntos y pistas: como `elapsedMs`, pero durante un turno se queda en el momento de pulsar. */
+    scoringElapsedMs: scoring,
     /** Lo que vale acertar el título ahora mismo (null si la ronda está cerrada). */
-    pointsNow: closed ? null : pointsForElapsed(elapsed, rules),
+    pointsNow: closed ? null : pointsForElapsed(scoring, rules),
     artistAvailable: !closed && !round.artistWinnerPlayerId && artistAvailable(clock, now, rules),
     hints,
     nextHintAt: closed ? null : nextHintAt,
@@ -95,7 +108,7 @@ export function toPublicRound(round: Round, game: RoundGame, now = new Date(), p
     artistWinnerPlayerId: round.artistWinnerPlayerId,
     /** Qué filtros hubo que aflojar para encontrar esta canción (vacío casi siempre). */
     relaxed: (round.relaxed ? JSON.parse(round.relaxed) : []) as Relaxed[],
-    /** Quien pulsó «¡Lo sé!» y está respondiendo (el reloj de la ronda está parado). */
+    /** Quien pulsó «¡Lo sé!» y está respondiendo (puntos y pistas quietos; la música se para o sigue según `buzzMode`). */
     buzz:
       !closed && round.buzzParticipantId && round.buzzDeadline
         ? {
@@ -168,6 +181,8 @@ function toPublicGame(
     answerSeconds: game.answerSeconds,
     /** Al fallar queda fuera "person" (solo quien falló) o "team" (todo su equipo). */
     lockout: game.lockout as "person" | "team",
+    /** Al pulsar «¡Lo sé!» la canción sigue sonando más baja ("continue") o se pausa ("pause"). */
+    buzzMode: game.buzzMode as BuzzMode,
     /** No repetir las canciones de las últimas N partidas del mismo dueño. */
     freshGames: game.freshGames,
     filters: JSON.parse(game.filters) as GameFilters,
@@ -368,6 +383,7 @@ export async function createGame(
           format: data.format,
           answerSeconds: data.answerSeconds,
           lockout: data.lockout,
+          buzzMode: data.buzzMode,
           freshGames: data.freshGames,
           maxTeamSize: data.format === "teams" ? data.maxTeamSize : null,
           players: {
@@ -414,6 +430,7 @@ function replayInput(game: Game & { players: PlayerWithMembers[] }): CreateGameI
     fragmentSeconds: game.fragmentSeconds,
     answerSeconds: game.answerSeconds,
     lockout: game.lockout as "person" | "team",
+    buzzMode: game.buzzMode as BuzzMode,
     freshGames: game.freshGames,
     filters: gameFiltersSchema.parse(JSON.parse(game.filters)),
   };
@@ -722,7 +739,8 @@ export async function award(
       data: { status: "WON", winnerPlayerId: playerId },
     });
     if (won.count) {
-      result.points += pointsForElapsed(elapsedMs(round, at), rules);
+      // Respondiendo en un turno, vale lo que valía al pulsar (la canción pudo seguir sonando).
+      result.points += pointsForElapsed(scoringElapsedMs(round, at), rules);
       result.titleAwarded = true;
       // Si estaba revelada, la partida ya se cerró (o no) al revelarla.
       if (round.status === "PLAYING") result.gameFinished = await finishIfLastRound(tx, round.game, round.number);

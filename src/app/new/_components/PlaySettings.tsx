@@ -119,6 +119,19 @@ export function PhoneSettings({ form: f, update }: Props) {
             onChange={(answerSeconds) => update({ answerSeconds })}
           />
         </div>
+        <div className={form.field}>
+          <span className={form.label}>{t.buzzMode}</span>
+          <Segmented<SetupForm["buzzMode"]>
+            fill
+            label={t.buzzModeGroup}
+            value={f.buzzMode}
+            onChange={(buzzMode) => update({ buzzMode })}
+            options={[
+              { value: "continue", label: t.buzzModeContinue },
+              { value: "pause", label: t.buzzModePause },
+            ]}
+          />
+        </div>
         {f.format === "teams" && (
           <div className={form.field}>
             <span className={form.label}>{t.lockout}</span>
@@ -135,6 +148,7 @@ export function PhoneSettings({ form: f, update }: Props) {
           </div>
         )}
       </div>
+      <p className={styles.hint}>{t.buzzModeHint[f.buzzMode]}</p>
     </div>
   );
 }

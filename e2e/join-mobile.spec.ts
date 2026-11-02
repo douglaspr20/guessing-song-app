@@ -1,5 +1,5 @@
 import { expect, phoneContext, test } from "./support/test";
-import { lastGameCode, playingRound } from "./support/db";
+import { lastGameCode, playingRound, roundPaused } from "./support/db";
 import { createSoloGame } from "./support/flows";
 
 test("alguien se une desde el móvil con el código, pulsa «¡Lo sé!» y acierta", async ({ page, browser, baseURL }) => {
@@ -30,6 +30,10 @@ test("alguien se une desde el móvil con el código, pulsa «¡Lo sé!» y acier
 
   // La tele muestra quién tiene el turno; el móvil responde con el título.
   await expect(page.getByRole("region", { name: "Turno de respuesta" })).toContainText("Pablo", { timeout: 15_000 });
+  // Como la canción sigue sonando (el modo normal), su nombre se pega en grande sobre el casete y la ronda no se pausa.
+  await expect(page.getByText("¡Pablo!")).toBeVisible();
+  await expect(page.getByText("Tiene el turno", { exact: true })).toBeVisible();
+  expect(await roundPaused()).toBe(false);
   const round = await playingRound();
   // La ronda guarda de qué búsqueda salió la canción.
   expect(round.pickedVia).toMatch(/^itunes: .+ \([A-Z]{2}\) (hits|mix|gems)$/);
@@ -75,4 +79,36 @@ test("después de una partida, volver a «Unirme con un código» deja escribir 
   await mobile.getByRole("button", { name: "Entrar", exact: true }).click();
   await expect(mobile.getByRole("heading", { name: "Esperando a que empiece" })).toBeVisible();
   await phone.close();
+});
+
+test("cuando alguien toma el turno, los demás móviles ven su nombre pegado sobre el botón", async ({ page, browser, baseURL }) => {
+  await createSoloGame(page, ["Ana", "Luis"], 1);
+  const code = await lastGameCode();
+
+  const join = async (name: string) => {
+    const ctx = await phoneContext(browser, baseURL);
+    const p = await ctx.newPage();
+    await p.goto("/join");
+    await p.getByLabel("Código de la partida").fill(code);
+    await p.getByRole("button", { name: "Continuar" }).click();
+    await p.getByLabel("Tu nombre").fill(name);
+    await p.getByRole("button", { name: "Entrar", exact: true }).click();
+    await expect(p.getByRole("heading", { name: "Esperando a que empiece" })).toBeVisible();
+    return { ctx, p };
+  };
+  const pablo = await join("Pablo");
+  const marta = await join("Marta");
+
+  await page.getByRole("button", { name: /^Empezar/ }).click();
+  const buzz = pablo.p.getByRole("button", { name: "¡Lo sé!" });
+  await expect(buzz).toBeEnabled({ timeout: 15_000 });
+  await buzz.click();
+
+  await expect(marta.p.getByText("¡Pablo!")).toBeVisible({ timeout: 15_000 });
+  await expect(marta.p.getByText("Tiene el turno", { exact: true })).toBeVisible();
+  await marta.p.screenshot({ path: "test-results/turn-sticker-phone.png" });
+  // Y después, la línea de siempre bajo el botón apagado.
+  await expect(marta.p.getByText(/Pablo tiene el turno/)).toBeVisible();
+  await pablo.ctx.close();
+  await marta.ctx.close();
 });

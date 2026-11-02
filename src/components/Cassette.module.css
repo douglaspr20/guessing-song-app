@@ -117,6 +117,11 @@
   animation-play-state: paused;
 }
 
+/* Durante un turno con la canción sonando: la cinta sigue, pero a un tercio de velocidad (como en espera). */
+.waiting .hub::before {
+  animation-duration: 4.8s;
+}
+
 .running .hub::before {
   animation-play-state: running;
 }

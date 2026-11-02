@@ -53,12 +53,14 @@ export interface RoundClock {
   pausedAt?: Date | null;
   /** Tiempo total ya pasado en pausas anteriores. */
   pausedMs?: number;
+  /** Alguien pulsó «¡Lo sé!» y está respondiendo desde entonces (null fuera de un turno). */
+  buzzedAt?: Date | null;
   trackName: string;
   artists: string[];
   genre: string | null;
 }
 
-type ClockTimes = Pick<RoundClock, "playStartedAt" | "pausedAt" | "pausedMs">;
+type ClockTimes = Pick<RoundClock, "playStartedAt" | "pausedAt" | "pausedMs" | "buzzedAt">;
 
 /** Tiempo de ronda transcurrido en `at`, descontando las pausas. 0 si aún no ha sonado. */
 export function elapsedMs(round: ClockTimes, at: Date): number {
@@ -67,6 +69,15 @@ export function elapsedMs(round: ClockTimes, at: Date): number {
   const paused =
     (round.pausedMs ?? 0) + (round.pausedAt && t > round.pausedAt.getTime() ? t - round.pausedAt.getTime() : 0);
   return Math.max(0, t - round.playStartedAt.getTime() - paused);
+}
+
+/**
+ * El reloj de puntos y pistas: el de la ronda, salvo durante un turno, que se queda en el momento de pulsar.
+ * Así pensar la respuesta no cuesta puntos ni abre pistas aunque la canción siga sonando. Al cerrarse el turno
+ * vuelve a ser el de la ronda (si la música siguió, se pone al día).
+ */
+export function scoringElapsedMs(round: ClockTimes, at: Date): number {
+  return elapsedMs(round, round.buzzedAt && at > round.buzzedAt ? round.buzzedAt : at);
 }
 
 /** 3 puntos antes del primer tramo, 2 antes del segundo, 1 después (20/40 s en Spotify, 10/20 s en abierto). */
@@ -123,15 +134,15 @@ function hintValue(type: HintType, round: RoundClock): string | null {
  * Con `revealAll` (ronda cerrada) se muestran todas.
  */
 export function unlockedHints(round: RoundClock, now: Date, revealAll = false, rules: RoundRules = SPOTIFY_RULES) {
-  const elapsed = elapsedMs(round, now);
+  const elapsed = scoringElapsedMs(round, now);
   const hints: Hint[] = [];
   let nextHintAt: Date | null = null;
   for (const type of HINT_ORDER) {
     const unlock = hintUnlockMs(type, rules);
     if (revealAll || (round.playStartedAt && elapsed >= unlock)) {
       hints.push({ type, value: hintValue(type, round) });
-    } else if (!nextHintAt && round.playStartedAt && !round.pausedAt) {
-      // En pausa no hay "siguiente pista" programada: el reloj está parado.
+    } else if (!nextHintAt && round.playStartedAt && !round.pausedAt && !round.buzzedAt) {
+      // En pausa o durante un turno no hay "siguiente pista" programada: ese reloj está parado.
       nextHintAt = new Date(round.playStartedAt.getTime() + unlock + (round.pausedMs ?? 0));
     }
   }
@@ -140,5 +151,5 @@ export function unlockedHints(round: RoundClock, now: Date, revealAll = false, r
 
 /** El punto de artista solo vale antes de que el artista salga como pista. */
 export function artistAvailable(round: ClockTimes, at: Date, rules: RoundRules = SPOTIFY_RULES): boolean {
-  return elapsedMs(round, at) < hintUnlockMs("artist", rules);
+  return scoringElapsedMs(round, at) < hintUnlockMs("artist", rules);
 }
