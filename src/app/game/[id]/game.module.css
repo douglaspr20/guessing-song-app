@@ -147,16 +147,16 @@
   vertical-align: -1px;
 }
 .remoteDot[data-color="red"] {
-  background: #d93a2b;
+  background: var(--remote-red);
 }
 .remoteDot[data-color="green"] {
-  background: #2f9e55;
+  background: var(--remote-green);
 }
 .remoteDot[data-color="yellow"] {
-  background: #f0c419;
+  background: var(--remote-yellow);
 }
 .remoteDot[data-color="blue"] {
-  background: #2f6fd6;
+  background: var(--remote-blue);
 }
 
 /* «¡Acertó!»: lo que el elegido dijo en voz alta, sin escribir. */
@@ -932,12 +932,11 @@
 }
 
 @keyframes buzzIn {
+  /* Solo `transform` (DESIGN.md): el cartel se ve desde el primer fotograma, aunque la animación no corra. */
   from {
-    opacity: 0;
-    transform: translateY(-12px) scale(0.98);
+    transform: translateY(-16px) scale(0.97);
   }
   to {
-    opacity: 1;
     transform: none;
   }
 }

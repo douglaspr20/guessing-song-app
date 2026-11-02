@@ -45,8 +45,14 @@
   max-width: 100px;
 }
 
+/* Con ratón no hace falta marca (el texto se selecciona al entrar); con teclado, el anillo tomate de la cartulina. */
 .value:focus {
   outline: none;
+}
+
+.value:focus-visible {
+  outline: var(--stroke) solid var(--tomato-deep);
+  outline-offset: -6px;
 }
 
 .value small {
