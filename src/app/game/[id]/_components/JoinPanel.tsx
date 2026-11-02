@@ -49,6 +49,10 @@ export function JoinPanel({
   const [busy, setBusy] = useState(false);
   /** Quién tenía ya una petición al leer la lista: solo se avisa de las nuevas. */
   const asked = useRef(new Set<string>());
+  /** Quién había en la última lectura (sin el anfitrión, que deja de jugar desde aquí): null hasta la primera. */
+  const inside = useRef<Map<string, string> | null>(null);
+  /** A quién sacó el anfitrión desde esta pantalla: de esos no se avisa que «se ha salido». */
+  const kicked = useRef(new Set<string>());
 
   useEffect(() => {
     const link = `${window.location.origin}/join/${game.code}`;
@@ -67,6 +71,11 @@ export function JoinPanel({
           const now = new Set(r.participants.filter((p) => p.claim).map((p) => p.id));
           for (const p of r.participants) if (p.claim && !asked.current.has(p.id)) toast({ tone: "ok", text: g.claimToast(p.name) });
           asked.current = now;
+          // Y de quien se salió desde su móvil: estaba en la lectura anterior y ya no, sin que el anfitrión lo sacara.
+          const still = new Set(r.participants.map((p) => p.id));
+          for (const [id, name] of inside.current ?? [])
+            if (!still.has(id) && !kicked.current.has(id)) toast({ tone: "ok", text: g.leftToast(name) });
+          inside.current = new Map(r.participants.filter((p) => !p.host).map((p) => [p.id, p.name]));
         },
         () => {},
       ),
@@ -108,7 +117,10 @@ export function JoinPanel({
   const kick = (p: Joined) =>
     act({
       question: { title: g.kickTitle(p.name), body: g.kickBody, confirmLabel: g.kick },
-      run: () => api(`/api/games/${game.id}/participants/${p.id}`, { method: "DELETE" }),
+      run: () => {
+        kicked.current.add(p.id);
+        return api(`/api/games/${game.id}/participants/${p.id}`, { method: "DELETE" });
+      },
       after: load,
     });
 

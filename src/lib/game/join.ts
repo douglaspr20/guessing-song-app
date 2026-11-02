@@ -169,7 +169,7 @@ export async function joinGame(input: JoinInput, ctx: JoinContext, opts: { follo
       if (fresh.players.length >= JOIN_LIMITS.maxSolo) throw new AppError("GAME_FULL", 409);
       const player = await tx.player.create({ data: { gameId: fresh.id, name } });
       return tx.participant.create({
-        data: { gameId: fresh.id, playerId: player.id, userId: ctx.user?.id, name, tokenHash },
+        data: { gameId: fresh.id, playerId: player.id, userId: ctx.user?.id, name, tokenHash, ownsSeat: true },
       });
     }
 
@@ -189,7 +189,7 @@ export async function joinGame(input: JoinInput, ctx: JoinContext, opts: { follo
     if (people >= MAX_PEOPLE) throw new AppError("GAME_FULL", 409);
     const member = await tx.teamMember.create({ data: { playerId: team.id, name } });
     return tx.participant.create({
-      data: { gameId: fresh.id, playerId: team.id, memberId: member.id, userId: ctx.user?.id, name, tokenHash },
+      data: { gameId: fresh.id, playerId: team.id, memberId: member.id, userId: ctx.user?.id, name, tokenHash, ownsSeat: true },
     });
   });
 
@@ -329,6 +329,28 @@ export async function requireParticipant(gameId: string) {
   const p = await currentParticipant(gameId);
   if (!p) throw notFound();
   return p;
+}
+
+/**
+ * Quien se unió desde el móvil se sale antes de la primera pista. Si su nombre lo creó al unirse, se borra con él
+ * (no queda en el marcador ni en el podio); si lo había apuntado el anfitrión, queda libre para quien lo reclame.
+ * Para volver, se une otra vez con el código, como la primera vez.
+ */
+export async function leaveGame(gameId: string) {
+  const me = await requireParticipant(gameId);
+  if (me.isHost) throw new AppError("CANT_LEAVE_AS_HOST", 409);
+  const game = await db.game.findUnique({ where: { id: gameId }, select: { currentRound: true, status: true } });
+  if (!game || game.currentRound > 0 || game.status !== "LOBBY") throw new AppError("GAME_ALREADY_STARTED", 409);
+
+  await db.$transaction(async (tx) => {
+    await tx.participant.delete({ where: { id: me.id } });
+    if (!me.ownsSeat) return;
+    // Por equipos se quita su sitio en el equipo (el equipo es del anfitrión); suelto, su jugador.
+    if (me.memberId) await tx.teamMember.delete({ where: { id: me.memberId } });
+    else await tx.player.delete({ where: { id: me.playerId } });
+  });
+  (await cookies()).delete(participantCookie(gameId));
+  emit({ type: "participant_left", gameId, participantId: me.id });
 }
 
 // ---------- Anfitrión ----------

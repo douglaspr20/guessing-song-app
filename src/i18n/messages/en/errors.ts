@@ -86,6 +86,7 @@ export const errors = {
   TEAM_FULL: ({ team }: { team: string }) => `${team} is full`,
   PARTICIPANT_NOT_FOUND: "Participant not found",
   CANT_KICK_HOST: "That's your seat as host: to stop playing, do it from the lobby before starting",
+  CANT_LEAVE_AS_HOST: "You're playing as the host: to stop playing, do it from the TV lobby",
   GAME_ALREADY_STARTED: "The game has already started: this can only change before the first track",
   HOST_NAME_NOT_FOUND: "Pick one of the names in the game",
   CLAIM_NOT_FOUND: "That request no longer exists: another one may have replaced it, or it expired.",

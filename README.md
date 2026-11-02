@@ -175,6 +175,7 @@ The app is built for Vercel with a Neon Postgres database; both have free tiers 
 | POST                        | `/api/games/:id/replay`                                                | "Same again": a new game with the same settings and people (once the game is over)     |
 | POST · GET · DELETE         | `/api/join/claim`                                                      | A browser that lost its session asks for its seat / asks if it was let in / withdraws    |
 | POST                        | `/api/games/:id/participants/:pid/claim`                               | The host lets that request in or refuses it `{ accept }`                                |
+| POST                        | `/api/games/:id/leave`                                                 | A phone leaves the game before the first track (its own name is removed; a name the host listed is freed) |
 | PUT · DELETE                | `/api/games/:id/host-seat`                                             | The host plays too as one of the names `{ name }` / stops playing (before the first track) |
 | GET                         | `/api/artists?source=spotify\|itunes&genres=&language=&yearFrom=&yearTo=&q=&page=` | Artist directory, 24 per page (Spotify only if the account has it connected; 120 requests per 10 min per connection) |
 | POST                        | `/api/play/:id/follow`                                                 | A phone moves to the replayed game with its same name and seat                         |

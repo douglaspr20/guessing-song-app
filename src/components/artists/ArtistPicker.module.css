@@ -8,30 +8,7 @@
 }
 
 .back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: var(--hit-min);
-  margin-bottom: 8px;
-  border: 0;
-  background: none;
-  padding: 0;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 20px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--on-shell-soft);
-  cursor: pointer;
-}
-
-.back:hover {
-  color: var(--on-shell);
-}
-
-.back:focus-visible {
-  outline: 3px solid var(--saffron);
-  outline-offset: 3px;
+  composes: backLink from "../styles/layout.module.css";
 }
 
 .title {

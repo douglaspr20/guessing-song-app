@@ -93,6 +93,7 @@ export const errors = {
   PARTICIPANT_NOT_FOUND: "Participante no encontrado",
   CLAIM_NOT_FOUND: "Esa petición ya no existe: puede que otra la sustituyera o que caducara.",
   CANT_KICK_HOST: "Ese es tu sitio de anfitrión: para dejar de jugar, hazlo desde la sala antes de empezar",
+  CANT_LEAVE_AS_HOST: "Juegas como anfitrión: para dejar de jugar, hazlo desde la sala de la tele",
   GAME_ALREADY_STARTED: "La partida ya empezó: esto solo se puede cambiar antes de la primera pista",
   HOST_NAME_NOT_FOUND: "Elige uno de los nombres de la partida",
   LOCKED_OUT: "Ya fallaste en esta pista: espera a la siguiente",

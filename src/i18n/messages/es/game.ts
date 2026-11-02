@@ -153,6 +153,7 @@ export const game = {
   claimAllow: "Dejar entrar",
   claimDeny: "No",
   claimToast: (name: string) => `${name} pide volver a entrar`,
+  leftToast: (name: string) => `${name} se ha salido`,
   claimBadge: { one: "{n} pide entrar", other: "{n} piden entrar" },
   linkCopied: "Enlace copiado: pégalo en el chat.",
   cantCopy: "No se pudo copiar. Selecciona el enlace y cópialo a mano.",

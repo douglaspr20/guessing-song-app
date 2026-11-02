@@ -1,14 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 import { BandStatus } from "@/components/band/BandStatus";
 import { Card } from "@/components/Card";
+import { useConfirmedAction } from "@/components/feedback/useConfirmedAction";
 import { Podium } from "@/components/Podium";
 import { ShareResult } from "@/components/ShareResult";
 import ui from "@/components/ui.module.css";
 import { useI18n } from "@/i18n/client";
 import { formatList } from "@/i18n/format";
-import type { Game, Round } from "@/lib/client/api";
+import { api, type Game, type Round } from "@/lib/client/api";
 import { winnerSummary, withPlaces } from "@/lib/game/standings";
 import styles from "./play.module.css";
 
@@ -36,13 +39,27 @@ export function OutOfGame() {
   );
 }
 
-/** Antes de la primera pista. */
-export function PlayWaiting() {
+/** Antes de la primera pista: esperar o salirse (después ya no se puede, solo antes de empezar). */
+export function PlayWaiting({ gameId }: { gameId: string }) {
   const { m } = useI18n();
+  const t = m.play;
+  const router = useRouter();
+  const act = useConfirmedAction();
+  const leave = async () => {
+    const left = await act({
+      question: { title: t.leaveTitle, body: t.leaveBody, confirmLabel: t.leaveConfirm },
+      run: () => api(`/api/games/${gameId}/leave`, { method: "POST" }),
+    });
+    if (left) router.push("/");
+  };
   return (
     <>
-      <h1 className={styles.headline}>{m.play.waitingTitle}</h1>
-      <p className={styles.lede}>{m.play.waitingLede}</p>
+      <h1 className={styles.headline}>{t.waitingTitle}</h1>
+      <p className={styles.lede}>{t.waitingLede}</p>
+      <button type="button" className={`${ui.btn} ${ui.onCard} ${styles.leave}`} onClick={leave}>
+        <LogOut size={20} aria-hidden />
+        {t.leave}
+      </button>
     </>
   );
 }
