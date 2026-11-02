@@ -13,6 +13,33 @@ import styles from "./JoinFlow.module.css";
 
 const clean = (raw: string) => raw.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
 
+/** El flujo de unirse, del código al nombre; el nombre va aparte (se conserva al volver). */
+interface Flow {
+  code: string;
+  found: Lookup | null;
+  teamId: string;
+  busy: boolean;
+  error: string | null;
+  /** La API no respondió: se dice y se ofrece reintentar. */
+  offline: boolean;
+  /** Ese nombre ya está dentro desde otro navegador: se ofrece pedir el sitio al anfitrión. */
+  taken: boolean;
+  /** Esperando a que el anfitrión deje entrar: la partida a la que se pidió el sitio. */
+  claiming: { gameId: string; name: string } | null;
+}
+
+/** Todo como al abrir la página, con ese código. */
+const startFlow = (code: string): Flow => ({
+  code: clean(code),
+  found: null,
+  teamId: "",
+  busy: false,
+  error: null,
+  offline: false,
+  taken: false,
+  claiming: null,
+});
+
 /**
  * Unirse a una partida con su código de 6 caracteres: primero el código, después el nombre (o el de
  * la cuenta, si hay sesión) y, por equipos, el equipo. Se abre desde /join o con el enlace /join/CÓDIGO.
@@ -23,20 +50,13 @@ export function JoinFlow() {
   // En /join/ABC123 el código viene en la dirección; en /join se escribe a mano.
   const initialCode = useParams<{ code?: string }>().code ?? "";
   const titleId = useId();
-  const [code, setCode] = useState(clean(initialCode));
-  const [found, setFound] = useState<Lookup | null>(null);
+  const [flow, setFlow] = useState(() => startFlow(initialCode));
+  const { code, found, teamId, busy, error, offline, taken, claiming } = flow;
   const [name, setName] = useState("");
-  const [teamId, setTeamId] = useState("");
   const [user, setUser] = useState<{ displayName: string } | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  /** La API no respondió: se dice y se ofrece reintentar. */
-  const [offline, setOffline] = useState(false);
   const autoLooked = useRef(false);
-  /** Ese nombre ya está dentro desde otro navegador: se ofrece pedir el sitio al anfitrión. */
-  const [taken, setTaken] = useState(false);
-  /** Esperando a que el anfitrión deje entrar: la partida a la que se pidió el sitio. */
-  const [claiming, setClaiming] = useState<{ gameId: string; name: string } | null>(null);
+  /** Cambia solo esas partes del flujo. */
+  const patch = (p: Partial<Flow>) => setFlow((f) => ({ ...f, ...p }));
 
   useEffect(() => {
     api<AccessStatus>("/api/access/status").then(
@@ -46,20 +66,24 @@ export function JoinFlow() {
   }, []);
 
   const lookup = async (value = code) => {
-    setBusy(true);
-    setError(null);
-    setOffline(false);
+    patch({ busy: true, error: null, offline: false });
     try {
       const r = await api<Lookup>("/api/join/lookup", { json: { code: value } });
-      setFound(r);
-      setCode(r.code);
+      patch({ busy: false, found: r, code: r.code });
     } catch (err) {
-      if (err instanceof ApiError) setError(err.message);
-      else setOffline(true);
-    } finally {
-      setBusy(false);
+      patch({ busy: false, ...(err instanceof ApiError ? { error: err.message } : { offline: true }) });
     }
   };
+
+  // Next 16 conserva esta página montada (oculta, con `<Activity>`) al irse a la partida: al volver a «Unirme» aparecía
+  // la partida anterior con «Entrando…» bloqueado. Al ocultarse, empieza de cero.
+  useEffect(
+    () => () => {
+      setFlow(startFlow(initialCode));
+      autoLooked.current = false;
+    },
+    [initialCode],
+  );
 
   // Con el enlace /join/ABC123 se comprueba el código sin que haya que pulsar nada.
   useEffect(() => {
@@ -83,50 +107,40 @@ export function JoinFlow() {
   const submitJoin = async (e: FormEvent) => {
     e.preventDefault();
     if (!found || !ready) return;
-    setBusy(true);
-    setError(null);
+    patch({ busy: true, error: null });
     try {
       const r = await api<{ gameId: string }>("/api/join", {
         json: { code: found.code, name: user ? undefined : finalName, teamId: needsTeam ? teamId : undefined },
       });
+      // El botón sigue en «Entrando…» hasta que cambia la página (y al ocultarse, todo vuelve a empezar).
       router.push(`/play/${r.gameId}`);
     } catch (err) {
-      // Solo se libera el botón si falló: al entrar, la página cambia.
-      if (err instanceof ApiError && err.code === "NAME_TAKEN" && !user) setTaken(true);
-      else setError(errorText(err));
-      setBusy(false);
+      if (err instanceof ApiError && err.code === "NAME_TAKEN" && !user) patch({ busy: false, taken: true });
+      else patch({ busy: false, error: errorText(err) });
     }
   };
 
   /** «Soy yo»: pide al anfitrión quedarse con el sitio de ese nombre y espera su respuesta. */
   const askToEnter = async () => {
     if (!found) return;
-    setBusy(true);
-    setError(null);
+    patch({ busy: true, error: null });
     try {
       const r = await api<{ gameId: string; already: boolean }>("/api/join/claim", { json: { code: found.code, name: finalName } });
       if (r.already) router.push(`/play/${r.gameId}`);
-      else setClaiming({ gameId: r.gameId, name: finalName });
+      else patch({ busy: false, claiming: { gameId: r.gameId, name: finalName } });
     } catch (err) {
-      setError(errorText(err));
-    } finally {
-      setBusy(false);
+      patch({ busy: false, error: errorText(err) });
     }
   };
 
   /** El anfitrión no lo dejó entrar (o caducó): vuelve al nombre, con el motivo. */
-  const claimGone = useCallback(() => {
-    setClaiming(null);
-    setTaken(false);
-    setError(m.join.waitGone);
-  }, [m.join.waitGone]);
+  const claimGone = useCallback(
+    () => setFlow((f) => ({ ...f, claiming: null, taken: false, error: m.join.waitGone })),
+    [m.join.waitGone],
+  );
 
-  const reset = () => {
-    setFound(null);
-    setTeamId("");
-    setError(null);
-    setTaken(false);
-  };
+  /** «Cambiar código»: de vuelta al primer paso con el código que había. */
+  const changeCode = () => setFlow((f) => startFlow(f.code));
 
   return (
     <>
@@ -139,16 +153,13 @@ export function JoinFlow() {
               gameId={claiming.gameId}
               name={claiming.name}
               onGone={claimGone}
-              onCancel={() => setClaiming(null)}
+              onCancel={() => patch({ claiming: null })}
             />
           ) : !found ? (
             <CodeStep
               titleId={titleId}
               code={code}
-              onCode={(value) => {
-                setCode(clean(value));
-                setError(null);
-              }}
+              onCode={(value) => patch({ code: clean(value), error: null })}
               busy={busy}
               error={error}
               offline={offline}
@@ -163,18 +174,17 @@ export function JoinFlow() {
               name={name}
               onName={(value) => {
                 setName(value);
-                setError(null);
-                setTaken(false);
+                patch({ error: null, taken: false });
               }}
               teamId={teamId}
-              onTeam={setTeamId}
+              onTeam={(id) => patch({ teamId: id })}
               claims={claims}
               ready={ready}
               busy={busy}
               error={error}
               taken={taken}
               onAskToEnter={askToEnter}
-              onChangeCode={reset}
+              onChangeCode={changeCode}
               onSubmit={submitJoin}
             />
           )}

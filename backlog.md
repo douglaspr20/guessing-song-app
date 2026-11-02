@@ -56,7 +56,7 @@ La gente llega desde el post sin conocer el juego: lo primero que ve es la tarje
 
 ### Medir
 
-- [ ] **Prueba con grupos reales (S, sin código).** Jugar con 5-10 grupos y anotar qué piden repetir. Decide qué de P2 y P3 importa de verdad. **1 de 5 hecha** (familia, octubre 2026): de ella salen los tres puntos de abajo.
+- [ ] **Prueba con grupos reales (S, sin código).** Jugar con 5-10 grupos y anotar qué piden repetir. Decide qué de P2 y P3 importa de verdad. **2 de 5 hechas** (familia, octubre 2026): de ellas salen los puntos de «Juego» y de «Unirse y sala de espera».
 
 ### Juego
 
@@ -73,6 +73,19 @@ Salen de la primera partida real (familia, con Spotify y desde un móvil como an
 - [x] **El anfitrión también juega (M/L).** «Yo también juego» al grabar (o desde la sala antes de empezar) obliga a elegir uno de los nombres.
   - Su pantalla tiene una franja «¡Lo sé!» sobre el casete, y en su turno el formulario de respuesta. Lo juzga el servidor; en su turno no tiene «Lo dijo bien», «Falló» ni «Revelar».
   - De paso se arregló una carrera al arrancar cada pista: si el estado llegaba antes que el audio, la ronda se quedaba en pausa en el servidor con la música sonando, y nadie podía pulsar.
+
+### Unirse y sala de espera
+
+Salen de la segunda partida real (familia, 31-10-2026).
+
+- [x] **Bug: al volver a «Unirse» se queda el código de la partida anterior y el botón atascado (S).** Tras terminar una partida y grabar otra, algunos móviles entraban desde el inicio a «Unirse» y veían el código viejo con «Entrando…» sin hacer nada. Al cambiar el código, el botón se quedaba en «Buscando…» y solo se arreglaba recargando la página.
+  - Causa (reproducida con una e2e): `JoinFlow` deja `busy` en `true` al entrar, porque cuenta con que la página cambie. Next 16 conserva la página montada entre navegaciones (`<Activity>`), así que al volver a `/join` reaparece con la partida anterior (`found`) y `busy` sin liberar. «Cambiar código» (`reset`) tampoco libera `busy`.
+  - Arreglo: al ocultarse la página, `JoinFlow` vuelve a empezar de cero (el nombre se conserva), y «Cambiar código» libera `busy`. E2E en `join-mobile.spec.ts`: entrar a una partida, volver al inicio, «Unirme con un código» y entrar a otra.
+- [ ] **Volver al inicio desde «¿Cómo te llamas?» (S).** En el paso del nombre solo está «Cambiar código»; falta una salida clara a la portada.
+- [ ] **Salirse de la partida antes de que empiece (M).** En «Esperando a que empiece», un botón «Salir de la partida» para el jugador.
+  - El servidor lo quita de la partida (o libera su nombre, si el anfitrión lo había apuntado) y avisa por Ably para que la tele y los demás móviles lo vean al momento: desaparece de la sala, con un aviso discreto en la tele («Pablo se ha salido»).
+  - Por equipos: sale de su equipo; si el equipo se queda vacío, decidir si se borra o se queda para que entre otro.
+  - Una vez empezada la partida, no (ahí sigue el «Recuperar el sitio» de siempre).
 
 
 ## P2 · Después: mejora la experiencia de quien ya juega
