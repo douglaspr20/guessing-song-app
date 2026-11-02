@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { ChevronLeft } from "lucide-react";
 import { BandStatus } from "@/components/band/BandStatus";
 import { Card } from "@/components/Card";
 import { useI18n } from "@/i18n/client";
@@ -146,6 +148,13 @@ export function JoinFlow() {
     <>
       <BandStatus text={m.join.band} />
       <main className={styles.main}>
+        {/* Esperando al anfitrión, la salida es su «Cancelar». */}
+        {!claiming && (
+          <Link href="/" className={styles.back}>
+            <ChevronLeft size={22} aria-hidden />
+            {m.join.backHome}
+          </Link>
+        )}
         <Card className={styles.card} aria-labelledby={titleId}>
           {claiming ? (
             <ClaimWaiting

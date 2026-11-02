@@ -134,7 +134,7 @@ export function PlayClient() {
                 next={game.nextGameId ? { error: followError, onFollow: follow } : null}
               />
             ) : !round ? (
-              <PlayWaiting />
+              <PlayWaiting gameId={gameId} />
             ) : round.status === "PLAYING" ? (
               <>
                 <h1 className={styles.headline}>{round.buzz?.participantId === me.id ? t.yourTurn : t.track(round.number)}</h1>

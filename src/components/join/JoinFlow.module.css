@@ -7,6 +7,11 @@
   padding: clamp(20px, 4vw, 56px) var(--gutter) 64px;
 }
 
+/* «< Volver al inicio» encima de la tarjeta, como «Volver a la estantería» en el directorio de artistas. */
+.back {
+  composes: backLink from "../styles/layout.module.css";
+}
+
 .card {
   width: 100%;
 }

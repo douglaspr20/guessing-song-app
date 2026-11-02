@@ -141,6 +141,7 @@ export const game = {
   claimAllow: "Let in",
   claimDeny: "No",
   claimToast: (name: string) => `${name} wants to come back in`,
+  leftToast: (name: string) => `${name} left the game`,
   claimBadge: { one: "{n} wants in", other: "{n} want in" },
   linkCopied: "Link copied: paste it in the chat.",
   cantCopy: "Couldn't copy. Select the link and copy it by hand.",
