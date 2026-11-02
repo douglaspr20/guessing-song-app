@@ -1,6 +1,6 @@
 // Panel del anfitrión (/host): Spotify, invitaciones, miembros y modo sin cuenta.
 export const host = {
-  pageTitle: "Anfitrión · Adivina la canción",
+  pageTitle: "Anfitrión · Hum",
   band: "Anfitrión",
   cantOpen: (detail: string) => `No pudimos abrir el panel. ${detail}`,
   title: "Panel del anfitrión",

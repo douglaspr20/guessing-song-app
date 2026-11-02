@@ -1,9 +1,11 @@
 // Textos compartidos por varias pantallas.
 export const common = {
-  brand: 'Adivina la canción',
+  brand: 'Hum',
+  /** El nombre con lo que es: título de la pestaña, metadatos y la imagen para redes. */
+  brandTitle: 'Hum · Adivina la canción',
   metaDescription: 'El juego familiar de adivinar canciones con tu Spotify.',
   ogAlt:
-    'Adivina la canción: «Suena la cinta. ¿Quién la canta?» junto a un casete con el reloj de la ronda en 00:30.',
+    'Hum · Adivina la canción: «Suena la cinta. ¿Quién la canta?» junto a un casete con el reloj de la ronda en 00:30.',
   language: 'Idioma',
   retry: 'Reintentar',
   retrying: 'Probando…',
@@ -48,7 +50,7 @@ export const common = {
     digest: (digest: string) => `Código del error: ${digest}`,
     tangledLabel: 'Mix de la abuela',
     tangledArt: 'Un casete roto con la cinta enredada y un lápiz en la bobina',
-    globalTitle: 'Se enredó la cinta · Adivina la canción',
+    globalTitle: 'Se enredó la cinta · Hum',
     code404: 'Error 404',
     lostTitle: 'Esta cinta',
     lostTitleEm: 'se perdió',

@@ -1,7 +1,7 @@
 import type { host as es } from "../es/host";
 
 export const host = {
-  pageTitle: "Host · Adivina la canción",
+  pageTitle: "Host · Hum",
   band: "Host",
   cantOpen: (detail: string) => `We couldn't open the dashboard. ${detail}`,
   title: "Host dashboard",

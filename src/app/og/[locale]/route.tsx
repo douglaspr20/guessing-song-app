@@ -107,7 +107,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/og/[locale]">) {
           <div style={band.stripe(C.saffron)} />
           <div style={band.stripe(C.tomato)} />
           <div style={band.stripe(C.sky)} />
-          <div style={band.brand}>{m.common.brand}</div>
+          <div style={band.brand}>{m.common.brandTitle}</div>
         </div>
 
         <div style={body}>

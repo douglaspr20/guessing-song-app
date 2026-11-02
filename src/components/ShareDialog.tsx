@@ -53,7 +53,7 @@ export function ShareDialog({ shared, onClose, onStop }: { shared: Shared; onClo
     fetch(image("tall"))
       .then((res) => res.blob())
       .then((blob) => {
-        const png = new File([blob], `adivina-la-cancion-${shared.cat}.png`, { type: "image/png" });
+        const png = new File([blob], `hum-${shared.cat}.png`, { type: "image/png" });
         if (live && navigator.canShare({ files: [png] })) setFile(png);
       })
       .catch(() => undefined);
@@ -151,11 +151,11 @@ export function ShareDialog({ shared, onClose, onStop }: { shared: Shared; onClo
         )}
 
         <div className={styles.actions}>
-          <a className={BUTTON} href={image("wide")} download={`adivina-la-cancion-${shared.cat}-apaisada.png`}>
+          <a className={BUTTON} href={image("wide")} download={`hum-${shared.cat}-apaisada.png`}>
             <Download size={18} aria-hidden />
             {t.downloadWide}
           </a>
-          <a className={BUTTON} href={image("tall")} download={`adivina-la-cancion-${shared.cat}-vertical.png`}>
+          <a className={BUTTON} href={image("tall")} download={`hum-${shared.cat}-vertical.png`}>
             <Download size={18} aria-hidden />
             {t.downloadTall}
           </a>

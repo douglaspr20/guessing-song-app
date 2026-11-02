@@ -1,5 +1,5 @@
 ---
-name: Adivina la canción
+name: Hum
 description: Cada partida es un casete grabado en casa; la cinta es el reloj y la carátula guarda nombres y puntos.
 colors:
   ink: "#1d2747"
@@ -219,7 +219,7 @@ components:
     width: "min(100%, 900px)"
 ---
 
-# Design System: Adivina la canción
+# Design System: Hum
 
 ## Overview
 

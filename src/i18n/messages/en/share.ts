@@ -2,7 +2,7 @@ import type { share as es } from "../es/share";
 
 export const share = {
   andMore: (n: number) => `and ${n} more`,
-  pageTitle: (headline: string, cat: string) => `${headline} · ${cat} · Adivina la canción`,
+  pageTitle: (headline: string, cat: string) => `${headline} · ${cat} · Hum`,
   pageDescription: (cat: string, tracks: string) => `The result of game ${cat} (${tracks}). Record yours, no account needed.`,
   cardAlt: (headline: string, cat: string) => `Result card for ${cat}: ${headline}`,
   ctaTitle: "And you, can you guess the song?",
@@ -21,7 +21,7 @@ export const share = {
   shareImage: "Share image",
   downloadWide: "Download landscape",
   downloadTall: "Download portrait",
-  shareText: (headline: string, cat: string) => `${headline} in ${cat} · Adivina la canción`,
+  shareText: (headline: string, cat: string) => `${headline} in ${cat} · Hum`,
   close: "Close",
   cantShare: (detail: string) => `Couldn't share. ${detail}`,
   stop: "Stop sharing",

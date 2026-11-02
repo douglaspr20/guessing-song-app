@@ -36,7 +36,7 @@ Usa la cuenta Spotify Premium del anfitrión, sus playlists y sus canciones que 
 
 ## Brand Commitments
 
-- Nombre: "Adivina la canción". Sin logo, colores ni estilo fijados; no debe imitar la identidad de Spotify.
+- Nombre: "Hum"; con lo que es, "Hum · Adivina la canción" (en inglés, "Hum · Guess the song"). La cabecera, las tarjetas y el reproductor de Spotify dicen solo "Hum"; el título de la pestaña, los metadatos y la imagen para redes, el nombre completo. Sin logo propio (el casete del icono); no debe imitar la identidad de Spotify.
 - Idioma de la interfaz: español.
 
 ## Evidence on Hand

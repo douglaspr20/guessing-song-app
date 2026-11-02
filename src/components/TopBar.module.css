@@ -26,8 +26,11 @@
   text-decoration: none;
 }
 
+/* «Hum» son tres letras: más grande y espaciada que el resto de etiquetas para que siga siendo la marca. */
 .brand {
-  font-size: clamp(20px, 2vw, 30px);
+  font-size: clamp(26px, 2.6vw, 38px);
+  letter-spacing: 0.14em;
+  padding: 8px 18px 8px 14px;
 }
 
 .brandIcon {
