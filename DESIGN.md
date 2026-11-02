@@ -16,6 +16,11 @@ colors:
   on-tomato: "#ffffff"
   sky: "#6fb7e0"
   tape-brown: "#5b3a1e"
+  tape-brown-light: "#6d4826"
+  remote-red: "#d93a2b"
+  remote-green: "#2f9e55"
+  remote-yellow: "#f0c419"
+  remote-blue: "#2f6fd6"
   ok: "#2f8f5b"
   bad: "#b3261e"
   on-shell: "#f4eedf"
@@ -70,8 +75,57 @@ typography:
     fontWeight: 700
     lineHeight: 1
     letterSpacing: "0.06em"
+  catalog:
+    fontFamily: "Barlow Condensed, Arial Narrow, sans-serif"
+    fontSize: "34px"
+    fontWeight: 800
+    lineHeight: 1
+    fontFeature: "tnum"
+  dialog-title:
+    fontFamily: "Barlow Condensed, Arial Narrow, sans-serif"
+    fontSize: "30px"
+    fontWeight: 800
+    lineHeight: 1
+  subhead:
+    fontFamily: "Barlow Condensed, Arial Narrow, sans-serif"
+    fontSize: "24px"
+    fontWeight: 800
+    lineHeight: 1.1
+  script-small:
+    fontFamily: "Kalam, cursive"
+    fontSize: "21px"
+    fontWeight: 700
+    lineHeight: 1.2
+  lede:
+    fontFamily: "Barlow, system-ui, sans-serif"
+    fontSize: "20px"
+    fontWeight: 400
+    lineHeight: 1.45
+  body-small:
+    fontFamily: "Barlow, system-ui, sans-serif"
+    fontSize: "16px"
+    fontWeight: 400
+    lineHeight: 1.45
+  label-small:
+    fontFamily: "Barlow Condensed, Arial Narrow, sans-serif"
+    fontSize: "17px"
+    fontWeight: 700
+    letterSpacing: "0.08em"
+  key:
+    fontFamily: "Barlow Condensed, Arial Narrow, sans-serif"
+    fontSize: "15px"
+    fontWeight: 700
+    letterSpacing: "0.06em"
+  micro:
+    fontFamily: "Barlow Condensed, Arial Narrow, sans-serif"
+    fontSize: "14px"
+    fontWeight: 700
+    letterSpacing: "0.08em"
 rounded:
   tag: "4px"
+  label: "6px"
+  inner: "8px"
+  mini-shell: "14px"
   step: "10px"
   control: "12px"
   card: "16px"
@@ -203,6 +257,8 @@ Una carcasa índigo profunda con papel crema encima y tres colores de cinta que 
 - **Cartulina** (card): carátulas, etiquetas, cubos de las bobinas. **Raya de cartulina** (card-rule) para separadores punteados de 2px. **Tinta suave** (card-ink-soft) para títulos de carátula, etiquetas de campo y metadatos. **Campo** (field) es el papel algo más claro dentro de inputs y selects.
 - **Papel sobre carcasa** (on-shell) y **papel suave** (on-shell-soft): texto principal y secundario sobre índigo.
 - **Cinta marrón** (tape-brown): el rollo magnético de las bobinas y algunos recortes del confeti.
+- **Brillo de cinta** (tape-brown-light): el centro más claro de cada rollo de cinta, para que se lea como un rollo y no como un disco plano.
+- **Colores del mando** (remote-red, remote-green, remote-yellow, remote-blue): solo en los puntos de las marcas de atajo que tienen botón de color en el mando de la tele. Son los del mando, no las rayas de cinta, y siempre van con la tecla escrita.
 - **Bien** (ok) y **mal** (bad): estados de acierto («+N» del marcador) y de error; siempre acompañados de texto.
 
 ### Named Rules
@@ -227,6 +283,7 @@ Una carcasa índigo profunda con papel crema encima y tres colores de cinta que 
 - **Body** (400, 18px, 1.45): texto corrido; ledes a 20 a 24px con máximo 34 a 46ch.
 - **Label** (700, 18 a 20px, 0.1em, mayúsculas): etiquetas de campo y metadatos; los títulos de carátula usan 0.18em.
 - **Button** (700, 22px, 0.06em, mayúsculas; 28px en la variante grande).
+- **Pasos intermedios**, siempre los mismos: catálogo C-NNN (800, 34px, tabular), título de diálogo (800, 30px), subtítulo de sección (800, 24px), nombre manuscrito pequeño (Kalam 700, 21px: tarjetas de artista), lede y texto de campo (Barlow, 20px), texto pequeño (Barlow, 16px: crédito y notas), etiqueta pequeña (700, 17px: chips, ayudas y metadatos), tecla de atajo (700, 15px) y micro (700, 14px: rótulos de las marcas de pista en el móvil). Los tamaños fluidos (`clamp`) de un solo componente (el nombre de la etiqueta del turno, la cuenta atrás del entreacto) se quedan en su componente.
 
 ### Named Rules
 **The Two Hands Rule.** Lo que escribe una persona (nombres, títulos, pistas) va en Kalam; lo que mide la máquina (tiempo, puntos, puestos, botones, etiquetas) va en Barlow Condensed mayúscula. Los placeholders de campos manuscritos van en Barlow para que un hueco vacío no parezca un nombre escrito.
@@ -246,7 +303,7 @@ Sistema plano. No hay box-shadow ni text-shadow en ninguna parte. La profundidad
 
 ## Shapes
 
-Esquinas de objeto físico: la carcasa a 28px, la carátula a 16px, los controles a 12px, las etiquetas de cinta (marca, catálogo, lomo) casi rectas a 4px, los escalones del podio a 10px arriba. La ventana de las bobinas y las fichas son píldoras (999px); bobinas y cubos son círculos. Los bordes de control son de 3px en el color del texto (currentColor); los chips de filtro bajan a 2px. Las carátulas recortan su contenido (overflow hidden) para que la banda de rayas llegue al borde.
+Esquinas de objeto físico: la carcasa a 28px, la carátula a 16px, los controles a 12px, las etiquetas de cinta (marca, catálogo, lomo) casi rectas a 4px, los escalones del podio a 10px arriba. La ventana de las bobinas y las fichas son píldoras (999px); bobinas y cubos son círculos. Tres radios intermedios para piezas pequeñas: 6px en etiquetas pegadas y carteles (el «Se busca», la marca de elegido), 8px en piezas dentro de una carátula (el enlace del diálogo de compartir) y 14px en la carcasa del casete de playlist, que es un casete en miniatura. Los bordes de control son de 3px en el color del texto (currentColor); los chips de filtro bajan a 2px. Las carátulas recortan su contenido (overflow hidden) para que la banda de rayas llegue al borde.
 
 ## Components
 

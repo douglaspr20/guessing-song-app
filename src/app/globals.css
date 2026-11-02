@@ -29,6 +29,13 @@
   --on-tomato: #ffffff;
   /* Cinta del casete */
   --tape-brown: #5b3a1e;
+  /* El brillo del rollo de cinta, en el centro de cada bobina. */
+  --tape-brown-light: #6d4826;
+  /* Los botones de color del mando de la tele (atajos): son los del mando, no las rayas de cinta. */
+  --remote-red: #d93a2b;
+  --remote-green: #2f9e55;
+  --remote-yellow: #f0c419;
+  --remote-blue: #2f6fd6;
   /* Avisos de error */
   --notice-error-ink: #ffd6cf;
   --notice-error-bg: #4a1d24;
