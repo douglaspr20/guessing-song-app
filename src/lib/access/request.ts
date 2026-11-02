@@ -23,3 +23,13 @@ export function cookieOptions(maxAgeSeconds: number) {
     maxAge: maxAgeSeconds,
   };
 }
+
+type CookieJar = { set(name: string, value: string, options: ReturnType<typeof cookieOptions>): unknown };
+
+/**
+ * Borra una cookie. `cookies().delete()` la manda sin `Secure` ni `Path=/`, y el navegador rechaza esa orden para las
+ * cookies `__Host-` de producción (la cookie se quedaba): hay que repetir los atributos con que se creó.
+ */
+export function clearCookie(jar: CookieJar, name: string) {
+  jar.set(name, "", cookieOptions(0));
+}

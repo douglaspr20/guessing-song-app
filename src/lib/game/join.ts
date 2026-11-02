@@ -4,7 +4,7 @@ import { recordGameEvent } from "@/lib/analytics/events";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { randomToken, sha256 } from "@/lib/access/hash";
-import { cookieName, cookieOptions } from "@/lib/access/request";
+import { clearCookie, cookieName, cookieOptions } from "@/lib/access/request";
 import { notFound } from "@/lib/access/session";
 import { emit } from "./events";
 import { MAX_PEOPLE } from "./teams";
@@ -276,7 +276,7 @@ export async function claimStatus(gameId: string, now = new Date()): Promise<"pe
   const accepted = await db.participant.findUnique({ where: { tokenHash: hash } });
   if (accepted && accepted.gameId === gameId && !accepted.kickedAt) {
     jar.set(participantCookie(gameId), token, cookieOptions(PARTICIPANT_TTL_SECONDS));
-    jar.delete(claimCookie(gameId));
+    clearCookie(jar, claimCookie(gameId));
     return "accepted";
   }
   const pending = await db.participant.findFirst({ where: { gameId, claimHash: hash, kickedAt: null } });
@@ -288,7 +288,7 @@ export async function withdrawClaim(gameId: string) {
   const jar = await cookies();
   const token = jar.get(claimCookie(gameId))?.value;
   if (!token) return;
-  jar.delete(claimCookie(gameId));
+  clearCookie(jar, claimCookie(gameId));
   const hash = sha256(token);
   const seat = await db.participant.findFirst({ where: { gameId, claimHash: hash } });
   if (!seat) return;
@@ -349,7 +349,7 @@ export async function leaveGame(gameId: string) {
     if (me.memberId) await tx.teamMember.delete({ where: { id: me.memberId } });
     else await tx.player.delete({ where: { id: me.playerId } });
   });
-  (await cookies()).delete(participantCookie(gameId));
+  clearCookie(await cookies(), participantCookie(gameId));
   emit({ type: "participant_left", gameId, participantId: me.id });
 }
 
@@ -435,7 +435,7 @@ export async function leaveHostSeat(gameId: string) {
   if (!game) throw new AppError("GAME_NOT_FOUND", 404);
   if (game.currentRound > 0 || game.status !== "LOBBY") throw new AppError("GAME_ALREADY_STARTED", 409);
   const host = await db.participant.findFirst({ where: { gameId, isHost: true, kickedAt: null } });
-  (await cookies()).delete(participantCookie(gameId));
+  clearCookie(await cookies(), participantCookie(gameId));
   if (!host) return;
   await db.participant.delete({ where: { id: host.id } });
   emit({ type: "participant_left", gameId, participantId: host.id });

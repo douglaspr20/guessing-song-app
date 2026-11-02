@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { randomToken, sha256 } from "./hash";
-import { cookieName, cookieOptions } from "./request";
+import { clearCookie, cookieName, cookieOptions } from "./request";
 
 const SESSION_COOKIE = () => cookieName("session");
 export const SESSION_TTL_MS = 7 * 24 * 60 * 60_000;
@@ -78,7 +78,7 @@ export async function endSession() {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE())?.value;
   if (token) await db.session.deleteMany({ where: { id: sha256(token) } });
-  store.delete(SESSION_COOKIE());
+  clearCookie(store, SESSION_COOKIE());
 }
 
 /** Cierra todas las sesiones de un usuario (en todos sus dispositivos). */
