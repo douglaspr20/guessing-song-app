@@ -59,7 +59,7 @@ export const setup = {
   freshGamesHint: "If these filters run out of new songs, one may repeat.",
   fromPhone: "From phones",
   fromPhoneHint:
-    "Whoever joins with the code presses “I know it!”: the song pauses and they have this long to type the title and artist. If they miss, they're out for that track.",
+    "Whoever joins with the code presses “I know it!” and has this long to type the title and artist. If they miss, they're out for that track.",
   answerTime: "Time to answer",
   answerSeconds: "Seconds to answer",
   lockout: "A miss locks out",
