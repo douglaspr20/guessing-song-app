@@ -6,6 +6,7 @@ import {
   OPEN_RULES,
   pointsForElapsed,
   rulesFor,
+  scoringElapsedMs,
   SPOTIFY_RULES,
   titleLetters,
   titleWordCount,
@@ -138,5 +139,25 @@ describe("fragmentEnded", () => {
     expect(fragmentEnded({ fragmentMs: 30_000, elapsedMs: 28_000 })).toBe(true);
     expect(fragmentEnded({ fragmentMs: 30_000, elapsedMs: 27_900 })).toBe(false);
     expect(fragmentEnded({ fragmentMs: 30_000, elapsedMs: 0 })).toBe(false);
+  });
+});
+
+describe("turno con la canción sonando (scoringElapsedMs)", () => {
+  // Pulsó a los 15 s y la canción siguió sonando.
+  const inTurn = { ...round, buzzedAt: at(15) };
+
+  it("el reloj de puntos se queda en el momento de pulsar; el de la cinta sigue", () => {
+    expect(elapsedMs(inTurn, at(30))).toBe(30_000);
+    expect(scoringElapsedMs(inTurn, at(30))).toBe(15_000);
+    // Antes de pulsar (o sin turno) son el mismo.
+    expect(scoringElapsedMs(round, at(30))).toBe(30_000);
+  });
+
+  it("durante el turno no se abre ninguna pista ni se programa la siguiente", () => {
+    const h = unlockedHints(inTurn, at(45));
+    expect(h.hints).toEqual([]);
+    expect(h.nextHintAt).toBeNull();
+    // El punto de artista sigue valiendo, aunque la cinta ya pasó los 40 s.
+    expect(artistAvailable(inTurn, at(45))).toBe(true);
   });
 });

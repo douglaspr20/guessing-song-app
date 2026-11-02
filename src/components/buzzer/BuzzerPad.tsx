@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Hand } from "lucide-react";
 import { Notice } from "@/components/Notice";
 import { api, errorText, type Round } from "@/lib/client/api";
 import { useRemainingMs } from "@/hooks/useNow";
 import { BuzzAnswerForm, type Verdict } from "./BuzzAnswerForm";
+import { TurnSticker, useTurnSticker } from "./TurnSticker";
 import { fragmentEnded } from "@/lib/game/scoring";
 import { useI18n } from "@/i18n/client";
 import styles from "./Buzzer.module.css";
@@ -37,6 +38,12 @@ export function BuzzerPad({ gameId, round, me, fetchedAt, onChanged, hints, comp
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const buzz = round.buzz;
   const mine = buzz?.participantId === me.id;
+  // El turno de otro: su nombre se pega sobre el botón unos segundos y el móvil da un toque (donde se puede).
+  const sticker = useTurnSticker(round.id, mine ? null : buzz);
+  const stickerKey = sticker ? `${round.id}:${sticker.participantId}` : null;
+  useEffect(() => {
+    if (stickerKey) navigator.vibrate?.(120);
+  }, [stickerKey]);
 
   const buzzIn = async () => {
     setBusy(true);
@@ -92,10 +99,13 @@ export function BuzzerPad({ gameId, round, me, fetchedAt, onChanged, hints, comp
           {t.wrongTitle}
         </Notice>
       )}
-      <button type="button" className={styles.bigButton} onClick={buzzIn} disabled={!canBuzz} aria-describedby="buzz-note">
-        <Hand size={compact ? 40 : 56} aria-hidden />
-        {t.buzz}
-      </button>
+      <div className={styles.buttonSlot}>
+        <button type="button" className={styles.bigButton} onClick={buzzIn} disabled={!canBuzz} aria-describedby="buzz-note">
+          <Hand size={compact ? 40 : 56} aria-hidden />
+          {t.buzz}
+        </button>
+        {sticker && <TurnSticker key={stickerKey} name={sticker.name || t.someone} size="phone" />}
+      </div>
       <p id="buzz-note" className={styles.padNote} role="status">
         {error ?? stateNote ?? t.pressWhenReady}
         {buzz && !mine && <Countdown leftAtFetch={buzz.remainingMs} fetchedAt={fetchedAt} />}

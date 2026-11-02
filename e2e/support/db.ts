@@ -32,3 +32,10 @@ export async function lastGameCode(): Promise<string> {
   if (!rows[0]) throw new Error("No hay ninguna partida");
   return rows[0].code;
 }
+
+/** Si la ronda en juego más reciente tiene el reloj parado (pausa del anfitrión o turno en modo «Pausar»). */
+export async function roundPaused(): Promise<boolean> {
+  const { rows } = await pool.query(`SELECT "pausedAt" FROM "Round" WHERE status = 'PLAYING' ORDER BY "createdAt" DESC LIMIT 1`);
+  if (!rows[0]) throw new Error("No hay ninguna ronda en juego");
+  return rows[0].pausedAt !== null;
+}

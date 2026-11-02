@@ -14,6 +14,7 @@ const round = (patch: Partial<Round> = {}): Round =>
     playStartedAt: new Date("2026-10-18T12:00:00Z"),
     paused: false,
     elapsedMs: 10_000,
+    scoringElapsedMs: 10_000,
     pointsNow: 3,
     artistAvailable: true,
     hints: [],
@@ -139,5 +140,23 @@ describe("describeGuess", () => {
       tone: "bad",
       text: "Luis: no es esa canción",
     });
+  });
+});
+
+describe("turno con la canción sonando", () => {
+  const buzz = { participantId: "p1", name: "Pablo", playerId: "pl1", remainingMs: 18_000, totalMs: 20_000 };
+
+  it("la cinta sigue, pero los puntos se quedan en lo que valían al pulsar", () => {
+    // Pulsó a los 18 s (valía 3); ya van 25 s de canción.
+    const c = deriveRoundClock(input({ round: round({ elapsedMs: 25_000, scoringElapsedMs: 18_000, buzz }) }));
+    expect(c.elapsedMs).toBe(25_000);
+    expect(c.pointsNow).toBe(3);
+    expect(c.nextDropInMs).toBeNull();
+    expect(c.artistOpen).toBe(true);
+  });
+
+  it("al acabar el turno los puntos vuelven a medirse con la canción", () => {
+    const c = deriveRoundClock(input({ round: round({ elapsedMs: 25_000, scoringElapsedMs: 25_000, buzz: null }) }));
+    expect(c.pointsNow).toBe(2);
   });
 });

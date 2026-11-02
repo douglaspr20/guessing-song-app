@@ -73,6 +73,11 @@ Salen de la primera partida real (familia, con Spotify y desde un móvil como an
 - [x] **El anfitrión también juega (M/L).** «Yo también juego» al grabar (o desde la sala antes de empezar) obliga a elegir uno de los nombres.
   - Su pantalla tiene una franja «¡Lo sé!» sobre el casete, y en su turno el formulario de respuesta. Lo juzga el servidor; en su turno no tiene «Lo dijo bien», «Falló» ni «Revelar».
   - De paso se arregló una carrera al arrancar cada pista: si el estado llegaba antes que el audio, la ronda se quedaba en pausa en el servidor con la música sonando, y nadie podía pulsar.
+- [x] **La canción puede seguir sonando al pulsar «¡Lo sé!» (M).** Sale de la segunda partida en familia: la pausa obligatoria cortaba el ritmo.
+  - Ajuste por partida, «Al pulsar ¡Lo sé!: Seguir sonando · Pausar» (`Game.buzzMode`; las partidas grabadas antes siguen con la pausa). Por defecto, seguir sonando.
+  - Puntos y pistas se congelan al pulsar en los dos modos (`scoringElapsedMs`): pensar la respuesta no cuesta puntos. Si falla, se ponen al día con la canción.
+  - Como ya no hay silencio que avise: el volumen baja al 35% durante el turno, las bobinas van despacio y el nombre se pega en grande sobre el casete («Etiqueta del turno»), y en los demás móviles en pequeño con una vibración.
+  - Falta probar en Spotify la bajada de volumen (`setVolume` del SDK).
 
 ### Unirse y sala de espera
 

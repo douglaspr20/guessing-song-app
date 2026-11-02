@@ -17,3 +17,8 @@ export async function requestPlay(gameId: string, roundId: string, body: { devic
   const data = await res.json();
   return { ok: res.ok, status: res.status, data: data as PlayResponse & { error?: string; message?: string } };
 }
+
+/** Volumen (sobre el normal) mientras alguien responde con la canción sonando: se nota que pasa algo y se oye al que contesta. */
+export const DUCKED_VOLUME = 0.35;
+/** Cuánto tarda en bajar o subir el volumen, para que no sea un golpe. */
+export const DUCK_RAMP_MS = 300;

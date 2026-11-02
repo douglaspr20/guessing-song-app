@@ -16,6 +16,7 @@ export function Cassette({
   remainingMs,
   progress,
   running,
+  waiting = false,
   caption,
   hints,
 }: {
@@ -25,6 +26,8 @@ export function Cassette({
   /** 0 al empezar el fragmento, 1 al acabar. */
   progress: number;
   running: boolean;
+  /** Alguien está respondiendo con la canción sonando: las bobinas giran despacio, como en espera. */
+  waiting?: boolean;
   caption: string;
   hints: HintMark[];
 }) {
@@ -42,7 +45,7 @@ export function Cassette({
         <span className={styles.labelValue}>{value}</span>
       </div>
 
-      <div className={`${styles.window} ${running ? styles.running : ""} ${low ? styles.low : ""}`}>
+      <div className={`${styles.window} ${running ? styles.running : ""} ${waiting ? styles.waiting : ""} ${low ? styles.low : ""}`}>
         <div className={styles.windowInner}>
           <div className={styles.reel} aria-hidden>
             <span className={styles.tape} style={{ "--r": `${left}%` } as CSSProperties} />

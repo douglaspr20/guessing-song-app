@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { requestPlay } from "@/lib/client/play";
+import { DUCK_RAMP_MS, DUCKED_VOLUME, requestPlay } from "@/lib/client/play";
 import type { PlayerStatus } from "@/lib/client/spotifyDevice";
 import { useFragmentTimer } from "./useFragmentTimer";
 import { currentMessages } from "@/i18n/runtime";
@@ -78,12 +78,33 @@ export function usePreviewPlayer(enabled = true) {
     thaw();
   }, [thaw]);
 
+  /** Baja (o devuelve) el volumen mientras alguien responde, con una rampa corta para que no sea un golpe. */
+  const ramp = useRef<number | null>(null);
+  const duck = useCallback(async (on: boolean) => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (ramp.current) cancelAnimationFrame(ramp.current);
+    const from = el.volume;
+    const to = on ? DUCKED_VOLUME : 1;
+    const t0 = performance.now();
+    const step = (t: number) => {
+      // El primer fotograma puede llevar una marca anterior a `t0`: se acota para no salir de [0, 1].
+      const k = Math.min(1, Math.max(0, (t - t0) / DUCK_RAMP_MS));
+      el.volume = from + (to - from) * k;
+      ramp.current = k < 1 ? requestAnimationFrame(step) : null;
+    };
+    ramp.current = requestAnimationFrame(step);
+  }, []);
+
   /** Corta el audio y deja el fragmento sin sonar (al cerrar la ronda). */
   const stop = useCallback(async () => {
     reset();
     audioRef.current?.pause();
+    if (ramp.current) cancelAnimationFrame(ramp.current);
+    // La siguiente pista empieza con el volumen normal aunque esta acabara durante un turno.
+    if (audioRef.current) audioRef.current.volume = 1;
   }, [reset]);
 
   const status: PlayerStatus = enabled ? "ready" : "loading";
-  return { status, error, phase, fragmentMs, remainingMs, activate, playFragment, pause, resume, stop };
+  return { status, error, phase, fragmentMs, remainingMs, activate, playFragment, pause, resume, stop, duck };
 }

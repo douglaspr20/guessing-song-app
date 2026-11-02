@@ -153,6 +153,9 @@ export const game = {
   claimAllow: "Dejar entrar",
   claimDeny: "No",
   claimToast: (name: string) => `${name} pide volver a entrar`,
+  // Etiqueta que se pega sobre el casete cuando alguien pulsa «¡Lo sé!»
+  turnSticker: "Tiene el turno",
+  turnName: (name: string) => `¡${name}!`,
   claimBadge: { one: "{n} pide entrar", other: "{n} piden entrar" },
   linkCopied: "Enlace copiado: pégalo en el chat.",
   cantCopy: "No se pudo copiar. Selecciona el enlace y cópialo a mano.",

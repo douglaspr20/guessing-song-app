@@ -14,6 +14,8 @@ export interface Intermission {
 interface PlayerSync {
   gameId: string;
   round: Round | null;
+  /** «Seguir sonando» al pulsar ¡Lo sé! (la música baja de volumen en vez de pararse). */
+  keepPlaying: boolean;
   /** Cuándo se leyó el estado (el tiempo del turno se mide desde ahí). */
   fetchedAt: number;
   player: ReturnType<typeof useGamePlayer>;
@@ -27,29 +29,52 @@ interface PlayerSync {
 
 /**
  * Mantiene el audio de la tele de acuerdo con la partida:
- * - pausa al pulsar alguien «¡Lo sé!» y sigue sola si su turno acaba sin ganar;
+ * - al pulsar alguien «¡Lo sé!», pausa (y sigue sola si su turno acaba sin ganar) o baja el volumen, según la partida;
  * - cierra el turno si el móvil de quien pulsó no responde;
  * - congela el reloj si se recarga a mitad de ronda (sin audio);
  * - pausa al salir de la pantalla y sigue al volver;
  * - hace sonar la pista al acabar el entreacto.
  */
-export function usePlayerSync({ gameId, round, fetchedAt, player, clock, intermission, endIntermission, refresh, readState, onError }: PlayerSync) {
+export function usePlayerSync({
+  gameId,
+  round,
+  keepPlaying,
+  fetchedAt,
+  player,
+  clock,
+  intermission,
+  endIntermission,
+  refresh,
+  readState,
+  onError,
+}: PlayerSync) {
   const roundId = round?.id;
   const buzz = round?.status === "PLAYING" ? (round.buzz ?? null) : null;
 
-  // Alguien pulsa: la música se para; acaba su turno sin ganar: sigue sola. Si la ronda se cierra, se corta.
+  // Alguien pulsa: con «Pausar» la música se para y sigue sola si su turno acaba sin ganar; con «Seguir sonando»
+  // baja de volumen y vuelve a subir. Si la ronda se cierra (acertó), se corta.
   const pausedByBuzz = useRef<string | null>(null);
+  const duckedByBuzz = useRef<string | null>(null);
   const buzzId = buzz?.participantId ?? null;
   const roundStatus = round?.status;
   const roundPaused = round?.paused;
   useEffect(() => {
     if (!roundId) return;
     if (roundStatus === "PLAYING" && buzzId) {
-      if (player.phase === "playing") {
+      if (keepPlaying) {
+        if (duckedByBuzz.current !== roundId) {
+          duckedByBuzz.current = roundId;
+          void player.duck(true);
+        }
+      } else if (player.phase === "playing") {
         pausedByBuzz.current = roundId;
         void player.pause();
       }
       return;
+    }
+    if (duckedByBuzz.current === roundId) {
+      duckedByBuzz.current = null;
+      void player.duck(false);
     }
     if (pausedByBuzz.current === roundId) {
       pausedByBuzz.current = null;
@@ -62,7 +87,7 @@ export function usePlayerSync({ gameId, round, fetchedAt, player, clock, intermi
     }
     // `player` cambia en cada render: solo importan su fase y lo que dice el servidor.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buzzId, roundId, roundStatus, roundPaused, player.phase]);
+  }, [buzzId, roundId, roundStatus, roundPaused, player.phase, keepPlaying]);
 
   // Si el móvil de quien pulsó no responde, la tele cierra su turno poco después de acabarse el tiempo.
   const buzzMsAtFetch = buzz?.remainingMs ?? 0;

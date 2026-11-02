@@ -116,6 +116,7 @@ export function useGameController(gameId: string) {
   usePlayerSync({
     gameId,
     round,
+    keepPlaying: game?.buzzMode !== "pause",
     fetchedAt,
     player,
     clock,

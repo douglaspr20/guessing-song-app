@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { requestPlay } from "@/lib/client/play";
-import { ensurePlayer, getPlayer, getServerState, getState, reconnect, subscribe } from "@/lib/client/spotifyDevice";
+import { DUCKED_VOLUME, requestPlay } from "@/lib/client/play";
+import { ensurePlayer, getPlayer, getServerState, getState, reconnect, subscribe, SPOTIFY_VOLUME } from "@/lib/client/spotifyDevice";
 import { useFragmentTimer } from "./useFragmentTimer";
 import { currentMessages } from "@/i18n/runtime";
 
@@ -72,10 +72,17 @@ export function useSpotifyPlayer(enabled = true) {
     thaw();
   }, [thaw]);
 
+  /** Baja (o devuelve) el volumen mientras alguien responde con la canción sonando. */
+  const duck = useCallback(async (on: boolean) => {
+    await getPlayer()?.setVolume(on ? SPOTIFY_VOLUME * DUCKED_VOLUME : SPOTIFY_VOLUME).catch(() => {});
+  }, []);
+
   /** Corta el audio y deja el fragmento sin sonar (al cerrar la ronda). */
   const stop = useCallback(async () => {
     reset();
     await getPlayer()?.pause().catch(() => {});
+    // La siguiente pista empieza con el volumen normal aunque esta acabara durante un turno.
+    await getPlayer()?.setVolume(SPOTIFY_VOLUME).catch(() => {});
   }, [reset]);
 
   return {
@@ -89,5 +96,6 @@ export function useSpotifyPlayer(enabled = true) {
     pause,
     resume,
     stop,
+    duck,
   };
 }

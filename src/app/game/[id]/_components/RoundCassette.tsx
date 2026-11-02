@@ -30,6 +30,7 @@ export function RoundCassette({
       remainingMs={clock.started ? clock.shownLeftMs : clock.fragmentMs}
       progress={clock.tapeProgress}
       running={running}
+      waiting={!!round.buzz}
       caption={clock.caption}
       hints={hints}
     />
