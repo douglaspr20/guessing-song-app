@@ -86,11 +86,12 @@ Salen de la segunda partida real (familia, 31-10-2026).
 - [x] **Bug: al volver a «Unirse» se queda el código de la partida anterior y el botón atascado (S).** Tras terminar una partida y grabar otra, algunos móviles entraban desde el inicio a «Unirse» y veían el código viejo con «Entrando…» sin hacer nada. Al cambiar el código, el botón se quedaba en «Buscando…» y solo se arreglaba recargando la página.
   - Causa (reproducida con una e2e): `JoinFlow` deja `busy` en `true` al entrar, porque cuenta con que la página cambie. Next 16 conserva la página montada entre navegaciones (`<Activity>`), así que al volver a `/join` reaparece con la partida anterior (`found`) y `busy` sin liberar. «Cambiar código» (`reset`) tampoco libera `busy`.
   - Arreglo: al ocultarse la página, `JoinFlow` vuelve a empezar de cero (el nombre se conserva), y «Cambiar código» libera `busy`. E2E en `join-mobile.spec.ts`: entrar a una partida, volver al inicio, «Unirme con un código» y entrar a otra.
-- [ ] **Volver al inicio desde «¿Cómo te llamas?» (S).** En el paso del nombre solo está «Cambiar código»; falta una salida clara a la portada.
-- [ ] **Salirse de la partida antes de que empiece (M).** En «Esperando a que empiece», un botón «Salir de la partida» para el jugador.
-  - El servidor lo quita de la partida (o libera su nombre, si el anfitrión lo había apuntado) y avisa por Ably para que la tele y los demás móviles lo vean al momento: desaparece de la sala, con un aviso discreto en la tele («Pablo se ha salido»).
-  - Por equipos: sale de su equipo; si el equipo se queda vacío, decidir si se borra o se queda para que entre otro.
-  - Una vez empezada la partida, no (ahí sigue el «Recuperar el sitio» de siempre).
+- [x] **Volver al inicio desde el formulario de unirse (S).** «‹ Volver al inicio» encima de la carátula, en el paso del código y en el del nombre, con el mismo estilo que «Volver a la estantería» de `/artists` (estilo compartido `backLink`).
+- [x] **Salirse de la partida antes de que empiece (M).** «Salir de la partida» en «Esperando a que empiece», con confirmación (`POST /api/games/:id/leave`, `leaveGame`).
+  - Si su nombre lo creó él al unirse, se borra con él (`Participant.ownsSeat`): no queda en el marcador ni en el podio. Si lo había apuntado el anfitrión, queda libre para quien lo reclame. Para volver, se une otra vez con el código.
+  - Por equipos se quita su sitio y el equipo se queda: los equipos los crea siempre el anfitrión.
+  - La tele lo quita de la sala con el `participant_left` de siempre y avisa «Pablo se ha salido». El aviso sale de comparar la lista de conectados (como las peticiones de volver a entrar), así que llega también sin Ably. De quien saca el anfitrión no se avisa.
+  - Una vez empezada la partida, no (ahí sigue el «Recuperar el sitio» de siempre). El anfitrión que juega tiene su propio «Dejar de jugar».
 
 
 ## P2 · Después: mejora la experiencia de quien ya juega

@@ -61,6 +61,12 @@
   max-width: 40ch;
 }
 
+/* «Salir de la partida» en la espera: secundario, a la izquierda y separado del texto. */
+.leave {
+  justify-self: start;
+  margin-top: 8px;
+}
+
 .answer {
   display: grid;
   gap: 4px;
